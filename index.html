@@ -1086,6 +1086,120 @@
     background: rgba(255, 230, 0, 0.25);
     box-shadow: 0 0 24px rgba(255, 230, 0, 0.5);
   }
+
+  /* ===== Awards Screen ===== */
+  #awardsScreen {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(10,13,31,0.95), rgba(5,6,15,0.99));
+    z-index: 305;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    padding: 20px;
+  }
+  #awardsScreen.show { display: flex; animation: victoryFadeIn 0.5s ease-out; }
+  #awardsScreen .aw-content {
+    text-align: center;
+    padding: 36px 44px;
+    border: 1px solid rgba(255, 230, 0, 0.4);
+    background: rgba(5, 6, 15, 0.92);
+    border-radius: 4px;
+    box-shadow: 0 0 60px rgba(255, 230, 0, 0.25);
+    max-width: 880px;
+    width: 100%;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+  }
+  #awardsScreen .aw-prefix {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: #ffe600;
+    margin-bottom: 10px;
+    opacity: 0.7;
+  }
+  #awardsScreen .aw-headline {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: clamp(24px, 3.6vw, 38px);
+    letter-spacing: 0.04em;
+    color: #ffe600;
+    margin-bottom: 6px;
+    text-shadow: 0 0 16px rgba(255, 230, 0, 0.4);
+  }
+  #awardsScreen .aw-sub {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    color: var(--ink-dim);
+    margin-bottom: 22px;
+    letter-spacing: 0.15em;
+  }
+  #awardsScreen .aw-list {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    text-align: left;
+    padding: 6px 4px 6px 0;
+    margin-bottom: 18px;
+  }
+  #awardsScreen .aw-list::-webkit-scrollbar { width: 6px; }
+  #awardsScreen .aw-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+  .award-row {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background: rgba(255,255,255,0.03);
+    border-left: 3px solid var(--award-color, #ffe600);
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .award-row .award-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--award-color, #ffe600);
+    letter-spacing: 0.1em;
+  }
+  .award-row .award-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+  .award-row .award-stats {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+    letter-spacing: 0.05em;
+  }
+  .award-row .award-ice {
+    font-size: 11px;
+    color: var(--ink-faint);
+    font-style: italic;
+    margin-top: 2px;
+  }
+  #awardsScreen button {
+    padding: 12px 32px;
+    background: rgba(255, 230, 0, 0.12);
+    border: 1px solid rgba(255, 230, 0, 0.5);
+    color: #ffe600;
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+    align-self: center;
+  }
+  #awardsScreen button:hover {
+    background: rgba(255, 230, 0, 0.25);
+    box-shadow: 0 0 24px rgba(255, 230, 0, 0.5);
+  }
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
@@ -1313,7 +1427,18 @@
       <div class="vb-team-label">Victorious Department:</div>
       <div class="vb-team" id="victoryTeam">—</div>
       <div class="vb-score" id="victoryScore">— points</div>
-      <button id="victoryDismiss">CONTINUE</button>
+      <button id="victoryDismiss">SEE THE AWARDS →</button>
+    </div>
+  </div>
+
+  <!-- Awards ceremony screen -->
+  <div id="awardsScreen">
+    <div class="aw-content">
+      <div class="aw-prefix">// HONORS &amp; AWARDS //</div>
+      <div class="aw-headline">The KCU Combat Honors</div>
+      <div class="aw-sub">Distinguished service awards for every pilot</div>
+      <div class="aw-list" id="awardsList"></div>
+      <button id="awardsDismiss">CLOSE</button>
     </div>
   </div>
 </div>
@@ -1645,7 +1770,186 @@ victoryDismiss?.addEventListener('click', () => {
   victoryBanner.classList.remove('show');
   // Remove the event from the database so it doesn't appear for future joiners
   remove(ref(db, 'victoryEvent')).catch(()=>{});
+  // Show the awards ceremony
+  showAwardsCeremony();
 });
+
+const awardsScreenEl = document.getElementById('awardsScreen');
+const awardsListEl = document.getElementById('awardsList');
+const awardsDismissBtn = document.getElementById('awardsDismiss');
+awardsDismissBtn?.addEventListener('click', () => {
+  awardsScreenEl.classList.remove('show');
+});
+
+// Chat message counter — used for the trash-talker award
+window._chatMessageCount = window._chatMessageCount || {};
+
+// Honorific pools — categorized so we match by performance + team flavor
+// Each entry: { title, condition, statLine } — condition tested against player+stats
+const HONORIFICS = [
+  // === Top performers (any team) ===
+  { title: 'Most Valuable Pilot', tier: 1, cond: (p, s, ctx) => p.kills >= ctx.maxKills && p.kills >= 5 },
+  { title: 'The Untouchable', tier: 1, cond: (p, s, ctx) => p.deaths === 0 && p.kills >= 3 },
+  { title: 'Glass Cannon Champion', tier: 2, cond: (p) => ['Finance','Payroll','Budget'].includes(p.team) && p.kills >= 4 },
+  { title: 'Walking Disaster', tier: 2, cond: (p, s, ctx) => p.deaths >= ctx.maxDeaths && p.deaths >= 5 },
+  { title: 'The Survivor', tier: 2, cond: (p) => p.deaths <= 1 && p.kills >= 1 },
+  { title: 'Frequent Respawner', tier: 3, cond: (p) => p.deaths >= 7 && p.kills < p.deaths },
+  { title: 'Trash Talk Champion', tier: 1, cond: (p, s, ctx) => (ctx.chatCounts[p.id] || 0) >= ctx.maxChat && ctx.maxChat >= 5 },
+  { title: 'Chatty Cathy of the Cosmos', tier: 2, cond: (p, s, ctx) => (ctx.chatCounts[p.id] || 0) >= 3 },
+
+  // === Finance ===
+  { title: 'Spreadsheet Ace', tier: 4, team: 'Finance' },
+  { title: 'Balance Sheet Bandit', tier: 4, team: 'Finance' },
+  { title: 'Cash Flow Connoisseur', tier: 4, team: 'Finance' },
+  { title: 'The Fiscal Responsibility Officer', tier: 4, team: 'Finance' },
+  { title: 'Yield Curve Whisperer', tier: 4, team: 'Finance' },
+
+  // === Accounting ===
+  { title: 'Reconciliation Royalty', tier: 4, team: 'Accounting' },
+  { title: 'Ledger Legend', tier: 4, team: 'Accounting' },
+  { title: 'GAAP Crusader', tier: 4, team: 'Accounting' },
+  { title: 'The Closing Entries Champion', tier: 4, team: 'Accounting' },
+  { title: 'Trial Balance Trailblazer', tier: 4, team: 'Accounting' },
+
+  // === Risk ===
+  { title: 'Risk Appetite Officer', tier: 4, team: 'Risk' },
+  { title: 'The Heat Map Hero', tier: 4, team: 'Risk' },
+  { title: 'Mitigation Maestro', tier: 4, team: 'Risk' },
+  { title: 'Stress Test Survivor', tier: 4, team: 'Risk' },
+  { title: 'Tail Risk Tactician', tier: 4, team: 'Risk' },
+
+  // === Strategy ===
+  { title: 'Roadmap Royalty', tier: 4, team: 'Strategy' },
+  { title: 'OKR Overlord', tier: 4, team: 'Strategy' },
+  { title: 'The Quarterly Plan Whisperer', tier: 4, team: 'Strategy' },
+  { title: 'Synergy Sommelier', tier: 4, team: 'Strategy' },
+  { title: 'KPI Knight', tier: 4, team: 'Strategy' },
+
+  // === CFO ===
+  { title: 'The Chair', tier: 4, team: 'CFO' },
+  { title: 'Master of the Big Pulse', tier: 4, team: 'CFO' },
+  { title: 'Compensation Committee Crusher', tier: 4, team: 'CFO' },
+
+  // === Subfaction-specific ===
+  { title: 'Budget Variance Vanquisher', tier: 4, team: 'Budget' },
+  { title: 'Forecast Phenom', tier: 4, team: 'Budget' },
+  { title: 'Direct Deposit Demolisher', tier: 4, team: 'Payroll' },
+  { title: 'Tax Withholding Wizard', tier: 4, team: 'Payroll' },
+  { title: 'Three-Way Match Marauder', tier: 4, team: 'AP' },
+  { title: 'Invoice Invader', tier: 4, team: 'AP' },
+  { title: 'Reconnaissance Royalty', tier: 4, team: 'Recon' },
+  { title: 'The Tractor Beam Tactician', tier: 4, team: 'Recon' },
+  { title: 'Compliance Crusader', tier: 4, team: 'Compliance' },
+  { title: 'Audit Trail Trailblazer', tier: 4, team: 'Compliance' },
+  { title: 'Fraud Detection Daredevil', tier: 4, team: 'Fraud' },
+  { title: 'Anomaly Annihilator', tier: 4, team: 'Fraud' },
+  { title: 'Project Plan Powerhouse', tier: 4, team: 'PMO' },
+  { title: 'Gantt Chart Gangster', tier: 4, team: 'PMO' },
+  { title: 'Marketing Genius', tier: 4, team: 'MG' },
+  { title: 'Brand Ambassador of Destruction', tier: 4, team: 'MG' },
+
+  // === Gentle catch-all (for low-engagement pilots) ===
+  { title: 'Honorary Combat Auditor', tier: 5 },
+  { title: 'Distinguished Pilot Cadet', tier: 5 },
+  { title: 'Most Improved (Pending)', tier: 5 },
+  { title: 'Promising Rookie', tier: 5 },
+  { title: 'Stealth Operative', tier: 5 },
+  { title: 'The Quiet Professional', tier: 5 }
+];
+
+function pickHonorific(player, stats, ctx, usedTitles) {
+  // Tier 1: try standout performance (sorted by tier so MVP, Untouchable etc. fire first)
+  const candidates = HONORIFICS
+    .filter(h => !usedTitles.has(h.title))
+    .filter(h => {
+      if (h.cond) return h.cond(player, stats, ctx);
+      if (h.team) return player.team === h.team;
+      return true; // fallback tier
+    })
+    .sort((a, b) => a.tier - b.tier);
+  if (candidates.length > 0) {
+    // Pick from tied lowest tier randomly so two players with same tier get variety
+    const topTier = candidates[0].tier;
+    const same = candidates.filter(c => c.tier === topTier);
+    return same[Math.floor(Math.random() * same.length)];
+  }
+  // Final fallback: random catch-all
+  const fallbacks = HONORIFICS.filter(h => h.tier === 5);
+  return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+}
+
+async function showAwardsCeremony() {
+  awardsListEl.innerHTML = '';
+  // Pull current player snapshot
+  let playersData = {};
+  try {
+    const snap = await get(ref(db, 'players'));
+    playersData = snap.val() || {};
+  } catch(e) { console.warn('[FARS] awards: could not fetch players', e); }
+
+  // Build player list excluding bots and the boss
+  const players = [];
+  for (const [id, p] of Object.entries(playersData)) {
+    if (!p) continue;
+    if (p.isBot || p.isBoss || p.team === 'KCU' || PARENT_TEAM[p.team] === 'AI') continue;
+    players.push({
+      id, name: p.name || 'Unknown', team: p.team || '—',
+      kills: p.kills || 0, deaths: p.deaths || 0,
+      icebreakerPrompt: p.icebreakerPrompt || '',
+      icebreakerAnswer: p.icebreakerAnswer || ''
+    });
+  }
+  if (players.length === 0) {
+    awardsListEl.innerHTML = '<div style="text-align:center;color:var(--ink-faint);padding:20px;">No pilots logged this session.</div>';
+    awardsScreenEl.classList.add('show');
+    return;
+  }
+
+  // Build context for honorific matching
+  const maxKills = Math.max(...players.map(p => p.kills));
+  const maxDeaths = Math.max(...players.map(p => p.deaths));
+  const rawChatCounts = window._chatMessageCount || {};
+  // Resolve to per-player-id counts (handles both 'id' keys and legacy 'name' keys)
+  const chatCounts = {};
+  for (const p of players) {
+    chatCounts[p.id] = (rawChatCounts[p.id] || 0) + (rawChatCounts[p.name] || 0);
+  }
+  const maxChat = Math.max(0, ...Object.values(chatCounts));
+  const ctx = { maxKills, maxDeaths, chatCounts, maxChat };
+
+  // Sort: top performers first (kills desc, then deaths asc)
+  players.sort((a, b) => (b.kills - a.kills) || (a.deaths - b.deaths));
+
+  // Assign unique honorifics (try not to repeat tier-1/2 titles across players)
+  const usedTitles = new Set();
+  for (const p of players) {
+    const h = pickHonorific(p, p, ctx, usedTitles);
+    if (h.tier <= 3) usedTitles.add(h.title); // only enforce uniqueness on standout titles
+    p._honorific = h.title;
+  }
+
+  // Render
+  for (const p of players) {
+    const row = document.createElement('div');
+    row.className = 'award-row';
+    const color = TEAM_COLORS[p.team] || '#ffe600';
+    row.style.setProperty('--award-color', color);
+    const kdRatio = p.deaths > 0 ? (p.kills / p.deaths).toFixed(2) : (p.kills > 0 ? '∞' : '—');
+    const statLine = `${p.team} · ${p.kills} kill${p.kills !== 1 ? 's' : ''} · ${p.deaths} death${p.deaths !== 1 ? 's' : ''} · K/D ${kdRatio}`;
+    let iceLine = '';
+    if (p.icebreakerPrompt && p.icebreakerAnswer) {
+      iceLine = `<div class="award-ice">${escapeHtml(p.icebreakerPrompt)}: ${escapeHtml(p.icebreakerAnswer)}</div>`;
+    }
+    row.innerHTML = `
+      <div class="award-name">${escapeHtml(p.name)}</div>
+      <div class="award-title">★ ${escapeHtml(p._honorific)} ★</div>
+      <div class="award-stats">${escapeHtml(statLine)}</div>
+      ${iceLine}
+    `;
+    awardsListEl.appendChild(row);
+  }
+  awardsScreenEl.classList.add('show');
+}
 
 // Trigger end-game victory after KCU boss falls. Reads scores, picks the highest
 // non-AI team, displays the "Truly Claudatious!" banner.
@@ -2981,7 +3285,7 @@ function randomSpawn() {
 chatInput.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     const text = chatInput.value.trim();
-    if (text) pushChat({ author: myName, team: myTeam, text });
+    if (text) pushChat({ author: myName, authorId: myId, team: myTeam, text });
     chatInput.value = '';
     chatInput.blur();
     e.stopPropagation();
@@ -3009,6 +3313,13 @@ function appendChatMsg(m) {
   } else {
     const color = teamColor(m.team);
     div.innerHTML = `<span class="author" style="color:${color}">${escapeHtml(m.author)}:</span><span class="text">${escapeHtml(m.text)}</span>`;
+    // Track message count per author for the awards ceremony
+    if (m.author && !m.system) {
+      window._chatMessageCount = window._chatMessageCount || {};
+      // Use authorId if present, else fall back to author name
+      const key = m.authorId || m.author;
+      window._chatMessageCount[key] = (window._chatMessageCount[key] || 0) + 1;
+    }
   }
   chatLog.appendChild(div);
   chatLog.scrollTop = chatLog.scrollHeight;
