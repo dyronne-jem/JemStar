@@ -723,6 +723,18 @@
   .kill-msg .killer { font-weight: 700; }
   .kill-msg .victim { font-weight: 700; }
   .kill-msg .arrow { color: var(--ink-faint); margin: 0 6px; }
+  .kill-msg .kill-ice {
+    margin-top: 3px;
+    font-size: 10px;
+    color: var(--ink-faint);
+    font-style: normal;
+    letter-spacing: 0.05em;
+  }
+  .kill-msg .kill-ice em {
+    font-style: normal;
+    color: var(--ink);
+    font-weight: 600;
+  }
 
   #respawn {
     position: fixed;
@@ -891,6 +903,52 @@
     z-index: 55;
   }
   #resetToast.show { opacity: 1; }
+
+  /* ===== Event Banner (lead changes, sprees, etc) ===== */
+  #eventBanner {
+    position: fixed;
+    top: 22%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    text-align: center;
+    z-index: 70;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s, transform 0.4s;
+    max-width: 80vw;
+  }
+  #eventBanner.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  #eventBanner .eb-prefix {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+  #eventBanner .eb-headline {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: clamp(28px, 4vw, 52px);
+    letter-spacing: 0.04em;
+    color: var(--eb-color, #ffe600);
+    text-shadow: 0 0 28px var(--eb-color, rgba(255,230,0,0.5));
+    line-height: 1.05;
+    animation: ebPulse 1.4s ease-in-out infinite;
+  }
+  @keyframes ebPulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.25); }
+  }
+  #eventBanner .eb-sub {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    color: var(--ink-dim);
+    margin-top: 8px;
+    letter-spacing: 0.15em;
+  }
 
   /* ===== KCU Boss HP Bar ===== */
   #bossHpContainer {
@@ -1084,6 +1142,19 @@
     <label class="field-label">Call Sign</label>
     <input id="nameInput" type="text" maxlength="16" placeholder="Enter your name..." autocomplete="off" />
 
+    <label class="field-label">Icebreaker <span style="font-size:9px;color:var(--ink-faint);">(shown to everyone you fight)</span></label>
+    <select id="icebreakerPrompt" style="width:100%;padding:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.2);color:var(--ink);font-family:inherit;font-size:12px;border-radius:2px;margin-bottom:6px;">
+      <option value="role">My role at KCU is...</option>
+      <option value="years">I've been at KCU for...</option>
+      <option value="weekword">One word for my week so far...</option>
+      <option value="lunch">My favorite Kitsap lunch spot...</option>
+      <option value="hobby">When I'm not at work I...</option>
+      <option value="superpower">If I had a superpower it'd be...</option>
+      <option value="hottake">My hot take...</option>
+      <option value="custom">Custom (write your own)...</option>
+    </select>
+    <input id="icebreakerAnswer" type="text" maxlength="60" placeholder="Your answer..." autocomplete="off" style="width:100%;padding:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.2);color:var(--ink);font-family:inherit;font-size:12px;border-radius:2px;" />
+
     <label class="field-label">Choose Your Department</label>
     <div class="team-grid">
       <button class="team-btn" data-team="Finance" style="--team-color: var(--finance)">Finance</button>
@@ -1214,6 +1285,13 @@
   </div>
 
   <div id="resetToast"></div>
+
+  <!-- Big animated event banner (lead changes, sprees, etc.) -->
+  <div id="eventBanner">
+    <div class="eb-prefix" id="ebPrefix">// EVENT //</div>
+    <div class="eb-headline" id="ebHeadline">—</div>
+    <div class="eb-sub" id="ebSub"></div>
+  </div>
 
   <!-- KCU Boss HP bar (only shown while boss is alive) -->
   <div id="bossHpContainer">
@@ -1810,6 +1888,146 @@ onValue(ref(db, 'purgeEvent'), snap => {
   resetToastEl.textContent = `★ HOST PURGE BY ${String(ev.by || 'unknown').toUpperCase()} — RELOADING ★`;
   resetToastEl.classList.add('show');
   setTimeout(() => location.reload(), 1500);
+});
+
+// ---------- Event Banner system ----------
+// Big animated headline messages that fire on lead changes, sprees, etc.
+const eventBannerEl = document.getElementById('eventBanner');
+const ebPrefixEl = document.getElementById('ebPrefix');
+const ebHeadlineEl = document.getElementById('ebHeadline');
+const ebSubEl = document.getElementById('ebSub');
+const eventQueue = [];
+let eventBannerActive = false;
+
+function pushEventBanner(prefix, headline, sub, color, dur = 3500) {
+  eventQueue.push({ prefix, headline, sub: sub || '', color: color || '#ffe600', dur });
+  if (!eventBannerActive) showNextEvent();
+}
+function showNextEvent() {
+  if (eventQueue.length === 0) {
+    eventBannerActive = false;
+    return;
+  }
+  eventBannerActive = true;
+  const ev = eventQueue.shift();
+  ebPrefixEl.textContent = ev.prefix;
+  ebHeadlineEl.textContent = ev.headline;
+  ebSubEl.textContent = ev.sub;
+  eventBannerEl.style.setProperty('--eb-color', ev.color);
+  eventBannerEl.classList.add('show');
+  setTimeout(() => {
+    eventBannerEl.classList.remove('show');
+    setTimeout(showNextEvent, 350);
+  }, ev.dur);
+}
+
+// Track scores for lead-change detection
+let _lastLeader = null;
+let _lastFirstBloodSeen = false;
+const FUNNY_LEAD_PHRASES = [
+  'TAKES THE LEAD',
+  'SEIZES THE THRONE',
+  'STORMS TO THE TOP',
+  'PULLS AHEAD',
+  'OVERTAKES THE FIELD',
+  "CLAIMS POLE POSITION",
+  'IS RUNNING THE BOARD'
+];
+const FUNNY_COMEBACK_PHRASES = [
+  'COMPLETES THE COMEBACK',
+  "RISES FROM THE ASHES",
+  'TURNS THE TABLES',
+  'REVERSES FORTUNE',
+  'FROM LAST TO FIRST'
+];
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+onValue(ref(db, 'scores'), snap => {
+  const s = snap.val() || {};
+  // Determine current leader from player teams only (ignore AI)
+  const playerTeams = ['Finance','Accounting','Risk','Strategy','CFO'];
+  let leader = null, leaderScore = -1, lastTeam = null, lastScore = Infinity;
+  for (const t of playerTeams) {
+    const sc = s[t] || 0;
+    if (sc > leaderScore) { leaderScore = sc; leader = t; }
+    if (sc < lastScore) { lastScore = sc; lastTeam = t; }
+  }
+  // First blood
+  if (!_lastFirstBloodSeen && leaderScore === 1) {
+    _lastFirstBloodSeen = true;
+    pushEventBanner(
+      '// FIRST BLOOD //',
+      `${leader.toUpperCase()} STRIKES`,
+      'first kill of the round',
+      TEAM_COLORS[leader] || '#ffe600',
+      3000
+    );
+    _lastLeader = leader;
+    return;
+  }
+  // Lead change
+  if (leader && leaderScore > 0 && leader !== _lastLeader) {
+    const wasLast = (_lastLeader && (s[_lastLeader] || 0) === lastScore);
+    if (_lastLeader === lastTeam || wasLast) {
+      // Comeback narrative
+      pushEventBanner(
+        '// COMEBACK //',
+        `${leader.toUpperCase()} ${pickRandom(FUNNY_COMEBACK_PHRASES)}`,
+        `now leading with ${leaderScore}`,
+        TEAM_COLORS[leader] || '#ffe600',
+        3500
+      );
+    } else {
+      pushEventBanner(
+        '// LEAD CHANGE //',
+        `${leader.toUpperCase()} ${pickRandom(FUNNY_LEAD_PHRASES)}`,
+        `now leading with ${leaderScore}`,
+        TEAM_COLORS[leader] || '#ffe600',
+        3200
+      );
+    }
+    _lastLeader = leader;
+  }
+});
+
+// Spree tracker: per-player kill counts in a sliding 30s window
+const _killTimes = new Map(); // playerId -> [timestamps]
+const SPREE_WINDOW_MS = 30000;
+const SPREE_THRESHOLD = 3;
+const SPREE_PHRASES = {
+  3: 'IS ON A TEAR',
+  5: 'IS UNSTOPPABLE',
+  7: 'IS WRITING HISTORY',
+  10: 'IS BEYOND HUMAN'
+};
+
+function trackSpreeForKill(killerId, killerName, killerTeam) {
+  if (!killerId) return;
+  const now = Date.now();
+  let arr = _killTimes.get(killerId) || [];
+  arr = arr.filter(t => now - t < SPREE_WINDOW_MS);
+  arr.push(now);
+  _killTimes.set(killerId, arr);
+  const count = arr.length;
+  // Fire banner at exact thresholds
+  if (SPREE_PHRASES[count]) {
+    pushEventBanner(
+      '// KILL STREAK //',
+      `${killerName.toUpperCase()} ${SPREE_PHRASES[count]}`,
+      `${count} kills in 30 seconds`,
+      TEAM_COLORS[killerTeam] || '#ffe600',
+      3000
+    );
+  }
+}
+
+// Hook into the killfeed listener to track sprees globally
+onChildAdded(ref(db, 'killfeed'), snap => {
+  const k = snap.val();
+  if (!k || !k.ts) return;
+  // Skip stale (matches the older filter)
+  if (Date.now() - k.ts > 15000) return;
+  trackSpreeForKill(k.killerId, k.killer, k.killerTeam);
 });
 
 function showResetToast(by) {
@@ -2443,6 +2661,24 @@ async function startGame() {
   myName = nameInput.value.trim().slice(0, 16);
   myTeam = selectedTeam;
   window._joinTime = Date.now();
+  // Capture icebreaker prompt + answer
+  const ibPromptSel = document.getElementById('icebreakerPrompt');
+  const ibAnsInput = document.getElementById('icebreakerAnswer');
+  const ICEBREAKER_LABELS = {
+    role: 'My role at KCU',
+    years: 'Time at KCU',
+    weekword: 'My week in a word',
+    lunch: 'Favorite lunch spot',
+    hobby: 'When not at work',
+    superpower: 'Dream superpower',
+    hottake: 'Hot take',
+    custom: 'About me'
+  };
+  if (ibPromptSel && ibAnsInput) {
+    const key = ibPromptSel.value;
+    window._icebreakerPrompt = ICEBREAKER_LABELS[key] || 'About me';
+    window._icebreakerAnswer = (ibAnsInput.value || '').trim().slice(0, 60);
+  }
   initAudio();
 
   // If user picked CFO, attempt atomic claim first
@@ -2485,6 +2721,8 @@ async function startGame() {
     shielding: false,
     hp: (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].hpMax) || 1,
     hpMax: (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].hpMax) || 1,
+    icebreakerPrompt: window._icebreakerPrompt || '',
+    icebreakerAnswer: window._icebreakerAnswer || '',
     last: Date.now()
   };
 
@@ -2779,9 +3017,13 @@ function showKill(k) {
   div.className = 'kill-msg';
   const kc = teamColor(k.killerTeam);
   const vc = teamColor(k.victimTeam);
-  div.innerHTML = `<span class="killer" style="color:${kc}">${escapeHtml(k.killer)}</span><span class="arrow">»</span><span class="victim" style="color:${vc}">${escapeHtml(k.victim)}</span>`;
+  let extraTag = '';
+  if (k.victimIcebreakerAnswer && k.victimIcebreakerPrompt) {
+    extraTag = `<div class="kill-ice">${escapeHtml(k.victimIcebreakerPrompt)}: <em>${escapeHtml(k.victimIcebreakerAnswer)}</em></div>`;
+  }
+  div.innerHTML = `<div class="kill-line"><span class="killer" style="color:${kc}">${escapeHtml(k.killer)}</span><span class="arrow">»</span><span class="victim" style="color:${vc}">${escapeHtml(k.victim)}</span></div>${extraTag}`;
   killfeed.appendChild(div);
-  setTimeout(() => div.remove(), 5000);
+  setTimeout(() => div.remove(), 7000);
   while (killfeed.children.length > 5) killfeed.removeChild(killfeed.firstChild);
 }
 
@@ -4271,6 +4513,8 @@ function handleDeath(bullet) {
     set(kr, {
       killer: killer.name, killerTeam: killer.team, killerId: bullet.owner,
       victim: myName, victimTeam: myTeam,
+      victimIcebreakerPrompt: myState.icebreakerPrompt || '',
+      victimIcebreakerAnswer: myState.icebreakerAnswer || '',
       ts: Date.now()
     });
   }
