@@ -1168,13 +1168,15 @@
 
     <label class="field-label">Or Pick a Specialist Division</label>
     <div class="sub-grid">
+      <!-- Row 1: one sub per parent team, in same column order as parent grid -->
       <button class="team-btn sub-btn" data-team="Budget"     style="--team-color: var(--finance)">Budget <em>(Finance)</em></button>
-      <button class="team-btn sub-btn" data-team="Payroll"    style="--team-color: var(--finance)">Payroll <em>(Finance)</em></button>
       <button class="team-btn sub-btn" data-team="AP"         style="--team-color: var(--accounting)">AP <em>(Accounting)</em></button>
-      <button class="team-btn sub-btn" data-team="Recon"      style="--team-color: var(--accounting)">Recon <em>(Accounting)</em></button>
       <button class="team-btn sub-btn" data-team="Compliance" style="--team-color: var(--risk)">Compliance <em>(Risk)</em></button>
-      <button class="team-btn sub-btn" data-team="Fraud"      style="--team-color: var(--risk)">Fraud <em>(Risk)</em></button>
       <button class="team-btn sub-btn" data-team="PMO"        style="--team-color: var(--strategy)">PMO <em>(Strategy)</em></button>
+      <!-- Row 2: second sub per parent -->
+      <button class="team-btn sub-btn" data-team="Payroll"    style="--team-color: var(--finance)">Payroll <em>(Finance)</em></button>
+      <button class="team-btn sub-btn" data-team="Recon"      style="--team-color: var(--accounting)">Recon <em>(Accounting)</em></button>
+      <button class="team-btn sub-btn" data-team="Fraud"      style="--team-color: var(--risk)">Fraud <em>(Risk)</em></button>
       <button class="team-btn sub-btn" data-team="MG"         style="--team-color: var(--strategy)">MG <em>(Strategy)</em></button>
     </div>
 
