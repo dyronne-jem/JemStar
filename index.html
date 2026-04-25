@@ -1381,9 +1381,10 @@ const AUTOLASER_RANGE = 286;
 const AUTOLASER_LIFE = 0.12;
 
 // Recon tractor
-const TRACTOR_RANGE = 450;
+const TRACTOR_RANGE = 600;
 const TRACTOR_HALF_ANGLE = Math.PI / 3;  // 60° half-angle, 120° cone
-const TRACTOR_FORCE = 1400;              // px/s² pulled toward source
+const TRACTOR_FORCE = 3000;              // px/s² pulled toward source (also adds direct displacement)
+const TRACTOR_DISPLACE_PER_SEC = 380;    // direct position pull per second (bypasses drag/cap)
 const RECON_KILL_R = 24;                 // touching Recon = death
 
 // PMO ribbons
@@ -3848,9 +3849,28 @@ function tick(dt) {
       while (delta > Math.PI) delta -= Math.PI * 2;
       while (delta < -Math.PI) delta += Math.PI * 2;
       if (Math.abs(delta) > TRACTOR_HALF_ANGLE) continue;
-      const pullStrength = TRACTOR_FORCE * (1 - dist / TRACTOR_RANGE);
+      // Falloff: stronger when closer, weaker at max range
+      const falloff = (1 - dist / TRACTOR_RANGE);
+      // Velocity nudge (so the victim 'inherits' some pull momentum)
+      const pullStrength = TRACTOR_FORCE * falloff;
       myState.vx += (dx / dist) * pullStrength * dt;
       myState.vy += (dy / dist) * pullStrength * dt;
+      // Direct position displacement — overrides drag/maxSpeed so the pull is FELT immediately
+      const displace = TRACTOR_DISPLACE_PER_SEC * falloff * dt;
+      myState.x += (dx / dist) * displace;
+      myState.y += (dy / dist) * displace;
+      // Visual sparks on the victim being pulled
+      if (Math.random() < 0.4) {
+        const sa = Math.random() * Math.PI * 2;
+        particles.push({
+          x: myState.x + Math.cos(sa) * 14,
+          y: myState.y + Math.sin(sa) * 14,
+          vx: -((dx / dist) * 60), vy: -((dy / dist) * 60),
+          life: 0.3, max: 0.3,
+          color: '#a888ff',
+          size: 2
+        });
+      }
     }
   }
 
