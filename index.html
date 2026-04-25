@@ -578,6 +578,38 @@
     box-shadow: none;
   }
 
+  #hpMeter {
+    margin-top: 10px;
+    text-align: right;
+  }
+  #hpMeter .hp-label {
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: #ffe066;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: baseline;
+    gap: 8px;
+  }
+  #hpMeter .hp-pips {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+  }
+  #hpMeter .hp-pip {
+    width: 16px; height: 8px;
+    background: linear-gradient(90deg, #ff8a00, #ffd040);
+    box-shadow: 0 0 6px rgba(255, 208, 64, 0.6);
+    border-radius: 1px;
+    transition: opacity 0.15s, background 0.2s;
+  }
+  #hpMeter .hp-pip.lost {
+    background: rgba(120, 60, 60, 0.4);
+    box-shadow: none;
+    opacity: 0.5;
+  }
+
   #roster {
     position: fixed;
     top: 170px; right: 16px;
@@ -1074,6 +1106,10 @@
       <div class="shield-label">SHIELD <span style="font-size:9px;color:var(--ink-faint);letter-spacing:0.15em;">(HOLD E)</span></div>
       <div class="shield-bar"><div class="shield-bar-fill" id="shieldBarFill"></div></div>
     </div>
+    <div id="hpMeter">
+      <div class="hp-label">HULL <span id="hpText" style="font-family:'Orbitron',monospace;font-size:11px;color:#ffe066;">3/3</span></div>
+      <div class="hp-pips" id="hpPips"></div>
+    </div>
     <div style="margin-top:8px;"><button id="muteBtn" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);color:var(--ink-dim);font-family:inherit;font-size:10px;letter-spacing:0.2em;padding:4px 10px;cursor:pointer;border-radius:2px;">🔊 SOUND ON</button></div>
   </div>
 
@@ -1170,34 +1206,35 @@ const CFO_PULSE_DURATION = 0.6;          // visual + damage window
 
 // Per-team ship stats & weapon configs
 // shieldMax: total seconds of shield available — inverse of offensive power
+// hpMax: hit points before destruction (most ships 3, tanks higher, glass cannons 1)
 const TEAM_STATS = {
-  Finance:    { turn: 5.0, accel: 380, maxSpeed: 480, drag: 1.0, weapon: 'bullet',   cooldown: 0.18, shieldMax: 3.3 },
-  Accounting: { turn: 2.4, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'torpedo',  cooldown: 1.5, maxActive: 3, shieldMax: 3.0 },
-  Risk:       { turn: 3.8, accel: 340, maxSpeed: 360, drag: 0.5, weapon: 'mine',     cooldown: 0.2, maxActive: 20, shieldMax: 2.8 },
-  Strategy:   { turn: 3.0, accel: 240, maxSpeed: 650, drag: 0.5, weapon: 'cone',     cooldown: 0.9, shieldMax: 2.3 },
-  CFO:        { turn: 3.4, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'pulse',    cooldown: CFO_PULSE_COOLDOWN, shieldMax: 1.5 },
+  Finance:    { turn: 5.0, accel: 380, maxSpeed: 480, drag: 1.0, weapon: 'bullet',   cooldown: 0.18, shieldMax: 3.3, hpMax: 1 },
+  Accounting: { turn: 2.4, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'torpedo',  cooldown: 1.5, maxActive: 3, shieldMax: 3.0, hpMax: 3 },
+  Risk:       { turn: 3.8, accel: 340, maxSpeed: 360, drag: 0.5, weapon: 'mine',     cooldown: 0.2, maxActive: 20, shieldMax: 2.8, hpMax: 3 },
+  Strategy:   { turn: 3.0, accel: 240, maxSpeed: 650, drag: 0.5, weapon: 'cone',     cooldown: 0.9, shieldMax: 2.3, hpMax: 3 },
+  CFO:        { turn: 3.4, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'pulse',    cooldown: CFO_PULSE_COOLDOWN, shieldMax: 1.5, hpMax: 5 },
   // --- Risk subfactions ---
-  Compliance: { turn: 3.0, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'net',      cooldown: 1.4, maxActive: 4, shieldMax: 3.0 },
-  Fraud:      { turn: 3.6, accel: 310, maxSpeed: 330, drag: 0.5, weapon: 'spiral',   cooldown: 0.35, shieldMax: 2.5 },
+  Compliance: { turn: 3.0, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'net',      cooldown: 1.4, maxActive: 4, shieldMax: 3.0, hpMax: 3 },
+  Fraud:      { turn: 3.6, accel: 310, maxSpeed: 330, drag: 0.5, weapon: 'spiral',   cooldown: 0.35, shieldMax: 2.5, hpMax: 3 },
   // --- Finance subfactions ---
-  Budget:     { turn: 4.2, accel: 360, maxSpeed: 460, drag: 1.0, weapon: 'trail',    cooldown: 0.05, shieldMax: 3.2 },
-  Payroll:    { turn: 4.8, accel: 360, maxSpeed: 460, drag: 1.0, weapon: 'miniX',    cooldown: 0.25, shieldMax: 3.5 },
+  Budget:     { turn: 4.2, accel: 360, maxSpeed: 460, drag: 1.0, weapon: 'trail',    cooldown: 0.05, shieldMax: 3.2, hpMax: 1 },
+  Payroll:    { turn: 4.8, accel: 360, maxSpeed: 460, drag: 1.0, weapon: 'miniX',    cooldown: 0.25, shieldMax: 3.5, hpMax: 1 },
   // --- Accounting subfactions ---
-  AP:         { turn: 4.5, accel: 200, maxSpeed: 220, drag: 0.5, weapon: 'autolaser', cooldown: 0.12, shieldMax: 3.5 },
-  Recon:      { turn: 2.6, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'tractor',  cooldown: 0.0, shieldMax: 2.0 },
+  AP:         { turn: 4.5, accel: 200, maxSpeed: 220, drag: 0.5, weapon: 'autolaser', cooldown: 0.12, shieldMax: 3.5, hpMax: 3 },
+  Recon:      { turn: 2.6, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'tractor',  cooldown: 0.0, shieldMax: 2.0, hpMax: 4 },
   // --- Strategy subfactions ---
-  PMO:        { turn: 3.4, accel: 260, maxSpeed: 320, drag: 0.5, weapon: 'ribbon',   cooldown: 0.18, shieldMax: 2.2 },
-  MG:         { turn: 3.4, accel: 320, maxSpeed: 380, drag: 0.5, weapon: 'trapezoid', cooldown: 0.35, shieldMax: 1.8 },
+  PMO:        { turn: 3.4, accel: 260, maxSpeed: 320, drag: 0.5, weapon: 'ribbon',   cooldown: 0.18, shieldMax: 2.2, hpMax: 3 },
+  MG:         { turn: 3.4, accel: 320, maxSpeed: 380, drag: 0.5, weapon: 'trapezoid', cooldown: 0.35, shieldMax: 1.8, hpMax: 4 },
   // --- AI bot factions (TIE-fighter style with acronym ship designs) ---
-  CRO:  { turn: 3.0, accel: 250, maxSpeed: 280, drag: 0.5, weapon: 'bullet', cooldown: 0.5, shieldMax: 0 },
-  CCLO: { turn: 3.5, accel: 270, maxSpeed: 300, drag: 0.5, weapon: 'bullet', cooldown: 0.45, shieldMax: 0 },
-  CDEO: { turn: 4.0, accel: 290, maxSpeed: 320, drag: 0.5, weapon: 'bullet', cooldown: 0.4, shieldMax: 0 },
-  CPO:  { turn: 4.5, accel: 310, maxSpeed: 340, drag: 0.5, weapon: 'bullet', cooldown: 0.35, shieldMax: 0 },
-  CTO:  { turn: 5.0, accel: 330, maxSpeed: 360, drag: 0.5, weapon: 'bullet', cooldown: 0.3, shieldMax: 0 },
-  CI:   { turn: 5.5, accel: 350, maxSpeed: 380, drag: 0.5, weapon: 'bullet', cooldown: 0.25, shieldMax: 0 },
-  CEO:  { turn: 6.0, accel: 380, maxSpeed: 420, drag: 0.5, weapon: 'bullet', cooldown: 0.2, shieldMax: 0 },
+  CRO:  { turn: 3.0, accel: 250, maxSpeed: 280, drag: 0.5, weapon: 'bullet', cooldown: 0.5, shieldMax: 0, hpMax: 1 },
+  CCLO: { turn: 3.5, accel: 270, maxSpeed: 300, drag: 0.5, weapon: 'bullet', cooldown: 0.45, shieldMax: 0, hpMax: 1 },
+  CDEO: { turn: 4.0, accel: 290, maxSpeed: 320, drag: 0.5, weapon: 'bullet', cooldown: 0.4, shieldMax: 0, hpMax: 1 },
+  CPO:  { turn: 4.5, accel: 310, maxSpeed: 340, drag: 0.5, weapon: 'bullet', cooldown: 0.35, shieldMax: 0, hpMax: 1 },
+  CTO:  { turn: 5.0, accel: 330, maxSpeed: 360, drag: 0.5, weapon: 'bullet', cooldown: 0.3, shieldMax: 0, hpMax: 1 },
+  CI:   { turn: 5.5, accel: 350, maxSpeed: 380, drag: 0.5, weapon: 'bullet', cooldown: 0.25, shieldMax: 0, hpMax: 1 },
+  CEO:  { turn: 6.0, accel: 380, maxSpeed: 420, drag: 0.5, weapon: 'bullet', cooldown: 0.2, shieldMax: 0, hpMax: 1 },
   // KCU MEGA BOSS — 8x size, 50 HP, all weapons, high AI
-  KCU:  { turn: 1.8, accel: 200, maxSpeed: 220, drag: 0.5, weapon: 'boss', cooldown: 0.0, shieldMax: 0 }
+  KCU:  { turn: 1.8, accel: 200, maxSpeed: 220, drag: 0.5, weapon: 'boss', cooldown: 0.0, shieldMax: 0, hpMax: 50 }
 };
 
 // Shield regeneration rate (per second of NOT holding shield)
@@ -1439,6 +1476,8 @@ const myKillsEl = document.getElementById('myKills');
 const myDeathsEl = document.getElementById('myDeaths');
 const onlineCountEl = document.getElementById('onlineCount');
 const shieldBarFill = document.getElementById('shieldBarFill');
+const hpPipsEl = document.getElementById('hpPips');
+const hpTextEl = document.getElementById('hpText');
 // Boss HP bar
 const bossHpContainer = document.getElementById('bossHpContainer');
 const bossHpFill = document.getElementById('bossHpFill');
@@ -2298,6 +2337,8 @@ async function startGame() {
     alive: true, kills: 0, deaths: 0,
     shield: (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].shieldMax) || 0,
     shielding: false,
+    hp: (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].hpMax) || 1,
+    hpMax: (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].hpMax) || 1,
     last: Date.now()
   };
 
@@ -3957,7 +3998,7 @@ function fireTrapezoid() {
 
 function handleDeath(bullet) {
   if (dead) return;
-  // Shield absorbs the hit
+  // Shield absorbs the hit (no HP loss)
   if (myState && myState.shielding && myState.shield > 0) {
     sfx('hit');
     // Spark particles around the ship to show the shield blocking
@@ -3975,6 +4016,34 @@ function handleDeath(bullet) {
     }
     return;
   }
+
+  // Deduct 1 HP. Only die when HP reaches 0.
+  if (!myState) return;
+  myState.hp = Math.max(0, (myState.hp || 0) - 1);
+  sfx('hit');
+
+  // Hit-flash particles in our team color
+  for (let i = 0; i < 8; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const sp = 60 + Math.random() * 100;
+    particles.push({
+      x: myState.x, y: myState.y,
+      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+      life: 0.4, max: 0.4,
+      color: '#ffffff',
+      size: 2
+    });
+  }
+
+  // Broadcast updated HP so other clients can show the right pip count
+  update_db(`players/${myId}`, { hp: myState.hp });
+
+  // Survived the hit?
+  if (myState.hp > 0) {
+    return;
+  }
+
+  // HP is 0 — actually die
   dead = true;
   respawnAt = performance.now() / 1000 + RESPAWN_TIME;
   respawnEl.classList.add('show');
@@ -3996,17 +4065,14 @@ function handleDeath(bullet) {
   // Update my deaths in DB
   myState.deaths++;
   myDeathsEl.textContent = myState.deaths;
-  update_db(`players/${myId}`, { alive: false, deaths: myState.deaths });
+  update_db(`players/${myId}`, { alive: false, deaths: myState.deaths, hp: 0 });
 
   // Find killer in player list
   const killer = players.get(bullet.owner);
   if (killer) {
-    // Increment killer's kills (transaction so concurrent kills don't clobber)
     runTransaction(ref(db, `players/${bullet.owner}/kills`), v => (v || 0) + 1).catch(()=>{});
-    // Award team score to the PARENT team (subfactions share their parent's score)
     const parent = PARENT_TEAM[bullet.team] || bullet.team;
     runTransaction(ref(db, `scores/${parent}`), v => (v || 0) + 1).catch(()=>{});
-    // Push killfeed
     const kr = push(ref(db, 'killfeed'));
     set(kr, {
       killer: killer.name, killerTeam: killer.team, killerId: bullet.owner,
@@ -4025,9 +4091,12 @@ function doRespawn() {
   myState.angle = Math.random() * Math.PI * 2;
   myState.shield = (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].shieldMax) || 0;
   myState.shielding = false;
+  myState.hp = (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].hpMax) || 1;
+  myState.hpMax = (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].hpMax) || 1;
   update_db(`players/${myId}`, {
     x: myState.x, y: myState.y, vx: 0, vy: 0,
-    angle: myState.angle, alive: true, shielding: false
+    angle: myState.angle, alive: true, shielding: false,
+    hp: myState.hp, hpMax: myState.hpMax
   });
 }
 
@@ -4076,13 +4145,18 @@ async function performSwap() {
     onDisconnect(claimRef).remove();
   }
   myTeam = newTeam;
-  // Reset shield to new team's max
+  // Reset shield and HP to new team's max
   if (myState) {
     myState.shield = (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].shieldMax) || 0;
     myState.shielding = false;
+    myState.hp = (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].hpMax) || 1;
+    myState.hpMax = (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].hpMax) || 1;
   }
   // Update player record
-  await update_db(`players/${myId}`, { team: myTeam, alive: true, shielding: false });
+  await update_db(`players/${myId}`, {
+    team: myTeam, alive: true, shielding: false,
+    hp: myState.hp, hpMax: myState.hpMax
+  });
   return true;
 }
 
@@ -4155,6 +4229,29 @@ function render() {
       ctx.arc(p.x, p.y, shieldR, 0, Math.PI * 2);
       ctx.fill();
       ctx.shadowBlur = 0;
+    }
+    // HP pips above ship — skip for boss (has its own HP bar) and for 1-HP ships (no need to show)
+    if (p.team !== 'KCU') {
+      const hp = isMe ? (myState ? myState.hp : 1) : (p.hp ?? 1);
+      const hpMax = isMe ? (myState ? myState.hpMax : 1) : (p.hpMax ?? 1);
+      if (hpMax > 1) {
+        const pipW = 6;
+        const pipH = 3;
+        const pipGap = 2;
+        const totalW = hpMax * pipW + (hpMax - 1) * pipGap;
+        const startX = p.x - totalW / 2;
+        const pipY = p.y - 38;
+        for (let i = 0; i < hpMax; i++) {
+          const filled = i < hp;
+          ctx.fillStyle = filled ? '#ffd040' : 'rgba(80, 40, 40, 0.6)';
+          if (filled) {
+            ctx.shadowColor = '#ffd040';
+            ctx.shadowBlur = 4;
+          }
+          ctx.fillRect(startX + i * (pipW + pipGap), pipY, pipW, pipH);
+          ctx.shadowBlur = 0;
+        }
+      }
     }
   }
 
@@ -4511,6 +4608,26 @@ function render() {
       } else {
         shieldBarFill.style.width = '0%';
         shieldBarFill.classList.add('empty');
+      }
+    }
+    // HP pips
+    if (hpPipsEl && hpTextEl) {
+      const hp = myState.hp ?? 1;
+      const hpMax = myState.hpMax ?? 1;
+      hpTextEl.textContent = hp + '/' + hpMax;
+      // Rebuild pips only if max changed (e.g. after ship swap)
+      if (hpPipsEl.children.length !== hpMax) {
+        hpPipsEl.innerHTML = '';
+        for (let i = 0; i < hpMax; i++) {
+          const pip = document.createElement('div');
+          pip.className = 'hp-pip';
+          hpPipsEl.appendChild(pip);
+        }
+      }
+      // Update lost state
+      const pips = hpPipsEl.children;
+      for (let i = 0; i < pips.length; i++) {
+        pips[i].classList.toggle('lost', i >= hp);
       }
     }
   }
