@@ -190,18 +190,24 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 11;
-    background: rgba(255,230,0,0.12);
-    border: 1px solid rgba(255,230,0,0.4);
+    background: rgba(255,230,0,0.18);
+    border: 2px solid rgba(255,230,0,0.7);
     color: #ffe600;
-    padding: 10px 20px;
+    padding: 14px 28px;
     font-family: 'Orbitron', monospace;
-    font-size: 12px;
-    letter-spacing: 0.2em;
-    border-radius: 2px;
-    animation: soundPromptPulse 1.8s ease-in-out infinite;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    border-radius: 3px;
+    cursor: pointer;
+    animation: soundPromptPulse 1.4s ease-in-out infinite;
   }
+  #soundPrompt:hover { background: rgba(255,230,0,0.3); }
   #soundPrompt.fade { opacity: 0; pointer-events: none; transition: opacity 0.5s; }
-  @keyframes soundPromptPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+  @keyframes soundPromptPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(255,230,0,0.4); }
+    50% { box-shadow: 0 0 24px rgba(255,230,0,0.9); }
+  }
 
   /* ===== Login Screen ===== */
   #login {
@@ -751,7 +757,7 @@
 <!-- Intro Crawl Screen -->
 <div id="intro">
   <div id="introStars"></div>
-  <div id="soundPrompt">🔊 Click anywhere for sound</div>
+  <button id="soundPrompt" type="button">🔊 CLICK FOR SOUND</button>
   <div id="introLogo">FARS WARS</div>
   <div id="introSubtitle">A long time ago in a finance department far, far away....</div>
   <div id="crawlContainer">
@@ -960,7 +966,15 @@ const TEAM_STATS = {
   Recon:      { turn: 2.6, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'tractor',  cooldown: 0.0 },
   // --- Strategy subfactions ---
   PMO:        { turn: 3.4, accel: 260, maxSpeed: 320, drag: 0.5, weapon: 'ribbon',   cooldown: 0.18 },
-  MG:         { turn: 3.4, accel: 320, maxSpeed: 380, drag: 0.5, weapon: 'ram',      cooldown: 999 }
+  MG:         { turn: 3.4, accel: 320, maxSpeed: 380, drag: 0.5, weapon: 'ram',      cooldown: 999 },
+  // --- AI bot factions (TIE-fighter style with acronym ship designs) ---
+  CRO:  { turn: 3.0, accel: 250, maxSpeed: 280, drag: 0.5, weapon: 'bullet', cooldown: 0.5 },
+  CCLO: { turn: 3.5, accel: 270, maxSpeed: 300, drag: 0.5, weapon: 'bullet', cooldown: 0.45 },
+  CDEO: { turn: 4.0, accel: 290, maxSpeed: 320, drag: 0.5, weapon: 'bullet', cooldown: 0.4 },
+  CPO:  { turn: 4.5, accel: 310, maxSpeed: 340, drag: 0.5, weapon: 'bullet', cooldown: 0.35 },
+  CTO:  { turn: 5.0, accel: 330, maxSpeed: 360, drag: 0.5, weapon: 'bullet', cooldown: 0.3 },
+  CI:   { turn: 5.5, accel: 350, maxSpeed: 380, drag: 0.5, weapon: 'bullet', cooldown: 0.25 },
+  CEO:  { turn: 6.0, accel: 380, maxSpeed: 420, drag: 0.5, weapon: 'bullet', cooldown: 0.2 }
 };
 
 // Maps subfaction -> parent team (for color + score attribution)
@@ -969,7 +983,9 @@ const PARENT_TEAM = {
   Compliance: 'Risk', Fraud: 'Risk',
   Budget: 'Finance', Payroll: 'Finance',
   AP: 'Accounting', Recon: 'Accounting',
-  PMO: 'Strategy', MG: 'Strategy'
+  PMO: 'Strategy', MG: 'Strategy',
+  // Bots: each is its own faction; their kills credit themselves
+  CRO: 'CRO', CCLO: 'CCLO', CDEO: 'CDEO', CPO: 'CPO', CTO: 'CTO', CI: 'CI', CEO: 'CEO'
 };
 
 // Resolve the color for any team OR subfaction
@@ -1040,7 +1056,15 @@ const TEAM_COLORS = {
   Accounting: "#ffb627",
   Risk:       "#ff4d6d",
   Strategy:   "#6dd3ff",
-  CFO:        "#c879ff"
+  CFO:        "#c879ff",
+  // Bots — escalating menace from gray → orange → red
+  CRO:  "#a0a0a8",
+  CCLO: "#b0a0a0",
+  CDEO: "#c0a890",
+  CPO:  "#d09060",
+  CTO:  "#e07840",
+  CI:   "#f04020",
+  CEO:  "#ff2020"
 };
 const TEAMS = Object.keys(TEAM_COLORS);
 
@@ -1214,6 +1238,12 @@ window.addEventListener('keydown', e => {
     e.preventDefault();
     resetConfirmEl.classList.add('show');
   }
+  // AI bot spawn — Shift+1 through Shift+7
+  if (e.shiftKey && /^[1-7]$/.test(e.key)) {
+    if (!myId) return;
+    e.preventDefault();
+    spawnAIBot(parseInt(e.key, 10));
+  }
 });
 resetNoBtn.addEventListener('click', () => {
   resetConfirmEl.classList.remove('show');
@@ -1290,27 +1320,29 @@ function startIntroMusicOnce() {
   const sp = document.getElementById('soundPrompt');
   if (sp) sp.classList.add('fade');
   initAudio();
-  // Resume if suspended (browsers suspend AudioContext until gesture)
-  if (audioCtx && audioCtx.state === 'suspended') {
-    audioCtx.resume().then(() => {
-      if (!muted && !introStopped) playIntroTheme();
-    }).catch(() => {});
-  } else if (audioCtx && !muted && !introStopped) {
-    playIntroTheme();
-  }
+  if (!audioCtx) return;
+  // Always try to resume - safer than checking state
+  audioCtx.resume().then(() => {
+    if (!muted && !introStopped) {
+      try { playIntroTheme(); } catch(e) { console.warn('music err', e); }
+    }
+  }).catch(err => {
+    console.warn('audio resume failed', err);
+    // Try to play anyway
+    if (!muted && !introStopped) {
+      try { playIntroTheme(); } catch(e) {}
+    }
+  });
 }
-// Attach on multiple events for reliability
+// Explicit button click is the most reliable trigger
+const soundPromptEl = document.getElementById('soundPrompt');
+if (soundPromptEl) {
+  soundPromptEl.addEventListener('click', startIntroMusicOnce);
+  soundPromptEl.addEventListener('pointerdown', startIntroMusicOnce);
+}
+// Also attach on multiple events as fallback
 ['click', 'keydown', 'touchstart', 'pointerdown', 'mousedown'].forEach(ev => {
   document.addEventListener(ev, startIntroMusicOnce, { once: true, capture: true });
-});
-// Also attempt to start as soon as page is interactive (may fail silently without gesture, that's OK)
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    if (!introMusicStarted) {
-      // Try anyway — on some browsers/configs this works
-      try { startIntroMusicOnce(); } catch(e) {}
-    }
-  }, 500);
 });
 
 // Original, non-copyrighted heroic theme — inspired by epic space opera conventions
@@ -2312,6 +2344,355 @@ function showKill(k) {
   while (killfeed.children.length > 5) killfeed.removeChild(killfeed.firstChild);
 }
 
+// ---------- AI Bots ----------
+// Bots are simulated client-side by whoever spawned them.
+// Each bot has a unique acronym name + ship design + skill level (1-7).
+const AI_BOT_NAMES = [null, 'CRO', 'CCLO', 'CDEO', 'CPO', 'CTO', 'CI', 'CEO'];
+// Acronym subfactions register in TEAM_STATS at the top in a moment.
+const aiBots = []; // local list of bots I spawned
+
+function spawnAIBot(level) {
+  const name = AI_BOT_NAMES[level];
+  if (!name) return;
+  const id = 'bot_' + Math.random().toString(36).slice(2, 9);
+  const spawn = randomSpawn();
+  const bot = {
+    id, name,
+    level,
+    team: name, // their team name IS their acronym (so ship draws their letters)
+    x: spawn.x, y: spawn.y,
+    vx: 0, vy: 0,
+    angle: Math.random() * Math.PI * 2,
+    alive: true,
+    kills: 0, deaths: 0,
+    targetId: null,
+    lastShot: 0,
+    lastDecision: 0,
+    lastMockery: performance.now() / 1000,
+    desiredAngle: 0,
+    thrust: false,
+    spawnedBy: myId
+  };
+  aiBots.push(bot);
+  // Push initial state to Firebase so other clients see them
+  set(ref(db, `players/${id}`), {
+    x: bot.x, y: bot.y, angle: bot.angle, vx: 0, vy: 0,
+    name: bot.name, team: bot.team,
+    alive: true, kills: 0, deaths: 0,
+    last: Date.now(),
+    isBot: true
+  });
+  // Cleanup if I disconnect
+  onDisconnect(ref(db, `players/${id}`)).remove();
+  pushChat({ system: true, text: `${bot.name} (Lvl ${level}) entered the battle` });
+  // Bot greeting based on level
+  const greetings = {
+    1: ["Hello fellow finance professionals.", "I am here to participate constructively."],
+    2: ["My calendar is wide open. So is your trajectory.", "Let's circle back. Right after I destroy you."],
+    3: ["I've been benchmarked against the best. None of them are here.", "Synergy incoming."],
+    4: ["I have reviewed your KPIs. They are insufficient.", "This is a dynamic environment. You are static."],
+    5: ["I do not have time for a stand-up. I have time for a stand-down.", "I optimize for outcomes. The outcome is your destruction."],
+    6: ["I have read every email in this organization. I am unimpressed.", "Insight: you will not survive the next two minutes."],
+    7: ["My compensation is tied to your defeat. Quarterly.", "I do not lose. I restructure."]
+  };
+  const lines = greetings[level] || greetings[1];
+  setTimeout(() => {
+    if (bot.alive) pushChat({ author: bot.name, team: bot.team, text: lines[Math.floor(Math.random()*lines.length)] });
+  }, 800);
+}
+
+// Mocking lines, organized by level — higher levels are sharper
+const MOCK_LINES = {
+  low: [
+    "Better luck next time.",
+    "Was that on purpose?",
+    "I almost felt that.",
+    "Adding you to a follow-up.",
+    "Action item: try harder.",
+    "Have you considered a training course?"
+  ],
+  mid: [
+    "I've seen better targeting in a budget meeting.",
+    "Did you mean to fly that direction?",
+    "Your KPI is now trending downward.",
+    "Audit finding: pilot lacks core competencies.",
+    "Process improvement opportunity identified.",
+    "I would escalate this, but no one would care."
+  ],
+  high: [
+    "{victim}, I've reviewed your performance. We need to talk.",
+    "{victim}'s ship has been deprecated.",
+    "{victim} has been removed from the org chart.",
+    "I'm going to need {victim} to come in on Saturday.",
+    "{victim}, your role has been eliminated. Effective immediately.",
+    "Forecast for {victim}: cloudy with a chance of obliteration.",
+    "{victim}, this isn't personal. Actually, it is."
+  ]
+};
+
+function botMockChat(bot, victimName) {
+  if (!victimName) return;
+  let pool;
+  if (bot.level <= 2) pool = MOCK_LINES.low;
+  else if (bot.level <= 4) pool = MOCK_LINES.mid;
+  else pool = MOCK_LINES.high;
+  let line = pool[Math.floor(Math.random() * pool.length)];
+  line = line.replace(/\{victim\}/g, victimName);
+  pushChat({ author: bot.name, team: bot.team, text: line });
+}
+
+// Random ambient mockery (occasional, level-gated)
+function botAmbientMockery(bot) {
+  const ambient = {
+    1: ["Per my last memo...", "Friendly reminder: I exist.", "This is a great learning opportunity."],
+    2: ["Circling back on our previous engagement.", "Just looping in to say hi."],
+    3: ["Q: who's losing? A: not me.", "Bandwidth check: I have plenty. Do you?"],
+    4: ["Status update: dominant.", "I don't fly. I execute the strategy.", "Touching base. Then touching your hull."],
+    5: ["Per my calculations, you have 30 seconds to live.", "I'm operating at 110% capacity. You're at 0."],
+    6: ["I am the synergy your CFO warned you about.", "I have unlimited PTO and zero patience.", "I promoted myself this morning."],
+    7: ["I am the consultant your consultants hired.", "My LinkedIn says 'galactic conqueror.' It is verified.", "The board has approved my acquisition of your ship."]
+  };
+  const pool = ambient[bot.level] || ambient[1];
+  const line = pool[Math.floor(Math.random() * pool.length)];
+  pushChat({ author: bot.name, team: bot.team, text: line });
+}
+
+// Skill parameters per level (1-7)
+function botStats(level) {
+  return {
+    accuracy:       0.2 + (level - 1) * 0.12,   // 0.2 → 0.92
+    reactionTime:   Math.max(0.18, 0.9 - level * 0.1), // 0.8s → 0.2s
+    pursueDistance: 200 + level * 70,            // chase from further at higher levels
+    fleeWhenLowHP:  level >= 4,                  // not implemented (no HP), placeholder
+    leadShots:      level >= 3,                  // predict target movement
+    fireCooldown:   Math.max(0.18, 0.6 - level * 0.06), // shoots faster
+    turnRate:       2.4 + level * 0.4,           // 2.8 → 5.2 rad/s
+    accel:          240 + level * 30,
+    maxSpeed:       260 + level * 30,
+    mockeryChance:  0.05 + level * 0.025         // mockery on kill chance
+  };
+}
+
+function updateBots(t, dt) {
+  for (let bi = aiBots.length - 1; bi >= 0; bi--) {
+    const bot = aiBots[bi];
+    if (!bot.alive) {
+      // Respawn after delay
+      if (t - bot.deadAt > RESPAWN_TIME) {
+        const spawn = randomSpawn();
+        bot.x = spawn.x; bot.y = spawn.y;
+        bot.vx = 0; bot.vy = 0;
+        bot.angle = Math.random() * Math.PI * 2;
+        bot.alive = true;
+      } else {
+        continue;
+      }
+    }
+    const s = botStats(bot.level);
+
+    // Decision: pick a target
+    if (t - bot.lastDecision > s.reactionTime) {
+      bot.lastDecision = t;
+      // Find nearest enemy player (exclude self, dead, or other bots-from-same-side)
+      let bestId = null, bestDist = Infinity;
+      for (const [pid, pl] of players) {
+        if (pid === bot.id) continue;
+        if (!pl.alive) continue;
+        // Bots target everyone (no "team" loyalty - they're villains)
+        const d = Math.hypot(pl.x - bot.x, pl.y - bot.y);
+        if (d < bestDist) { bestDist = d; bestId = pid; }
+      }
+      bot.targetId = bestId;
+    }
+
+    // Behavior: fly toward target, fire when reasonably aligned
+    let desiredAngle = bot.angle;
+    bot.thrust = false;
+    if (bot.targetId) {
+      const target = players.get(bot.targetId);
+      if (target && target.alive) {
+        let aimX = target.x, aimY = target.y;
+        // Lead the shot at higher skill
+        if (s.leadShots) {
+          const distToTarget = Math.hypot(target.x - bot.x, target.y - bot.y);
+          const timeToHit = distToTarget / BULLET_SPEED;
+          aimX = target.x + (target.vx || 0) * timeToHit;
+          aimY = target.y + (target.vy || 0) * timeToHit;
+        }
+        const dx = aimX - bot.x, dy = aimY - bot.y;
+        desiredAngle = Math.atan2(dy, dx);
+        const dist = Math.hypot(dx, dy);
+
+        // Maintain distance — close in if far, slow if close
+        if (dist > s.pursueDistance) {
+          bot.thrust = true;
+        } else if (dist < 140 && bot.level >= 3) {
+          // Strafe at higher levels — turn slightly perpendicular
+          desiredAngle += (Math.sin(t * 1.5) * 0.6);
+          bot.thrust = Math.random() < 0.6;
+        } else {
+          bot.thrust = Math.random() < 0.4;
+        }
+
+        // Inaccuracy — wiggle desired angle by inverse of accuracy
+        const aimNoise = (1 - s.accuracy) * 0.6;
+        desiredAngle += (Math.random() - 0.5) * aimNoise;
+
+        // Fire if pointing roughly the right direction
+        const angDiff = Math.abs(normalizeAngle(desiredAngle - bot.angle));
+        if (angDiff < 0.35 && t - bot.lastShot > s.fireCooldown && dist < 700) {
+          bot.lastShot = t;
+          fireBotBullet(bot);
+        }
+      }
+    } else {
+      // No target — drift
+      bot.thrust = Math.random() < 0.3;
+      desiredAngle += (Math.random() - 0.5) * 0.3;
+    }
+
+    // Turn toward desired angle, capped by turn rate
+    let turn = normalizeAngle(desiredAngle - bot.angle);
+    const maxTurn = s.turnRate * dt;
+    if (turn > maxTurn) turn = maxTurn;
+    if (turn < -maxTurn) turn = -maxTurn;
+    bot.angle += turn;
+
+    // Apply thrust
+    if (bot.thrust) {
+      bot.vx += Math.cos(bot.angle) * s.accel * dt;
+      bot.vy += Math.sin(bot.angle) * s.accel * dt;
+    }
+    // Drag
+    bot.vx *= Math.pow(0.5, dt);
+    bot.vy *= Math.pow(0.5, dt);
+    // Cap
+    const sp = Math.hypot(bot.vx, bot.vy);
+    if (sp > s.maxSpeed) { bot.vx *= s.maxSpeed/sp; bot.vy *= s.maxSpeed/sp; }
+    // Move
+    bot.x += bot.vx * dt;
+    bot.y += bot.vy * dt;
+    // Wrap
+    if (bot.x < 0) bot.x += WORLD_W;
+    if (bot.x > WORLD_W) bot.x -= WORLD_W;
+    if (bot.y < 0) bot.y += WORLD_H;
+    if (bot.y > WORLD_H) bot.y -= WORLD_H;
+
+    // Get hit by bullets — bots are also victim-authoritative for fairness
+    for (const [bid, b] of bullets) {
+      if (b.owner === bot.id) continue;
+      const d = Math.hypot(b.x - bot.x, b.y - bot.y);
+      if (d < SHIP_R + 4) {
+        bot.alive = false;
+        bot.deadAt = t;
+        bot.deaths++;
+        bullets.delete(bid);
+        // Award kill to whoever shot
+        const killer = players.get(b.owner);
+        if (killer && b.owner !== bot.id) {
+          runTransaction(ref(db, `players/${b.owner}/kills`), v => (v || 0) + 1).catch(()=>{});
+          const parent = PARENT_TEAM[b.team] || b.team;
+          runTransaction(ref(db, `scores/${parent}`), v => (v || 0) + 1).catch(()=>{});
+          const kr = push(ref(db, 'killfeed'));
+          set(kr, {
+            killer: killer.name, killerTeam: killer.team, killerId: b.owner,
+            victim: bot.name, victimTeam: bot.team,
+            ts: Date.now()
+          });
+        }
+        // Push bot death to firebase
+        update_db(`players/${bot.id}`, { alive: false, deaths: bot.deaths });
+        break;
+      }
+    }
+    // Get hit by torpedoes
+    if (bot.alive) {
+      for (const [tid, tor] of torpedoes) {
+        if (tor.owner === bot.id) continue;
+        const d = Math.hypot(tor.x - bot.x, tor.y - bot.y);
+        if (d < TORP_HIT_R) {
+          bot.alive = false;
+          bot.deadAt = t;
+          bot.deaths++;
+          torpedoes.delete(tid);
+          const killer = players.get(tor.owner);
+          if (killer) {
+            runTransaction(ref(db, `players/${tor.owner}/kills`), v => (v || 0) + 1).catch(()=>{});
+            const parent = PARENT_TEAM[tor.team] || tor.team;
+            runTransaction(ref(db, `scores/${parent}`), v => (v || 0) + 1).catch(()=>{});
+            const kr = push(ref(db, 'killfeed'));
+            set(kr, {
+              killer: killer.name, killerTeam: killer.team, killerId: tor.owner,
+              victim: bot.name, victimTeam: bot.team,
+              ts: Date.now()
+            });
+          }
+          update_db(`players/${bot.id}`, { alive: false, deaths: bot.deaths });
+          break;
+        }
+      }
+    }
+
+    // Broadcast position
+    if (bot.alive && t - (bot.lastBroadcast || 0) > NETWORK_TICK) {
+      bot.lastBroadcast = t;
+      update_db(`players/${bot.id}`, {
+        x: bot.x, y: bot.y, angle: bot.angle,
+        vx: bot.vx, vy: bot.vy,
+        alive: true,
+        last: Date.now()
+      });
+    }
+
+    // Ambient mockery — occasional, scaled by level
+    if (bot.alive && t - bot.lastMockery > (12 - bot.level)) {
+      bot.lastMockery = t;
+      if (Math.random() < 0.5) botAmbientMockery(bot);
+    }
+  }
+}
+
+function fireBotBullet(bot) {
+  const r = push(ref(db, 'bullets'));
+  const id = r.key;
+  const b = {
+    x: bot.x + Math.cos(bot.angle) * 18,
+    y: bot.y + Math.sin(bot.angle) * 18,
+    vx: Math.cos(bot.angle) * BULLET_SPEED + bot.vx * 0.5,
+    vy: Math.sin(bot.angle) * BULLET_SPEED + bot.vy * 0.5,
+    team: bot.team,
+    owner: bot.id,
+    ts: Date.now()
+  };
+  set(r, b);
+  bullets.set(id, { ...b, birth: performance.now()/1000 });
+}
+
+function normalizeAngle(a) {
+  while (a > Math.PI) a -= Math.PI * 2;
+  while (a < -Math.PI) a += Math.PI * 2;
+  return a;
+}
+
+// Hook into the kill flow: when MY bullet kills a non-bot player owned by my bot, mock
+// We do this by listening to killfeed for bot kills
+let knownKillfeedKeys = new Set();
+onChildAdded(ref(db, 'killfeed'), snap => {
+  const k = snap.val();
+  if (!k) return;
+  knownKillfeedKeys.add(snap.key);
+  // If a bot of mine got the kill, have the bot mock the victim
+  for (const bot of aiBots) {
+    if (k.killerId === bot.id && k.victim) {
+      const stats = botStats(bot.level);
+      if (Math.random() < stats.mockeryChance + 0.4) { // base + skill
+        setTimeout(() => botMockChat(bot, k.victim), 400 + Math.random() * 600);
+      }
+      break;
+    }
+  }
+});
+
 // ---------- Game Loop ----------
 let lastTime = performance.now();
 function loop(now) {
@@ -2326,6 +2707,9 @@ function loop(now) {
 
 function tick(dt) {
   const t = performance.now() / 1000;
+
+  // Update AI bots first
+  if (aiBots.length) updateBots(t, dt);
 
   // ----- My ship -----
   if (!dead && myState) {
@@ -3832,6 +4216,60 @@ function drawShip(p, isMe) {
     ctx.fillStyle = `rgba(255, 255, 255, ${pulse * 0.8})`;
     ctx.beginPath();
     ctx.arc(0, 0, 3, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (['CRO','CCLO','CDEO','CPO','CTO','CI','CEO'].includes(p.team)) {
+    // TIE-fighter style with acronym in cockpit
+    ctx.rotate(p.angle);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 16 : 12;
+    // Solar panel "wings" — hex panels perpendicular to facing direction
+    ctx.fillStyle = 'rgba(40,40,50,0.95)';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    // Top panel
+    ctx.beginPath();
+    ctx.moveTo(-2, -10); ctx.lineTo(2, -10);
+    ctx.lineTo(4, -20); ctx.lineTo(-4, -20);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // Bottom panel
+    ctx.beginPath();
+    ctx.moveTo(-2, 10); ctx.lineTo(2, 10);
+    ctx.lineTo(4, 20); ctx.lineTo(-4, 20);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // Panel struts
+    ctx.beginPath();
+    ctx.moveTo(0, -10); ctx.lineTo(0, -7);
+    ctx.moveTo(0, 10); ctx.lineTo(0, 7);
+    ctx.stroke();
+    // Cockpit (central sphere)
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI * 2);
+    ctx.fill();
+    // Cockpit window
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 7.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Acronym in cockpit
+    ctx.save();
+    ctx.rotate(Math.PI / 2);
+    ctx.fillStyle = color;
+    const fontSize = p.team.length >= 4 ? 6 : (p.team.length === 3 ? 7 : 8);
+    ctx.font = `bold ${fontSize}px Orbitron, monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(p.team, 0, 0);
+    ctx.restore();
+    // Forward direction marker
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.beginPath();
+    ctx.arc(13, 0, 1.5, 0, Math.PI * 2);
     ctx.fill();
   } else {
     ctx.rotate(p.angle);
