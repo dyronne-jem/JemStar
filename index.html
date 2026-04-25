@@ -2629,8 +2629,9 @@ const camera = { x: 0, y: 0 };
 const keys = {};
 window.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !loginEl.classList.contains('hidden')) return;
-  if (document.activeElement === chatInput) return;
-  if (document.activeElement === nameInput) return;
+  // Don't capture keys when any text input or textarea has focus (icebreaker, name, chat, etc.)
+  const ae = document.activeElement;
+  if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT')) return;
   keys[e.key.toLowerCase()] = true;
   if (e.key === ' ') e.preventDefault();
 });
