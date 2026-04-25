@@ -105,15 +105,15 @@
 
   /* === Star Wars-style crawl ===
      Three-layer structure:
-     #crawlContainer  — fixed viewport, applies perspective
+     #crawlContainer   — fixed viewport, applies perspective
      #crawlPerspective — fixed tilted plane (rotateX), the "floor" of perspective
-     #crawlContent    — the actual text, scrolls upward (translateY animated)
+     #crawlContent     — the actual text, scrolls upward (translateY animated)
   */
   #crawlContainer {
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    perspective: 350px;
+    perspective: 500px;
     perspective-origin: 50% 100%;
     opacity: 0;
     animation: crawlShow 1s ease-in 14s forwards;
@@ -123,12 +123,14 @@
 
   #crawlPerspective {
     position: absolute;
-    top: 0; left: 50%;
-    transform: translateX(-50%) rotateX(25deg);
+    /* Extend below the viewport so text appears wide at the bottom before tilting away */
+    bottom: -50vh;
+    left: 50%;
+    transform: translateX(-50%) rotateX(22deg);
     transform-origin: 50% 100%;
-    width: min(720px, 85vw);
-    height: 100%;
-    overflow: hidden;
+    width: min(820px, 92vw);
+    height: 200vh;
+    overflow: visible;
   }
 
   #crawlContent {
@@ -139,21 +141,21 @@
     color: #ffe600;
     font-family: 'Orbitron', sans-serif;
     font-weight: 700;
-    font-size: clamp(18px, 2.2vw, 28px);
-    line-height: 1.6;
+    font-size: clamp(20px, 2.6vw, 32px);
+    line-height: 1.7;
     text-align: justify;
-    animation: crawl 110s linear 14s forwards;
-    text-shadow: 0 0 6px rgba(255,230,0,0.4);
+    animation: crawl 200s linear 14s forwards;
+    text-shadow: 0 0 8px rgba(255,230,0,0.45);
   }
-  #crawlContent p { margin-bottom: 1.5em; }
+  #crawlContent p { margin-bottom: 1.6em; }
   .crawl-episode {
-    font-size: clamp(22px, 2.8vw, 36px) !important;
+    font-size: clamp(24px, 3.2vw, 40px) !important;
     text-align: center !important;
     font-weight: 400 !important;
     letter-spacing: 0.1em;
   }
   .crawl-title {
-    font-size: clamp(32px, 4.5vw, 60px) !important;
+    font-size: clamp(36px, 5vw, 68px) !important;
     text-align: center !important;
     font-weight: 900 !important;
     letter-spacing: 0.05em;
@@ -161,25 +163,25 @@
   }
   .crawl-final {
     text-align: center !important;
-    font-size: clamp(22px, 2.8vw, 36px) !important;
+    font-size: clamp(24px, 3.2vw, 40px) !important;
     margin-top: 2em !important;
     letter-spacing: 0.1em;
   }
   @keyframes crawl {
     0%   { transform: translateY(0); }
-    100% { transform: translateY(-1500%); }
+    100% { transform: translateY(-260%); }
   }
   /* Top fade — masks where crawl recedes into "space" */
   #intro::after {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 50%;
+    height: 55%;
     background: linear-gradient(to bottom,
       #000 0%,
-      #000 25%,
-      rgba(0,0,0,0.95) 50%,
-      rgba(0,0,0,0.6) 75%,
+      #000 30%,
+      rgba(0,0,0,0.95) 55%,
+      rgba(0,0,0,0.6) 80%,
       transparent 100%);
     pointer-events: none;
     z-index: 4;
@@ -1115,7 +1117,7 @@ function initAudio() {
   try {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.5; // master volume — louder so music is clearly audible
+    masterGain.gain.value = 0.7; // master volume — clearly audible
     masterGain.connect(audioCtx.destination);
   } catch(e) { audioCtx = null; }
 }
@@ -1366,7 +1368,7 @@ skipBtn.addEventListener('click', () => {
 });
 
 // Auto-advance to login after the crawl
-setTimeout(() => endIntro(), 128000);
+setTimeout(() => endIntro(), 220000);
 
 // Start intro music on any first user interaction (autoplay policy)
 let introMusicStarted = false;
@@ -1385,18 +1387,19 @@ function startIntroMusicOnce() {
 
   const startMusic = () => {
     if (muted) { console.log('[FARS] muted, skipping music'); return; }
-    if (introStopped) { console.log('[FARS] intro already stopped, skipping music'); return; }
-    console.log('[FARS] Playing intro theme');
+    console.log('[FARS] Playing intro theme (master gain=' + masterGain.gain.value + ', state=' + audioCtx.state + ')');
     try {
+      // Force master gain in case something muted it
+      masterGain.gain.setValueAtTime(0.7, audioCtx.currentTime);
       // Quick confirmation beep so user knows audio is alive
       const beep = audioCtx.createOscillator();
       const beepGain = audioCtx.createGain();
       beep.type = 'sine';
       beep.frequency.value = 660;
-      beepGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-      beepGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+      beepGain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+      beepGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
       beep.connect(beepGain); beepGain.connect(masterGain);
-      beep.start(); beep.stop(audioCtx.currentTime + 0.18);
+      beep.start(); beep.stop(audioCtx.currentTime + 0.22);
 
       playIntroTheme();
     } catch(e) {
@@ -1435,7 +1438,6 @@ function playIntroTheme() {
 
   // Brass-like voice: sawtooth through a bandpass filter (warmer, less buzzy)
   function brass(startOffset, freq, duration, volume = 0.22) {
-    if (introStopped) return;
     const t = ctx.currentTime + startOffset;
     const osc = ctx.createOscillator();
     const osc2 = ctx.createOscillator();
@@ -1460,7 +1462,6 @@ function playIntroTheme() {
 
   // Horn (adds richness one octave down with softer tone)
   function horn(startOffset, freq, duration, volume = 0.16) {
-    if (introStopped) return;
     const t = ctx.currentTime + startOffset;
     const osc = ctx.createOscillator();
     const filt = ctx.createBiquadFilter();
@@ -1480,7 +1481,6 @@ function playIntroTheme() {
 
   // Sustained string pad
   function strings(startOffset, freqs, duration, volume = 0.08) {
-    if (introStopped) return;
     freqs.forEach(f => {
       const t = ctx.currentTime + startOffset;
       const osc = ctx.createOscillator();
@@ -1506,7 +1506,6 @@ function playIntroTheme() {
 
   // Timpani — low thump with pitch bend
   function timpani(startOffset, freq = 75, dur = 0.5, volume = 0.6) {
-    if (introStopped) return;
     const t = ctx.currentTime + startOffset;
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
@@ -1521,7 +1520,6 @@ function playIntroTheme() {
 
   // Snare-like reinforcement for march feel
   function snare(startOffset, volume = 0.12) {
-    if (introStopped) return;
     const t = ctx.currentTime + startOffset;
     const bufSize = ctx.sampleRate * 0.12;
     const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
@@ -1541,7 +1539,6 @@ function playIntroTheme() {
 
   // Cymbal crash (short noise burst, long decay)
   function cymbal(startOffset, volume = 0.18) {
-    if (introStopped) return;
     const t = ctx.currentTime + startOffset;
     const bufSize = ctx.sampleRate * 1.2;
     const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
