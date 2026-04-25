@@ -1751,18 +1751,20 @@ purgeNoBtn.addEventListener('click', () => {
 purgeYesBtn.addEventListener('click', async () => {
   purgeConfirmEl.classList.remove('show');
   console.log('[FARS] Host purge initiated by', myName);
+  const purgeTs = Date.now();
+  // Mark in localStorage so this browser doesn't react to its own purge after reload
+  try { localStorage.setItem('fars_lastPurge', String(purgeTs)); } catch(e) {}
   // Broadcast purge event so all clients reload BEFORE we wipe
-  // (gives clients ~1s to see the toast and detach listeners cleanly)
   try {
-    await set(ref(db, 'purgeEvent'), { by: myName, ts: Date.now() });
+    await set(ref(db, 'purgeEvent'), { by: myName, ts: purgeTs });
   } catch(e) {}
   // Brief delay to let the broadcast propagate
-  await new Promise(r => setTimeout(r, 300));
+  await new Promise(r => setTimeout(r, 600));
   // Wipe every game-state node
   const nodesToWipe = [
     'players', 'bullets', 'torpedoes', 'mines', 'cones', 'nets',
     'spirals', 'trails', 'minixs', 'lasers', 'ribbons', 'trapezoids',
-    'pulses', 'killfeed', 'chat', 'cfoSlot', 'victoryEvent'
+    'pulses', 'killfeed', 'chat', 'cfoSlot', 'victoryEvent', 'purgeEvent'
   ];
   await Promise.all(nodesToWipe.map(node =>
     remove(ref(db, node)).catch(err => console.warn('[FARS] purge node failed:', node, err))
@@ -1780,9 +1782,20 @@ purgeYesBtn.addEventListener('click', async () => {
 onValue(ref(db, 'purgeEvent'), snap => {
   const ev = snap.val();
   if (!ev || !ev.ts) return;
-  if (ev.ts < (window._joinTime || 0)) return;
+  // Skip if this browser already handled this purge (prevents reload loop)
+  let lastHandled = 0;
+  try { lastHandled = parseInt(localStorage.getItem('fars_lastPurge') || '0', 10); } catch(e) {}
+  if (ev.ts <= lastHandled) {
+    console.log('[FARS] Already handled purge', ev.ts, 'lastHandled=', lastHandled);
+    return;
+  }
+  // Skip very old events (more than 30s old at page load)
+  if (ev.ts < Date.now() - 30000) {
+    console.log('[FARS] Ignoring stale purge event');
+    return;
+  }
   console.log('[FARS] Purge event received from', ev.by);
-  // Show a brief toast then reload
+  try { localStorage.setItem('fars_lastPurge', String(ev.ts)); } catch(e) {}
   resetToastEl.textContent = `★ HOST PURGE BY ${String(ev.by || 'unknown').toUpperCase()} — RELOADING ★`;
   resetToastEl.classList.add('show');
   setTimeout(() => location.reload(), 1500);
