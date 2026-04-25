@@ -174,11 +174,6 @@ const firebaseConfig = {
   appId: "1:946711565533:web:ee49d70e06e9315ea5b734",
   measurementId: "G-B1YSMCRDVF"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-};
 // =============================================================================
 
 const CONFIGURED = !firebaseConfig.apiKey.startsWith("YOUR_");
@@ -760,7 +755,9 @@ function renderUI() {
 
 // ===== Boot =====
 async function boot() {
+  console.log("Pellet Arena booting...");
   if (!CONFIGURED) {
+    console.log("Firebase not configured — showing setup screen.");
     renderConfigError();
     return;
   }
@@ -774,7 +771,21 @@ async function boot() {
   }
 }
 
-boot();
+// Run immediately and also catch any top-level errors
+boot().catch(err => {
+  console.error("Boot failed:", err);
+  document.getElementById("app").innerHTML =
+    `<h2>Something went wrong</h2><p style="color:#fca5a5;font-family:monospace;font-size:12px;">${err.message}</p><p style="color:#9ca3af;">Open browser console (F12) for details.</p>`;
+});
+
+// Safety net: if after 4 seconds we're still showing "Loading…", show setup screen
+setTimeout(() => {
+  const app = document.getElementById("app");
+  if (app && app.innerText.trim() === "Loading…") {
+    console.warn("Boot didn't render in time. Falling back to setup screen.");
+    renderConfigError();
+  }
+}, 4000);
 </script>
 </body>
 </html>
