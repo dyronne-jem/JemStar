@@ -1107,9 +1107,9 @@ const TRAIL_LIFE = 2.0;
 const TRAIL_HIT_R = 14;
 
 // Payroll mini-X
-const MINIX_LIFE = 1.4;
+const MINIX_LIFE = 3.0;
 const MINIX_SPEED = 200;
-const MINIX_HIT_R = 8;
+const MINIX_HIT_R = 16;
 
 // AP autolaser
 const AUTOLASER_RANGE = 286;
@@ -3310,7 +3310,7 @@ function dropTrail() {
 }
 
 function spawnMiniXs() {
-  const count = 5;
+  const count = 12;
   for (let i = 0; i < count; i++) {
     const r = push(ref(db, 'minixs'));
     const id = r.key;
@@ -3765,11 +3765,18 @@ function render() {
     ctx.rotate(spin);
     ctx.strokeStyle = `rgba(0, 229, 168, ${alpha})`;
     ctx.shadowColor = TEAM_COLORS.Finance;
-    ctx.shadowBlur = 8;
-    ctx.lineWidth = 2.5;
+    ctx.shadowBlur = 12;
+    ctx.lineWidth = 3.5;
     ctx.beginPath();
-    ctx.moveTo(-5, -5); ctx.lineTo(5, 5);
-    ctx.moveTo(-5, 5); ctx.lineTo(5, -5);
+    ctx.moveTo(-11, -11); ctx.lineTo(11, 11);
+    ctx.moveTo(-11, 11); ctx.lineTo(11, -11);
+    ctx.stroke();
+    // Inner brighter cross
+    ctx.strokeStyle = `rgba(180, 255, 220, ${alpha * 0.9})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-11, -11); ctx.lineTo(11, 11);
+    ctx.moveTo(-11, 11); ctx.lineTo(11, -11);
     ctx.stroke();
     ctx.restore();
     ctx.shadowBlur = 0;
