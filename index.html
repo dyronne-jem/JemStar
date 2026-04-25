@@ -2716,57 +2716,183 @@ function updateBots(t, dt) {
     if (bot.y < 0) bot.y += WORLD_H;
     if (bot.y > WORLD_H) bot.y -= WORLD_H;
 
-    // Get hit by bullets — bots are also victim-authoritative for fairness
-    for (const [bid, b] of bullets) {
-      if (b.owner === bot.id) continue;
-      const d = Math.hypot(b.x - bot.x, b.y - bot.y);
-      if (d < SHIP_R + 4) {
+    // Get hit by ANY weapon — bot is victim-authoritative for fairness
+    if (bot.alive) {
+      const killBy = (weaponObj) => {
+        // Skip if same side (bots vs bots)
+        if (sameSide(weaponObj.team || 'AI', bot.team)) return false;
         bot.alive = false;
         bot.deadAt = t;
         bot.deaths++;
-        bullets.delete(bid);
-        // Award kill to whoever shot
-        const killer = players.get(b.owner);
-        if (killer && b.owner !== bot.id) {
-          runTransaction(ref(db, `players/${b.owner}/kills`), v => (v || 0) + 1).catch(()=>{});
-          const parent = PARENT_TEAM[b.team] || b.team;
+        const killer = players.get(weaponObj.owner);
+        if (killer && weaponObj.owner !== bot.id) {
+          runTransaction(ref(db, `players/${weaponObj.owner}/kills`), v => (v || 0) + 1).catch(()=>{});
+          const parent = PARENT_TEAM[weaponObj.team] || weaponObj.team;
           runTransaction(ref(db, `scores/${parent}`), v => (v || 0) + 1).catch(()=>{});
           const kr = push(ref(db, 'killfeed'));
           set(kr, {
-            killer: killer.name, killerTeam: killer.team, killerId: b.owner,
+            killer: killer.name, killerTeam: killer.team, killerId: weaponObj.owner,
             victim: bot.name, victimTeam: bot.team,
             ts: Date.now()
           });
         }
-        // Push bot death to firebase
         remove(ref(db, `players/${bot.id}`)).catch(()=>{});
-        break;
+        return true;
+      };
+
+      // Bullets
+      for (const [bid, b] of bullets) {
+        if (b.owner === bot.id) continue;
+        if (Math.hypot(b.x - bot.x, b.y - bot.y) < SHIP_R + 4) {
+          if (killBy(b)) { bullets.delete(bid); break; }
+        }
       }
-    }
-    // Get hit by torpedoes
-    if (bot.alive) {
-      for (const [tid, tor] of torpedoes) {
+
+      // Torpedoes
+      if (bot.alive) for (const [tid, tor] of torpedoes) {
         if (tor.owner === bot.id) continue;
-        const d = Math.hypot(tor.x - bot.x, tor.y - bot.y);
-        if (d < TORP_HIT_R) {
-          bot.alive = false;
-          bot.deadAt = t;
-          bot.deaths++;
-          torpedoes.delete(tid);
-          const killer = players.get(tor.owner);
-          if (killer) {
-            runTransaction(ref(db, `players/${tor.owner}/kills`), v => (v || 0) + 1).catch(()=>{});
-            const parent = PARENT_TEAM[tor.team] || tor.team;
-            runTransaction(ref(db, `scores/${parent}`), v => (v || 0) + 1).catch(()=>{});
-            const kr = push(ref(db, 'killfeed'));
-            set(kr, {
-              killer: killer.name, killerTeam: killer.team, killerId: tor.owner,
-              victim: bot.name, victimTeam: bot.team,
-              ts: Date.now()
-            });
+        if (Math.hypot(tor.x - bot.x, tor.y - bot.y) < TORP_HIT_R) {
+          if (killBy(tor)) { torpedoes.delete(tid); break; }
+        }
+      }
+
+      // CFO pulses (expanding ring)
+      if (bot.alive) for (const [pid, p] of pulses) {
+        if (p.owner === bot.id || p._botHit) continue;
+        const age = t - p.birth;
+        const currentRadius = (age / CFO_PULSE_DURATION) * CFO_PULSE_RADIUS;
+        const dist = Math.hypot(bot.x - p.x, bot.y - p.y);
+        if (dist <= currentRadius) {
+          p._botHit = true;
+          if (killBy(p)) break;
+        }
+      }
+
+      // Cones (Strategy)
+      if (bot.alive) for (const [cid, c] of cones) {
+        if (c.owner === bot.id || c._botHit) continue;
+        const dx = bot.x - c.x, dy = bot.y - c.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist <= CONE_RANGE) {
+          const angleToBot = Math.atan2(dy, dx);
+          let delta = angleToBot - c.angle;
+          while (delta > Math.PI) delta -= Math.PI * 2;
+          while (delta < -Math.PI) delta += Math.PI * 2;
+          if (Math.abs(delta) <= CONE_HALF_ANGLE) {
+            c._botHit = true;
+            if (killBy(c)) break;
           }
-          remove(ref(db, `players/${bot.id}`)).catch(()=>{});
-          break;
+        }
+      }
+
+      // Mines (Risk) — only during blast window
+      if (bot.alive) for (const [mid, m] of mines) {
+        if (m.owner === bot.id || !m.exploded || m._botHit) continue;
+        if (Math.hypot(bot.x - m.x, bot.y - m.y) <= MINE_BLAST_R) {
+          m._botHit = true;
+          if (killBy(m)) break;
+        }
+      }
+
+      // Nets (Compliance) — leading edge ring
+      if (bot.alive) for (const [nid, n] of nets) {
+        if (n.owner === bot.id || n._botHit) continue;
+        const age = t - n.birth;
+        const radius = NET_START_R + (NET_END_R - NET_START_R) * (age / NET_LIFE);
+        const d = Math.hypot(bot.x - n.x, bot.y - n.y);
+        if (d >= radius - 22 && d <= radius + 4) {
+          n._botHit = true;
+          if (killBy(n)) break;
+        }
+      }
+
+      // Spirals (Fraud)
+      if (bot.alive) for (const [sid, s] of spirals) {
+        if (s.owner === bot.id || s._botHit || s.curX === undefined) continue;
+        if (Math.hypot(bot.x - s.curX, bot.y - s.curY) <= SPIRAL_HIT_R) {
+          s._botHit = true;
+          if (killBy(s)) break;
+        }
+      }
+
+      // Trails (Budget)
+      if (bot.alive) for (const [trid, tr] of trails) {
+        if (tr.owner === bot.id || tr._botHit) continue;
+        if (Math.hypot(bot.x - tr.x, bot.y - tr.y) <= TRAIL_HIT_R) {
+          tr._botHit = true;
+          if (killBy(tr)) break;
+        }
+      }
+
+      // Mini-Xs (Payroll)
+      if (bot.alive) for (const [xid, x] of minixs) {
+        if (x.owner === bot.id || x._botHit) continue;
+        if (Math.hypot(bot.x - x.x, bot.y - x.y) <= MINIX_HIT_R) {
+          x._botHit = true;
+          if (killBy(x)) break;
+        }
+      }
+
+      // AP lasers — segment hit
+      if (bot.alive) for (const [lid, l] of lasers) {
+        if (l.owner === bot.id || l._botHit) continue;
+        const ax = l.x, ay = l.y, bx = l.tx, by = l.ty;
+        const dx = bx - ax, dy = by - ay;
+        const len2 = dx*dx + dy*dy || 1;
+        const t2 = Math.max(0, Math.min(1, ((bot.x - ax)*dx + (bot.y - ay)*dy) / len2));
+        const cx = ax + t2 * dx, cy = ay + t2 * dy;
+        if (Math.hypot(bot.x - cx, bot.y - cy) <= 8) {
+          l._botHit = true;
+          if (killBy(l)) break;
+        }
+      }
+
+      // PMO Ribbons — segment hit
+      if (bot.alive) for (const [rid, rb] of ribbons) {
+        if (rb.owner === bot.id || rb._botHit) continue;
+        const ex = rb.x + Math.cos(rb.angle) * RIBBON_LENGTH;
+        const ey = rb.y + Math.sin(rb.angle) * RIBBON_LENGTH;
+        const dx = ex - rb.x, dy = ey - rb.y;
+        const len2 = dx*dx + dy*dy || 1;
+        const t2 = Math.max(0, Math.min(1, ((bot.x - rb.x)*dx + (bot.y - rb.y)*dy) / len2));
+        const cx = rb.x + t2 * dx, cy = rb.y + t2 * dy;
+        if (Math.hypot(bot.x - cx, bot.y - cy) <= RIBBON_HIT_R) {
+          rb._botHit = true;
+          if (killBy(rb)) break;
+        }
+      }
+
+      // MG Trapezoids — local rectangle in trap-space
+      if (bot.alive) for (const [tpid, tp] of trapezoids) {
+        if (tp.owner === bot.id || tp._botHit) continue;
+        const dx = bot.x - tp.x, dy = bot.y - tp.y;
+        const cos = Math.cos(tp.angle), sin = Math.sin(tp.angle);
+        const localF = dx * cos + dy * sin;
+        const localP = -dx * sin + dy * cos;
+        const halfH = TRAP_HEIGHT / 2;
+        const age = t - tp.birth;
+        const progress = age / TRAP_LIFE;
+        const halfW = TRAP_START_HALF_W + (TRAP_END_HALF_W - TRAP_START_HALF_W) * progress;
+        if (Math.abs(localF) <= halfH + SHIP_R && Math.abs(localP) <= halfW + SHIP_R) {
+          tp._botHit = true;
+          if (killBy(tp)) break;
+        }
+      }
+
+      // Touch-kill ships (MG ramming, Recon contact) — kill bot if a non-bot enemy ship touches it
+      if (bot.alive) for (const [pid, pl] of players) {
+        if (pid === bot.id || !pl.alive) continue;
+        if (PARENT_TEAM[pl.team] === 'AI') continue; // skip other bots
+        if (pl.team === 'MG') {
+          if (Math.hypot(pl.x - bot.x, pl.y - bot.y) < SHIP_R * 2.8) {
+            killBy({ owner: pid, team: pl.team });
+            break;
+          }
+        } else if (pl.team === 'Recon') {
+          if (Math.hypot(pl.x - bot.x, pl.y - bot.y) <= RECON_KILL_R) {
+            killBy({ owner: pid, team: pl.team });
+            break;
+          }
         }
       }
     }
