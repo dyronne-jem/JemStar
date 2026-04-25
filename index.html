@@ -33,7 +33,7 @@
     background: #000;
     overflow: hidden;
     z-index: 200;
-    perspective: 400px;
+    perspective: 260px;
     perspective-origin: 50% 100%;
   }
   #intro.hidden { display: none; }
@@ -120,7 +120,7 @@
     top: 100%;
     left: 50%;
     width: min(720px, 85vw);
-    transform: translateX(-50%) rotateX(25deg);
+    transform: translateX(-50%) rotateX(30deg);
     transform-origin: 50% 100%;
     color: #ffe600;
     font-family: 'Orbitron', sans-serif;
@@ -159,8 +159,8 @@
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 40%;
-    background: linear-gradient(to bottom, #000 0%, rgba(0,0,0,0.7) 60%, transparent 100%);
+    height: 55%;
+    background: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.5) 80%, transparent 100%);
     pointer-events: none;
     z-index: 3;
     opacity: 0;
@@ -214,6 +214,42 @@
     z-index: 100;
   }
   #login.hidden { display: none; }
+  #loginStars {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(1px 1px at 12% 18%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 28% 42%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 46% 8%, #fff, transparent 50%),
+      radial-gradient(2px 2px at 60% 25%, rgba(255,255,255,0.85), transparent 50%),
+      radial-gradient(1px 1px at 75% 60%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 90% 20%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 8% 75%, #fff, transparent 50%),
+      radial-gradient(2px 2px at 22% 88%, rgba(255,255,255,0.7), transparent 50%),
+      radial-gradient(1px 1px at 38% 65%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 54% 92%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 68% 35%, #fff, transparent 50%),
+      radial-gradient(2px 2px at 82% 78%, rgba(255,255,255,0.7), transparent 50%),
+      radial-gradient(1px 1px at 94% 55%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 5% 40%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 17% 60%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 33% 25%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 50% 50%, rgba(255,255,255,0.6), transparent 50%),
+      radial-gradient(1px 1px at 64% 80%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 78% 12%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 88% 45%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 95% 90%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 3% 5%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 15% 30%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 42% 78%, rgba(255,255,255,0.7), transparent 50%);
+    animation: loginStarTwinkle 6s ease-in-out infinite;
+  }
+  @keyframes loginStarTwinkle {
+    0%, 100% { opacity: 0.75; }
+    50% { opacity: 1; }
+  }
+  .login-card { position: relative; z-index: 1; }
   .login-card {
     width: min(560px, 92vw);
     max-height: 92vh;
@@ -757,6 +793,7 @@
 
 <!-- Login Screen -->
 <div id="login">
+  <div id="loginStars"></div>
   <div class="login-card">
     <div class="title">FARS WARS</div>
     <div class="subtitle">// 4-Team Orbital Combat</div>
@@ -909,12 +946,12 @@ const CFO_PULSE_DURATION = 0.6;          // visual + damage window
 const TEAM_STATS = {
   Finance:    { turn: 5.0, accel: 380, maxSpeed: 480, drag: 1.0, weapon: 'bullet',   cooldown: 0.18 },
   Accounting: { turn: 2.4, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'torpedo',  cooldown: 1.5, maxActive: 3 },
-  Risk:       { turn: 3.8, accel: 340, maxSpeed: 360, drag: 0.5, weapon: 'mine',     cooldown: 0.5, maxActive: 12 },
+  Risk:       { turn: 3.8, accel: 340, maxSpeed: 360, drag: 0.5, weapon: 'mine',     cooldown: 0.2, maxActive: 20 },
   Strategy:   { turn: 3.0, accel: 240, maxSpeed: 650, drag: 0.5, weapon: 'cone',     cooldown: 0.9 },
   CFO:        { turn: 3.4, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'pulse',    cooldown: CFO_PULSE_COOLDOWN },
   // --- Risk subfactions ---
   Compliance: { turn: 3.0, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'net',      cooldown: 1.4, maxActive: 4 },
-  Fraud:      { turn: 3.6, accel: 310, maxSpeed: 330, drag: 0.5, weapon: 'spiral',   cooldown: 0.9 },
+  Fraud:      { turn: 3.6, accel: 310, maxSpeed: 330, drag: 0.5, weapon: 'spiral',   cooldown: 0.35 },
   // --- Finance subfactions ---
   Budget:     { turn: 4.2, accel: 360, maxSpeed: 460, drag: 1.0, weapon: 'trail',    cooldown: 0.05 },
   Payroll:    { turn: 4.8, accel: 360, maxSpeed: 460, drag: 1.0, weapon: 'miniX',    cooldown: 0.25 },
@@ -970,8 +1007,8 @@ const NET_END_R = 110;
 const NET_SPEED = 140;
 
 // Fraud flaming spirals
-const SPIRAL_LIFE = 0.9;
-const SPIRAL_SPEED = 280;
+const SPIRAL_LIFE = 2.0;
+const SPIRAL_SPEED = 840;
 const SPIRAL_HIT_R = 10;
 
 // Budget fire trail
@@ -979,12 +1016,12 @@ const TRAIL_LIFE = 2.0;
 const TRAIL_HIT_R = 14;
 
 // Payroll mini-X
-const MINIX_LIFE = 0.7;
+const MINIX_LIFE = 1.4;
 const MINIX_SPEED = 200;
 const MINIX_HIT_R = 8;
 
 // AP autolaser
-const AUTOLASER_RANGE = 260;
+const AUTOLASER_RANGE = 286;
 const AUTOLASER_LIFE = 0.12;
 
 // Recon tractor
@@ -995,7 +1032,7 @@ const RECON_KILL_R = 24;                 // touching Recon = death
 
 // PMO ribbons
 const RIBBON_LIFE = 0.4;
-const RIBBON_LENGTH = 70;
+const RIBBON_LENGTH = 630;
 const RIBBON_HIT_R = 10;
 
 const TEAM_COLORS = {
@@ -1276,305 +1313,573 @@ window.addEventListener('load', () => {
   }, 500);
 });
 
-// Original, non-copyrighted heroic theme
+// Original, non-copyrighted heroic theme — inspired by epic space opera conventions
+// Uses brass-like sawtooth layers, orchestral chord pads, and timpani
+// Written in Bb major, 4/4 at ~108 bpm, with a main theme, bridge, minor section, reprise, finale
 function playIntroTheme() {
   if (!audioCtx) return;
   const ctx = audioCtx;
   const musicGain = ctx.createGain();
-  musicGain.gain.value = 0.35;
+  musicGain.gain.value = 0.38;
   musicGain.connect(masterGain);
 
-  function note(startOffset, freq, duration, type = 'triangle', volume = 0.3) {
+  // Brass-like voice: sawtooth through a bandpass filter (warmer, less buzzy)
+  function brass(startOffset, freq, duration, volume = 0.22) {
     if (introStopped) return;
     const t = ctx.currentTime + startOffset;
     const osc = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const filt = ctx.createBiquadFilter();
     const g = ctx.createGain();
-    osc.type = type;
+    osc.type = 'sawtooth';
+    osc2.type = 'sawtooth';
     osc.frequency.value = freq;
+    osc2.frequency.value = freq * 1.003; // slight detune for richness
+    filt.type = 'lowpass';
+    filt.frequency.value = freq * 6;
+    filt.Q.value = 2;
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(volume, t + 0.02);
-    g.gain.setValueAtTime(volume, t + duration - 0.08);
+    g.gain.linearRampToValueAtTime(volume, t + 0.04);
+    g.gain.linearRampToValueAtTime(volume * 0.85, t + duration * 0.5);
+    g.gain.setValueAtTime(volume * 0.85, t + duration - 0.08);
     g.gain.exponentialRampToValueAtTime(0.001, t + duration);
-    osc.connect(g); g.connect(musicGain);
-    osc.start(t);
-    osc.stop(t + duration + 0.02);
+    osc.connect(filt); osc2.connect(filt); filt.connect(g); g.connect(musicGain);
+    osc.start(t); osc2.start(t);
+    osc.stop(t + duration + 0.02); osc2.stop(t + duration + 0.02);
   }
 
-  function chord(startOffset, freqs, duration, type = 'sine', volume = 0.12) {
-    freqs.forEach(f => note(startOffset, f, duration, type, volume));
+  // Horn (adds richness one octave down with softer tone)
+  function horn(startOffset, freq, duration, volume = 0.16) {
+    if (introStopped) return;
+    const t = ctx.currentTime + startOffset;
+    const osc = ctx.createOscillator();
+    const filt = ctx.createBiquadFilter();
+    const g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+    filt.type = 'lowpass';
+    filt.frequency.value = freq * 3.5;
+    filt.Q.value = 1.5;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(volume, t + 0.06);
+    g.gain.setValueAtTime(volume, t + duration - 0.1);
+    g.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    osc.connect(filt); filt.connect(g); g.connect(musicGain);
+    osc.start(t); osc.stop(t + duration + 0.02);
   }
 
-  function timpani(startOffset, freq = 80, dur = 0.4) {
+  // Sustained string pad
+  function strings(startOffset, freqs, duration, volume = 0.08) {
+    if (introStopped) return;
+    freqs.forEach(f => {
+      const t = ctx.currentTime + startOffset;
+      const osc = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc2.type = 'sawtooth';
+      osc.frequency.value = f;
+      osc2.frequency.value = f * 1.005;
+      const filt = ctx.createBiquadFilter();
+      filt.type = 'lowpass';
+      filt.frequency.value = 1800;
+      filt.Q.value = 0.5;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(volume, t + 0.25);
+      g.gain.setValueAtTime(volume, t + duration - 0.3);
+      g.gain.linearRampToValueAtTime(0.001, t + duration);
+      osc.connect(filt); osc2.connect(filt); filt.connect(g); g.connect(musicGain);
+      osc.start(t); osc2.start(t);
+      osc.stop(t + duration + 0.02); osc2.stop(t + duration + 0.02);
+    });
+  }
+
+  // Timpani — low thump with pitch bend
+  function timpani(startOffset, freq = 75, dur = 0.5, volume = 0.6) {
     if (introStopped) return;
     const t = ctx.currentTime + startOffset;
     const osc = ctx.createOscillator();
     const g = ctx.createGain();
     osc.type = 'sine';
     osc.frequency.setValueAtTime(freq * 2, t);
-    osc.frequency.exponentialRampToValueAtTime(freq * 0.6, t + 0.15);
-    g.gain.setValueAtTime(0.5, t);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.55, t + 0.18);
+    g.gain.setValueAtTime(volume, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
     osc.connect(g); g.connect(musicGain);
     osc.start(t); osc.stop(t + dur + 0.02);
   }
 
-  // Note frequencies (Hz) — C major / F major melodic phrases, original composition
-  // Using a heroic feel in 4/4: bold brass-like leaps + sustained chord pad
-  const C4 = 261.63, D4 = 293.66, E4 = 329.63, F4 = 349.23, G4 = 392.00;
-  const A4 = 440.00, Bb4 = 466.16, B4 = 493.88;
-  const C5 = 523.25, D5 = 587.33, E5 = 659.25, F5 = 698.46, G5 = 783.99, A5 = 880.00;
-  const C3 = 130.81, F3 = 174.61, G3 = 196.00;
+  // Snare-like reinforcement for march feel
+  function snare(startOffset, volume = 0.12) {
+    if (introStopped) return;
+    const t = ctx.currentTime + startOffset;
+    const bufSize = ctx.sampleRate * 0.12;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const filt = ctx.createBiquadFilter();
+    filt.type = 'highpass';
+    filt.frequency.value = 1200;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(volume, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    src.connect(filt); filt.connect(g); g.connect(musicGain);
+    src.start(t); src.stop(t + 0.13);
+  }
 
-  // --- Opening fanfare (0-6s): bold ascending call ---
-  // Melody (lead brass)
-  note(0.0, G4, 0.5, 'sawtooth', 0.18);
-  note(0.5, C5, 0.5, 'sawtooth', 0.18);
-  note(1.0, E5, 0.5, 'sawtooth', 0.18);
-  note(1.5, G5, 1.2, 'sawtooth', 0.22);
-  note(2.7, F5, 0.25, 'sawtooth', 0.18);
-  note(2.95, E5, 0.25, 'sawtooth', 0.18);
-  note(3.2, D5, 0.5, 'sawtooth', 0.18);
-  note(3.7, E5, 1.3, 'sawtooth', 0.22);
-  // Harmony (sustained)
-  chord(0.0, [C3, E4], 2.0, 'sine', 0.08);
-  chord(2.0, [C3, G4], 3.0, 'sine', 0.08);
-  // Timpani hits
-  timpani(0.0, 80, 0.4);
-  timpani(1.5, 80, 0.4);
-  timpani(3.0, 80, 0.4);
+  // Cymbal crash (short noise burst, long decay)
+  function cymbal(startOffset, volume = 0.18) {
+    if (introStopped) return;
+    const t = ctx.currentTime + startOffset;
+    const bufSize = ctx.sampleRate * 1.2;
+    const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 2);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const filt = ctx.createBiquadFilter();
+    filt.type = 'highpass';
+    filt.frequency.value = 4000;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(volume, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+    src.connect(filt); filt.connect(g); g.connect(musicGain);
+    src.start(t); src.stop(t + 1.25);
+  }
 
-  // --- Phrase 2 (5-10s): answer phrase, slightly softer ---
-  note(5.0, C5, 0.4, 'sawtooth', 0.18);
-  note(5.4, D5, 0.4, 'sawtooth', 0.18);
-  note(5.8, E5, 0.4, 'sawtooth', 0.18);
-  note(6.2, F5, 0.4, 'sawtooth', 0.18);
-  note(6.6, G5, 1.2, 'sawtooth', 0.22);
-  note(7.8, E5, 0.6, 'sawtooth', 0.18);
-  note(8.4, C5, 1.4, 'sawtooth', 0.22);
-  chord(5.0, [F3, A4], 2.0, 'sine', 0.08);
-  chord(7.0, [C3, G4], 3.0, 'sine', 0.08);
-  timpani(5.0, 70, 0.4);
-  timpani(7.0, 70, 0.4);
-  timpani(9.0, 80, 0.4);
+  // --- Note frequencies in Bb major ---
+  // Bb = 233.08 (Bb3) / 466.16 (Bb4) / 932.33 (Bb5)
+  const Bb2=116.54, F2=87.31, Eb2=77.78, C2=65.41, D2=73.42, G2=98.00, A2=110.00;
+  const Bb3=233.08, F3=174.61, Eb3=155.56, C3=130.81, D3=146.83, G3=196.00, A3=220.00;
+  const C4=261.63, D4=293.66, Eb4=311.13, F4=349.23, G4=392.00, A4=440.00, Bb4=466.16;
+  const C5=523.25, D5=587.33, Eb5=622.25, F5=698.46, G5=783.99, A5=880.00, Bb5=932.33;
+  const C6=1046.50, D6=1174.66, Eb6=1244.51, F6=1396.91;
 
-  // --- Bridge (10-18s): quieter, mysterious ---
-  chord(10.0, [A4, C5, E5], 2.5, 'sine', 0.1);
-  chord(12.5, [G4, B4, D5], 2.5, 'sine', 0.1);
-  chord(15.0, [F4, A4, C5], 2.5, 'sine', 0.1);
-  note(10.5, C5, 1.0, 'triangle', 0.14);
-  note(11.5, E5, 1.0, 'triangle', 0.14);
-  note(13.0, B4, 1.0, 'triangle', 0.14);
-  note(14.0, D5, 1.5, 'triangle', 0.14);
-  note(15.5, A4, 1.0, 'triangle', 0.14);
-  note(16.5, C5, 1.5, 'triangle', 0.14);
+  // =============================================================
+  // Section A: Opening Fanfare (0–10s) — bold three-note call
+  // Uses classic heroic-leap intervals (fourth + fifth)
+  // =============================================================
+  // Pickup + downbeat hit
+  timpani(-0.05, 75, 0.4, 0.7);
+  cymbal(0.0, 0.22);
 
-  // --- Building tension (18-26s) ---
-  note(18.0, G4, 0.25, 'sawtooth', 0.15);
-  note(18.25, A4, 0.25, 'sawtooth', 0.15);
-  note(18.5, B4, 0.25, 'sawtooth', 0.15);
-  note(18.75, C5, 0.25, 'sawtooth', 0.15);
-  note(19.0, D5, 0.25, 'sawtooth', 0.17);
-  note(19.25, E5, 0.25, 'sawtooth', 0.17);
-  note(19.5, F5, 0.25, 'sawtooth', 0.17);
-  note(19.75, G5, 0.75, 'sawtooth', 0.22);
-  chord(18.0, [C3, G3], 2.5, 'sawtooth', 0.06);
-  timpani(18.0, 65, 0.3);
-  timpani(18.75, 65, 0.3);
-  timpani(19.5, 75, 0.4);
+  // Fanfare melody — rising fourth to sustain, stepwise descend, leap
+  brass(0.0, F4, 0.55, 0.28);
+  brass(0.55, Bb4, 0.55, 0.28);
+  brass(1.1, D5, 0.45, 0.28);
+  brass(1.55, F5, 1.6, 0.32);       // held high note
+  horn(0.0, Bb3, 2.2, 0.15);
+  horn(0.0, D4, 2.2, 0.12);
 
-  note(20.5, E5, 0.5, 'sawtooth', 0.2);
-  note(21.0, G5, 0.5, 'sawtooth', 0.2);
-  note(21.5, C5, 0.5, 'sawtooth', 0.2);
-  note(22.0, E5, 0.5, 'sawtooth', 0.2);
-  note(22.5, A5, 1.5, 'sawtooth', 0.25);
-  chord(20.5, [F3, C5], 2.0, 'sine', 0.08);
-  chord(22.5, [C3, G4], 2.5, 'sine', 0.1);
-  timpani(20.5, 80, 0.4);
-  timpani(22.0, 80, 0.4);
+  // Answer phrase
+  brass(3.2, Eb5, 0.5, 0.26);
+  brass(3.7, D5, 0.5, 0.26);
+  brass(4.2, C5, 0.5, 0.26);
+  brass(4.7, Bb4, 1.6, 0.3);
+  horn(3.2, G3, 2.1, 0.14);
+  horn(3.2, Bb3, 2.1, 0.12);
 
-  // --- Big statement (26-36s): full triumphant return ---
-  note(26.0, C5, 0.5, 'sawtooth', 0.22);
-  note(26.5, E5, 0.5, 'sawtooth', 0.22);
-  note(27.0, G5, 0.5, 'sawtooth', 0.22);
-  note(27.5, C5, 0.5, 'sawtooth', 0.22);
-  note(28.0, E5, 1.0, 'sawtooth', 0.25);
-  note(29.0, D5, 0.5, 'sawtooth', 0.2);
-  note(29.5, C5, 0.5, 'sawtooth', 0.2);
-  note(30.0, D5, 1.5, 'sawtooth', 0.22);
-  chord(26.0, [C3, G4], 3.0, 'sine', 0.1);
-  chord(29.0, [G3, D5], 2.5, 'sine', 0.1);
-  timpani(26.0, 80, 0.4);
-  timpani(27.5, 80, 0.4);
-  timpani(29.0, 80, 0.4);
+  strings(0.0, [Bb2, F3, Bb3, D4], 3.2, 0.09);
+  strings(3.2, [Eb3, G3, Bb3, Eb4], 2.1, 0.09);
+  timpani(0.0, 75, 0.5, 0.7);
+  timpani(1.6, 75, 0.4, 0.6);
+  timpani(3.2, 75, 0.5, 0.6);
+  timpani(4.7, 75, 0.4, 0.6);
 
-  note(32.0, E5, 0.4, 'sawtooth', 0.22);
-  note(32.4, G5, 0.4, 'sawtooth', 0.22);
-  note(32.8, C5, 0.8, 'sawtooth', 0.2);
-  note(33.6, E5, 0.4, 'sawtooth', 0.22);
-  note(34.0, G5, 0.4, 'sawtooth', 0.22);
-  note(34.4, A5, 1.6, 'sawtooth', 0.25);
-  chord(32.0, [F3, A4], 2.0, 'sine', 0.1);
-  chord(34.0, [C3, E5], 2.5, 'sine', 0.1);
-  timpani(32.0, 80, 0.4);
-  timpani(34.0, 85, 0.5);
+  // Second half of Section A — repetition with octave lift
+  brass(6.4, F4, 0.4, 0.26);
+  brass(6.8, Bb4, 0.4, 0.26);
+  brass(7.2, D5, 0.4, 0.26);
+  brass(7.6, F5, 0.4, 0.3);
+  brass(8.0, Bb5, 1.8, 0.34);        // dramatic octave leap
+  horn(6.4, Bb3, 3.4, 0.16);
+  horn(6.4, F4, 3.4, 0.12);
+  strings(6.4, [Bb2, F3, Bb3, D4, F4], 3.4, 0.1);
+  timpani(6.4, 75, 0.5, 0.7);
+  timpani(7.6, 75, 0.4, 0.7);
+  timpani(8.0, 75, 0.5, 0.8);
+  cymbal(8.0, 0.2);
 
-  // --- Quiet recap (38-50s) ---
-  chord(38.0, [A4, C5, E5], 3.0, 'sine', 0.1);
-  note(38.0, E5, 0.8, 'triangle', 0.14);
-  note(38.8, G5, 0.8, 'triangle', 0.14);
-  note(39.6, A5, 2.4, 'triangle', 0.16);
-  chord(42.0, [F3, C5], 3.0, 'sine', 0.1);
-  note(42.0, F5, 0.8, 'triangle', 0.14);
-  note(42.8, A5, 0.8, 'triangle', 0.14);
-  note(43.6, G5, 2.4, 'triangle', 0.16);
-  chord(46.0, [C3, G4], 4.0, 'sine', 0.1);
-  note(46.0, E5, 1.0, 'triangle', 0.14);
-  note(47.0, G5, 1.0, 'triangle', 0.14);
-  note(48.0, C5, 2.0, 'triangle', 0.16);
+  // =============================================================
+  // Section B: Main Theme (10–24s) — march feel, triumphant
+  // Classic I-V-vi-IV-I progression in Bb
+  // =============================================================
+  // Theme statement — bar 1 (I: Bb)
+  brass(10.0, Bb4, 0.35, 0.26);
+  brass(10.35, D5, 0.35, 0.26);
+  brass(10.7, F5, 0.7, 0.28);
+  brass(11.4, Eb5, 0.3, 0.25);
+  brass(11.7, D5, 0.3, 0.25);
+  horn(10.0, F3, 1.9, 0.14);
+  horn(10.0, Bb3, 1.9, 0.12);
+  strings(10.0, [Bb2, F3, Bb3, D4], 1.9, 0.1);
+  timpani(10.0, 75, 0.4, 0.6);
+  snare(10.9, 0.1);
 
-  // --- Final swell (50-60s) ---
-  note(50.0, G4, 0.5, 'sawtooth', 0.18);
-  note(50.5, C5, 0.5, 'sawtooth', 0.2);
-  note(51.0, E5, 0.5, 'sawtooth', 0.2);
-  note(51.5, G5, 1.5, 'sawtooth', 0.25);
-  note(53.0, A5, 0.5, 'sawtooth', 0.22);
-  note(53.5, G5, 0.5, 'sawtooth', 0.22);
-  note(54.0, E5, 0.5, 'sawtooth', 0.22);
-  note(54.5, C5, 2.5, 'sawtooth', 0.25);
-  chord(50.0, [C3, G4], 4.0, 'sine', 0.1);
-  chord(54.0, [C3, C5], 3.0, 'sine', 0.12);
-  timpani(50.0, 80, 0.4);
-  timpani(51.5, 80, 0.4);
-  timpani(53.0, 80, 0.4);
+  // Bar 2 (V: F)
+  brass(12.0, C5, 0.4, 0.26);
+  brass(12.4, F5, 0.4, 0.26);
+  brass(12.8, A5, 0.6, 0.3);
+  brass(13.4, G5, 0.3, 0.25);
+  brass(13.7, F5, 0.3, 0.25);
+  horn(12.0, C3, 1.9, 0.14);
+  horn(12.0, A3, 1.9, 0.12);
+  strings(12.0, [F2, C3, F3, A3, C4], 1.9, 0.1);
+  timpani(12.0, 70, 0.4, 0.6);
+  snare(12.9, 0.1);
 
-  // --- Playful middle section (57-70s): lighter, almost whimsical for the humor beats ---
-  note(57.0, E5, 0.3, 'triangle', 0.16);
-  note(57.3, G5, 0.3, 'triangle', 0.16);
-  note(57.6, E5, 0.3, 'triangle', 0.16);
-  note(57.9, C5, 0.6, 'triangle', 0.18);
-  note(58.5, D5, 0.3, 'triangle', 0.16);
-  note(58.8, F5, 0.3, 'triangle', 0.16);
-  note(59.1, D5, 0.3, 'triangle', 0.16);
-  note(59.4, A4, 0.6, 'triangle', 0.18);
-  chord(57.0, [C3, G4], 3.0, 'sine', 0.08);
-  chord(60.0, [F3, A4], 3.0, 'sine', 0.08);
+  // Bar 3 (vi: Gm)
+  brass(14.0, G4, 0.4, 0.24);
+  brass(14.4, Bb4, 0.4, 0.24);
+  brass(14.8, D5, 0.6, 0.28);
+  brass(15.4, C5, 0.3, 0.24);
+  brass(15.7, Bb4, 0.3, 0.24);
+  horn(14.0, G3, 1.9, 0.14);
+  horn(14.0, D4, 1.9, 0.12);
+  strings(14.0, [G2, D3, G3, Bb3], 1.9, 0.1);
+  timpani(14.0, 75, 0.4, 0.6);
+  snare(14.9, 0.1);
 
-  note(60.5, F5, 0.25, 'triangle', 0.16);
-  note(60.75, A5, 0.25, 'triangle', 0.16);
-  note(61.0, F5, 0.25, 'triangle', 0.16);
-  note(61.25, D5, 0.75, 'triangle', 0.18);
-  note(62.0, E5, 0.25, 'triangle', 0.16);
-  note(62.25, G5, 0.25, 'triangle', 0.16);
-  note(62.5, E5, 0.25, 'triangle', 0.16);
-  note(62.75, C5, 0.75, 'triangle', 0.18);
+  // Bar 4 (IV: Eb)
+  brass(16.0, Eb5, 0.4, 0.26);
+  brass(16.4, G5, 0.4, 0.28);
+  brass(16.8, Bb5, 0.8, 0.32);
+  brass(17.6, A5, 0.4, 0.28);
+  horn(16.0, Eb3, 1.9, 0.14);
+  horn(16.0, G3, 1.9, 0.12);
+  strings(16.0, [Eb2, Bb2, Eb3, G3, Bb3], 1.9, 0.1);
+  timpani(16.0, 75, 0.4, 0.6);
+  cymbal(16.0, 0.14);
+  snare(16.9, 0.1);
 
-  // --- Darker turn (63-74s): minor inflection for compliance/fraud beats ---
-  chord(63.5, [A4, C5, E5], 2.5, 'sine', 0.1);
-  note(63.5, A4, 0.8, 'sawtooth', 0.16);
-  note(64.3, C5, 0.8, 'sawtooth', 0.16);
-  note(65.1, E5, 1.4, 'sawtooth', 0.2);
-  chord(66.0, [E4, G4, B4], 2.5, 'sine', 0.1);
-  note(66.5, B4, 0.6, 'sawtooth', 0.18);
-  note(67.1, D5, 0.6, 'sawtooth', 0.18);
-  note(67.7, F5, 0.8, 'sawtooth', 0.22);
-  timpani(63.5, 65, 0.35);
-  timpani(66.0, 65, 0.35);
+  // Bars 5-8: continuation with more movement
+  brass(18.0, G5, 0.35, 0.28);
+  brass(18.35, F5, 0.35, 0.26);
+  brass(18.7, D5, 0.35, 0.26);
+  brass(19.05, Bb4, 0.35, 0.26);
+  brass(19.4, F5, 0.6, 0.3);
+  horn(18.0, Bb3, 1.9, 0.14);
+  strings(18.0, [Bb2, D3, F3, Bb3], 1.9, 0.1);
+  timpani(18.0, 75, 0.4, 0.6);
+  snare(18.9, 0.1);
 
-  chord(68.5, [D4, F4, A4], 2.5, 'sine', 0.1);
-  note(68.5, F5, 0.4, 'sawtooth', 0.2);
-  note(68.9, E5, 0.4, 'sawtooth', 0.2);
-  note(69.3, D5, 0.4, 'sawtooth', 0.2);
-  note(69.7, C5, 0.4, 'sawtooth', 0.2);
-  note(70.1, D5, 0.8, 'sawtooth', 0.22);
-  note(70.9, A4, 1.6, 'sawtooth', 0.22);
-  chord(71.0, [G3, D4, G4], 3.5, 'sine', 0.1);
-  timpani(68.5, 65, 0.35);
-  timpani(71.0, 70, 0.4);
+  brass(20.0, Eb5, 0.4, 0.26);
+  brass(20.4, D5, 0.4, 0.26);
+  brass(20.8, C5, 0.4, 0.26);
+  brass(21.2, Bb4, 0.4, 0.28);
+  brass(21.6, F5, 0.4, 0.3);
+  horn(20.0, F3, 1.9, 0.14);
+  strings(20.0, [F2, A2, C3, F3], 1.9, 0.1);
+  timpani(20.0, 70, 0.4, 0.6);
 
-  // --- Building back up (74-85s) ---
-  note(74.5, C5, 0.25, 'sawtooth', 0.16);
-  note(74.75, D5, 0.25, 'sawtooth', 0.16);
-  note(75.0, E5, 0.25, 'sawtooth', 0.18);
-  note(75.25, F5, 0.25, 'sawtooth', 0.18);
-  note(75.5, G5, 0.5, 'sawtooth', 0.2);
-  note(76.0, F5, 0.25, 'sawtooth', 0.18);
-  note(76.25, E5, 0.25, 'sawtooth', 0.18);
-  note(76.5, D5, 0.5, 'sawtooth', 0.2);
-  note(77.0, E5, 1.0, 'sawtooth', 0.22);
-  chord(74.5, [C3, G4], 3.5, 'sine', 0.08);
-  timpani(74.5, 75, 0.35);
-  timpani(77.0, 75, 0.35);
+  // Cadence to rest
+  brass(22.0, Bb4, 0.6, 0.28);
+  brass(22.6, D5, 0.6, 0.28);
+  brass(23.2, F5, 1.2, 0.32);
+  horn(22.0, Bb3, 2.4, 0.16);
+  horn(22.0, F4, 2.4, 0.14);
+  strings(22.0, [Bb2, F3, Bb3, D4, F4], 2.4, 0.12);
+  timpani(22.0, 75, 0.4, 0.7);
+  timpani(23.2, 75, 0.5, 0.7);
+  cymbal(23.2, 0.18);
 
-  note(78.5, G4, 0.4, 'sawtooth', 0.2);
-  note(78.9, B4, 0.4, 'sawtooth', 0.2);
-  note(79.3, D5, 0.4, 'sawtooth', 0.2);
-  note(79.7, G5, 0.4, 'sawtooth', 0.22);
-  note(80.1, A5, 0.4, 'sawtooth', 0.22);
-  note(80.5, G5, 1.5, 'sawtooth', 0.25);
-  chord(78.5, [G3, D4, B4], 3.5, 'sine', 0.1);
-  timpani(78.5, 80, 0.4);
-  timpani(80.0, 80, 0.4);
+  // =============================================================
+  // Section C: Lyrical bridge (24–40s) — softer, mysterious
+  // Suspended harmonies, string-forward
+  // =============================================================
+  strings(24.5, [C3, G3, C4, Eb4], 4.0, 0.12);
+  horn(25.0, Eb4, 1.5, 0.12);
+  horn(26.5, G4, 1.5, 0.12);
+  brass(25.5, C5, 0.8, 0.18);
+  brass(26.3, Eb5, 0.8, 0.18);
+  brass(27.1, G5, 1.2, 0.22);
 
-  note(82.5, C5, 0.3, 'sawtooth', 0.22);
-  note(82.8, E5, 0.3, 'sawtooth', 0.22);
-  note(83.1, G5, 0.3, 'sawtooth', 0.22);
-  note(83.4, C5, 0.3, 'sawtooth', 0.22);
-  note(83.7, E5, 0.3, 'sawtooth', 0.22);
-  note(84.0, G5, 0.3, 'sawtooth', 0.22);
-  note(84.3, A5, 1.7, 'sawtooth', 0.26);
-  chord(82.5, [C3, G4], 3.5, 'sine', 0.12);
-  timpani(82.5, 80, 0.4);
-  timpani(84.0, 85, 0.45);
+  strings(28.5, [Bb2, F3, Bb3, D4], 4.0, 0.12);
+  horn(29.0, D4, 1.5, 0.12);
+  horn(30.5, F4, 1.5, 0.12);
+  brass(29.5, Bb4, 0.8, 0.18);
+  brass(30.3, D5, 0.8, 0.18);
+  brass(31.1, F5, 1.4, 0.22);
 
-  // --- Big reprise of main theme (86-98s): triumphant return ---
-  note(86.5, G4, 0.5, 'sawtooth', 0.22);
-  note(87.0, C5, 0.5, 'sawtooth', 0.24);
-  note(87.5, E5, 0.5, 'sawtooth', 0.24);
-  note(88.0, G5, 1.2, 'sawtooth', 0.26);
-  note(89.2, F5, 0.25, 'sawtooth', 0.22);
-  note(89.45, E5, 0.25, 'sawtooth', 0.22);
-  note(89.7, D5, 0.5, 'sawtooth', 0.22);
-  note(90.2, E5, 1.3, 'sawtooth', 0.26);
-  chord(86.5, [C3, E4, G4], 5.0, 'sine', 0.12);
-  timpani(86.5, 80, 0.4);
-  timpani(88.0, 80, 0.4);
-  timpani(89.5, 80, 0.4);
+  strings(32.5, [A2, E3, A3, C4], 3.5, 0.12);  // minor color
+  horn(33.0, C4, 1.3, 0.12);
+  brass(33.5, E4, 0.6, 0.18);
+  brass(34.1, A4, 0.6, 0.18);
+  brass(34.7, C5, 1.2, 0.22);
 
-  note(92.0, C5, 0.4, 'sawtooth', 0.24);
-  note(92.4, D5, 0.4, 'sawtooth', 0.24);
-  note(92.8, E5, 0.4, 'sawtooth', 0.24);
-  note(93.2, F5, 0.4, 'sawtooth', 0.24);
-  note(93.6, G5, 1.2, 'sawtooth', 0.28);
-  note(94.8, E5, 0.6, 'sawtooth', 0.24);
-  note(95.4, C5, 1.6, 'sawtooth', 0.26);
-  chord(92.0, [F3, A4, C5], 5.0, 'sine', 0.12);
-  timpani(92.0, 75, 0.4);
-  timpani(93.6, 75, 0.4);
-  timpani(95.0, 80, 0.4);
+  strings(36.0, [D3, A3, D4, F4], 4.0, 0.12);
+  horn(36.5, F4, 1.5, 0.14);
+  brass(37.0, A4, 0.5, 0.2);
+  brass(37.5, D5, 0.5, 0.2);
+  brass(38.0, F5, 1.8, 0.26);
+  timpani(38.0, 73, 0.5, 0.6);
 
-  // --- Grand finale (97-110s) ---
-  note(97.5, G5, 0.35, 'sawtooth', 0.26);
-  note(97.85, A5, 0.35, 'sawtooth', 0.26);
-  note(98.2, G5, 0.35, 'sawtooth', 0.26);
-  note(98.55, E5, 0.35, 'sawtooth', 0.26);
-  note(98.9, C5, 0.7, 'sawtooth', 0.24);
-  note(99.6, E5, 0.5, 'sawtooth', 0.26);
-  note(100.1, G5, 0.5, 'sawtooth', 0.26);
-  note(100.6, 1046.50, 2.0, 'sawtooth', 0.3);
-  chord(97.5, [C3, G4, E5], 5.0, 'sine', 0.12);
-  timpani(97.5, 80, 0.4);
-  timpani(99.0, 80, 0.4);
-  timpani(100.5, 85, 0.5);
+  // =============================================================
+  // Section D: Rising tension / minor turn (40–56s)
+  // Fraud / compliance / dark humor beats
+  // =============================================================
+  strings(40.0, [G2, D3, G3, Bb3], 3.5, 0.12);
+  brass(40.0, D5, 0.35, 0.24);
+  brass(40.35, Eb5, 0.35, 0.24);
+  brass(40.7, F5, 0.35, 0.24);
+  brass(41.05, G5, 0.9, 0.28);
+  timpani(40.0, 60, 0.4, 0.6);
+  timpani(41.0, 60, 0.4, 0.6);
+  snare(40.5, 0.12); snare(41.0, 0.12); snare(41.5, 0.12);
 
-  // Sustain on the high note, fade with timpani
-  note(102.5, 1046.50, 3.0, 'sawtooth', 0.28);
-  note(102.5, 783.99, 3.0, 'sawtooth', 0.22);
-  chord(102.5, [C3, C4, E4, G4], 5.0, 'sine', 0.16);
-  for (let i = 0; i < 6; i++) timpani(103 + i * 0.25, 80, 0.3);
-  // Final massive chord
-  chord(106.0, [C3, G3, C4, E4, G4, C5, E5, G5], 4.0, 'sine', 0.16);
-  timpani(106.0, 70, 0.8);
-  timpani(107.0, 80, 0.8);
+  strings(43.5, [F2, C3, F3, A3], 3.5, 0.12);
+  brass(43.5, C5, 0.35, 0.24);
+  brass(43.85, D5, 0.35, 0.24);
+  brass(44.2, Eb5, 0.35, 0.24);
+  brass(44.55, F5, 0.9, 0.28);
+  timpani(43.5, 65, 0.4, 0.6);
+  snare(44.0, 0.12); snare(44.5, 0.12);
+
+  // Dark march (47-52): marching eighths rising
+  const darkBass = [F3, F3, G3, G3, A3, A3, Bb3, Bb3];
+  for (let i = 0; i < 8; i++) {
+    horn(47.0 + i * 0.5, darkBass[i], 0.45, 0.15);
+  }
+  strings(47.0, [Bb2, D3, F3], 4.5, 0.1);
+  brass(47.0, F4, 0.45, 0.22);
+  brass(47.5, A4, 0.45, 0.22);
+  brass(48.0, C5, 0.45, 0.22);
+  brass(48.5, F5, 0.45, 0.24);
+  brass(49.0, A5, 0.45, 0.26);
+  brass(49.5, F5, 0.45, 0.24);
+  brass(50.0, G5, 0.45, 0.26);
+  brass(50.5, A5, 0.9, 0.3);
+  for (let i = 0; i < 9; i++) timpani(47.0 + i * 0.5, 70, 0.35, 0.5);
+  snare(47.0, 0.1); snare(47.5, 0.12); snare(48.0, 0.1); snare(48.5, 0.12);
+  snare(49.0, 0.1); snare(49.5, 0.12); snare(50.0, 0.1); snare(50.5, 0.14);
+  cymbal(51.5, 0.16);
+
+  // Release to major (52-56)
+  brass(52.0, Bb5, 1.2, 0.32);
+  brass(53.2, A5, 0.4, 0.28);
+  brass(53.6, G5, 0.4, 0.28);
+  brass(54.0, F5, 1.8, 0.3);
+  horn(52.0, Bb3, 3.5, 0.16);
+  horn(52.0, F4, 3.5, 0.14);
+  strings(52.0, [Bb2, F3, Bb3, D4, F4], 3.5, 0.12);
+  timpani(52.0, 75, 0.5, 0.7);
+  timpani(53.5, 75, 0.4, 0.6);
+  cymbal(52.0, 0.2);
+
+  // =============================================================
+  // Section E: Reprise of Main Theme (56–72s) — fuller orchestration
+  // =============================================================
+  // Same theme as B but with octave doubling in brass
+  brass(56.0, Bb4, 0.35, 0.26);
+  brass(56.0, Bb5, 0.35, 0.22);
+  brass(56.35, D5, 0.35, 0.26);
+  brass(56.35, D6, 0.35, 0.2);
+  brass(56.7, F5, 0.7, 0.3);
+  brass(56.7, F6, 0.7, 0.22);
+  brass(57.4, Eb5, 0.3, 0.26);
+  brass(57.7, D5, 0.3, 0.26);
+  horn(56.0, Bb2, 2.0, 0.15);
+  horn(56.0, F3, 2.0, 0.13);
+  strings(56.0, [Bb2, F3, Bb3, D4, F4], 2.0, 0.12);
+  timpani(56.0, 75, 0.4, 0.7);
+  snare(56.9, 0.12);
+
+  brass(58.0, C5, 0.4, 0.26);
+  brass(58.0, C6, 0.4, 0.2);
+  brass(58.4, F5, 0.4, 0.26);
+  brass(58.4, F6, 0.4, 0.2);
+  brass(58.8, A5, 0.6, 0.3);
+  brass(59.4, G5, 0.3, 0.26);
+  brass(59.7, F5, 0.3, 0.26);
+  horn(58.0, C3, 1.9, 0.15);
+  strings(58.0, [F2, C3, F3, A3, C4], 1.9, 0.12);
+  timpani(58.0, 70, 0.4, 0.7);
+  snare(58.9, 0.12);
+
+  brass(60.0, G4, 0.4, 0.24);
+  brass(60.0, G5, 0.4, 0.22);
+  brass(60.4, Bb4, 0.4, 0.24);
+  brass(60.4, Bb5, 0.4, 0.22);
+  brass(60.8, D5, 0.6, 0.28);
+  brass(60.8, D6, 0.6, 0.24);
+  brass(61.4, C5, 0.3, 0.24);
+  brass(61.7, Bb4, 0.3, 0.24);
+  horn(60.0, G2, 1.9, 0.15);
+  strings(60.0, [G2, D3, G3, Bb3], 1.9, 0.12);
+  timpani(60.0, 75, 0.4, 0.7);
+
+  brass(62.0, Eb5, 0.4, 0.26);
+  brass(62.0, Eb6, 0.4, 0.22);
+  brass(62.4, G5, 0.4, 0.28);
+  brass(62.8, Bb5, 0.8, 0.34);
+  brass(63.6, A5, 0.4, 0.3);
+  horn(62.0, Eb3, 1.9, 0.16);
+  strings(62.0, [Eb2, Bb2, Eb3, G3, Bb3], 1.9, 0.12);
+  timpani(62.0, 75, 0.4, 0.7);
+  cymbal(62.0, 0.18);
+
+  // Big pushed continuation
+  brass(64.0, G5, 0.3, 0.3);
+  brass(64.3, A5, 0.3, 0.3);
+  brass(64.6, Bb5, 0.3, 0.32);
+  brass(64.9, C6, 0.3, 0.32);
+  brass(65.2, D6, 0.8, 0.36);
+  horn(64.0, Bb3, 2.0, 0.16);
+  strings(64.0, [Bb2, D3, F3, Bb3, D4], 2.0, 0.12);
+  timpani(64.0, 75, 0.4, 0.7);
+
+  brass(66.0, Eb6, 0.4, 0.32);
+  brass(66.4, D6, 0.4, 0.3);
+  brass(66.8, C6, 0.4, 0.3);
+  brass(67.2, Bb5, 0.4, 0.3);
+  brass(67.6, F5, 0.4, 0.28);
+  horn(66.0, F3, 2.0, 0.16);
+  strings(66.0, [F2, A2, C3, F3, A3], 2.0, 0.12);
+  timpani(66.0, 70, 0.4, 0.6);
+
+  brass(68.0, Bb4, 0.4, 0.28);
+  brass(68.4, D5, 0.4, 0.28);
+  brass(68.8, F5, 0.4, 0.3);
+  brass(69.2, Bb5, 1.6, 0.36);
+  horn(68.0, Bb3, 2.8, 0.18);
+  horn(68.0, F4, 2.8, 0.14);
+  strings(68.0, [Bb2, F3, Bb3, D4, F4], 2.8, 0.14);
+  timpani(68.0, 75, 0.5, 0.7);
+  timpani(69.2, 75, 0.5, 0.8);
+  cymbal(69.2, 0.22);
+
+  // =============================================================
+  // Section F: Quieter interlude (72–86s)
+  // Gives ears a rest before the big finale
+  // =============================================================
+  strings(72.0, [Bb2, D3, F3, Bb3], 5.0, 0.11);
+  horn(72.5, Bb3, 1.3, 0.14);
+  horn(73.8, D4, 1.3, 0.14);
+  brass(75.0, F4, 0.5, 0.18);
+  brass(75.5, Bb4, 0.5, 0.18);
+  brass(76.0, D5, 1.0, 0.22);
+
+  strings(77.0, [G2, D3, G3, Bb3], 5.0, 0.11);
+  horn(77.5, G3, 1.3, 0.14);
+  horn(78.8, Bb3, 1.3, 0.14);
+  brass(80.0, D5, 0.5, 0.2);
+  brass(80.5, G5, 0.5, 0.2);
+  brass(81.0, Bb5, 1.2, 0.26);
+
+  // Build-up
+  strings(82.5, [Eb3, G3, Bb3, Eb4], 3.5, 0.12);
+  brass(82.5, Bb5, 0.25, 0.24);
+  brass(82.75, C6, 0.25, 0.26);
+  brass(83.0, D6, 0.25, 0.28);
+  brass(83.25, Eb6, 0.25, 0.3);
+  brass(83.5, F6, 0.5, 0.32);
+  brass(84.0, Eb6, 0.3, 0.3);
+  brass(84.3, D6, 0.3, 0.28);
+  brass(84.6, C6, 0.3, 0.28);
+  brass(84.9, Bb5, 1.0, 0.3);
+  timpani(82.5, 75, 0.4, 0.6);
+  timpani(83.5, 75, 0.4, 0.7);
+  timpani(84.9, 75, 0.5, 0.7);
+
+  // =============================================================
+  // Section G: Grand Finale (86–107s)
+  // Full orchestration, dramatic cadence
+  // =============================================================
+  // Pickup to finale
+  cymbal(86.0, 0.24);
+  timpani(86.0, 75, 0.5, 0.8);
+
+  // First big statement of finale
+  brass(86.0, F5, 0.4, 0.32);
+  brass(86.4, Bb5, 0.4, 0.32);
+  brass(86.8, D6, 1.0, 0.36);
+  brass(86.0, Bb4, 0.4, 0.28);
+  brass(86.4, D5, 0.4, 0.28);
+  brass(86.8, F5, 1.0, 0.3);
+  horn(86.0, Bb2, 2.0, 0.18);
+  horn(86.0, F3, 2.0, 0.16);
+  strings(86.0, [Bb2, F3, Bb3, D4, F4, Bb4], 2.0, 0.14);
+  timpani(86.8, 75, 0.5, 0.7);
+
+  brass(88.0, C6, 0.4, 0.32);
+  brass(88.4, D6, 0.4, 0.32);
+  brass(88.8, F6, 1.0, 0.38);
+  horn(88.0, F3, 2.0, 0.18);
+  strings(88.0, [F2, C3, F3, A3, C4, F4], 2.0, 0.14);
+  timpani(88.0, 70, 0.4, 0.7);
+  timpani(88.8, 70, 0.5, 0.8);
+  cymbal(88.8, 0.2);
+
+  // Second phrase of finale — slightly higher peak
+  brass(90.0, Eb6, 0.3, 0.32);
+  brass(90.3, D6, 0.3, 0.3);
+  brass(90.6, C6, 0.3, 0.3);
+  brass(90.9, Bb5, 0.3, 0.3);
+  brass(91.2, A5, 0.3, 0.3);
+  brass(91.5, Bb5, 0.5, 0.32);
+  brass(92.0, F5, 1.4, 0.3);
+  horn(90.0, Bb3, 3.4, 0.18);
+  strings(90.0, [Bb2, F3, Bb3, D4, F4], 3.4, 0.14);
+  timpani(90.0, 75, 0.4, 0.7);
+  timpani(91.5, 75, 0.4, 0.7);
+
+  brass(93.5, Bb4, 0.5, 0.3);
+  brass(94.0, D5, 0.5, 0.3);
+  brass(94.5, F5, 0.5, 0.32);
+  brass(95.0, Bb5, 2.0, 0.36);
+  horn(93.5, Bb3, 3.5, 0.2);
+  horn(93.5, F4, 3.5, 0.16);
+  strings(93.5, [Bb2, F3, Bb3, D4, F4, Bb4], 3.5, 0.16);
+  timpani(93.5, 75, 0.5, 0.7);
+  timpani(95.0, 75, 0.5, 0.8);
+  cymbal(95.0, 0.22);
+
+  // =============================================================
+  // Coda (97–110s) — final cadence and massive chord
+  // =============================================================
+  // Descending bass crush
+  horn(97.0, Bb4, 0.4, 0.2);
+  horn(97.4, Bb4, 0.4, 0.2);
+  horn(97.8, F4, 0.4, 0.2);
+  horn(98.2, F4, 0.4, 0.2);
+  brass(97.0, D5, 0.4, 0.24);
+  brass(97.4, F5, 0.4, 0.26);
+  brass(97.8, Bb5, 0.4, 0.28);
+  brass(98.2, D6, 0.4, 0.3);
+  brass(98.6, F6, 0.6, 0.36);
+  strings(97.0, [Bb2, F3, Bb3, D4], 2.2, 0.14);
+  timpani(97.0, 75, 0.4, 0.7);
+  timpani(97.8, 75, 0.4, 0.7);
+  timpani(98.6, 75, 0.5, 0.8);
+
+  // Final sustained chord with timpani roll
+  strings(99.5, [Bb2, F3, Bb3, D4, F4, Bb4, D5, F5], 8.0, 0.18);
+  brass(99.5, Bb5, 4.0, 0.32);
+  brass(99.5, F5, 4.0, 0.28);
+  brass(99.5, D5, 4.0, 0.26);
+  horn(99.5, Bb2, 6.0, 0.2);
+  horn(99.5, F3, 6.0, 0.18);
+  cymbal(99.5, 0.28);
+  // Timpani roll
+  for (let i = 0; i < 12; i++) {
+    timpani(99.5 + i * 0.12, 75, 0.3, 0.5 + i * 0.02);
+  }
+
+  // Climactic final hit
+  timpani(102.0, 70, 0.8, 0.9);
+  timpani(103.0, 75, 0.8, 0.9);
+  cymbal(103.0, 0.3);
+  brass(103.0, Bb5, 3.5, 0.38);
+  brass(103.0, D6, 3.5, 0.34);
+  brass(103.0, F6, 3.5, 0.3);
+  strings(103.0, [Bb2, F3, Bb3, D4, F4, Bb4, D5, F5, Bb5], 5.0, 0.2);
+  horn(103.0, Bb2, 5.0, 0.22);
+
+  // Very final punctuation
+  timpani(106.5, 60, 1.0, 0.9);
+  cymbal(106.5, 0.28);
 }
 
 let selectedTeam = null;
@@ -2083,7 +2388,11 @@ function tick(dt) {
       } else if (weapon === 'spiral') {
         if (t - lastShot > cd) { lastShot = t; fireSpirals(); }
       } else if (weapon === 'trail') {
-        // Handled automatically while moving — see below
+        // Space bar snaps ship 90° right instantly
+        if (t - lastShot > 0.25) {  // debounce so holding space doesn't spin them
+          lastShot = t;
+          myState.angle += Math.PI / 2;
+        }
       } else if (weapon === 'miniX') {
         if (t - lastShot > cd) { lastShot = t; spawnMiniXs(); }
       } else if (weapon === 'autolaser') {
@@ -2108,10 +2417,13 @@ function tick(dt) {
     // Network broadcast
     if (t - lastNetSend > NETWORK_TICK) {
       lastNetSend = t;
+      const extra = {};
+      if (myTeam === 'Recon') extra.tractoring = !!keys[' '];
       update_db(`players/${myId}`, {
         x: myState.x, y: myState.y, angle: myState.angle,
         vx: myState.vx, vy: myState.vy, alive: true,
-        last: Date.now()
+        last: Date.now(),
+        ...extra
       });
     }
   }
@@ -2286,7 +2598,8 @@ function tick(dt) {
     if (!dead && myState && n.owner !== myId && !sameSide(n.team, myTeam) && !n._hitMe) {
       const radius = NET_START_R + (NET_END_R - NET_START_R) * (age / NET_LIFE);
       const d = Math.hypot(myState.x - n.x, myState.y - n.y);
-      if (d <= radius) {
+      // Hit on the leading edge — a ring ~20px thick, matching the visible mesh
+      if (d >= radius - 22 && d <= radius + 4) {
         n._hitMe = true;
         handleDeath(n);
       }
@@ -2297,12 +2610,12 @@ function tick(dt) {
   for (const [id, s] of spirals) {
     const age = t - s.birth;
     if (age > SPIRAL_LIFE) { spirals.delete(id); continue; }
-    // Position updates locally each frame (spiral path)
-    const speedFactor = Math.max(0.2, 1 - age / SPIRAL_LIFE);
-    const travel = SPIRAL_SPEED * age * speedFactor;
-    const spiralPhase = s.baseAngle + s.spinDir * age * 6;
-    s.curX = s.x + Math.cos(spiralPhase) * travel;
-    s.curY = s.y + Math.sin(spiralPhase) * travel;
+    // Corkscrew path: radius grows steadily, angle rotates rapidly
+    const radius = SPIRAL_SPEED * age * 0.33;  // outward growth
+    const rotationSpeed = 10;                  // rad/s of spin
+    const spiralPhase = s.baseAngle + s.spinDir * age * rotationSpeed;
+    s.curX = s.x + Math.cos(spiralPhase) * radius;
+    s.curY = s.y + Math.sin(spiralPhase) * radius;
     if (!dead && myState && s.owner !== myId && !sameSide(s.team, myTeam) && !s._hitMe) {
       const d = Math.hypot(myState.x - s.curX, myState.y - s.curY);
       if (d <= SPIRAL_HIT_R) {
@@ -2385,31 +2698,30 @@ function tick(dt) {
   }
 
   // ----- Recon tractor beam + kill-on-touch (Accounting subfaction) -----
-  // Every Recon ship pulls nearby enemies toward it. Touch = death.
-  // Apply pull only to ME, based on all enemy Recon ships.
+  // Tractor only active when the Recon pilot is holding space.
+  // Kill-on-touch is ALWAYS active (touching a Recon ship is fatal regardless of beam state).
   if (!dead && myState && myTeam !== 'Recon') {
     for (const [pid, pl] of players) {
       if (pid === myId || !pl.alive || pl.team !== 'Recon' || sameSide(pl.team, myTeam)) continue;
       const dx = pl.x - myState.x, dy = pl.y - myState.y;
       const dist = Math.hypot(dx, dy);
       if (dist < 1) continue;
-      if (dist > TRACTOR_RANGE) continue;
-      // Recon's tractor cone points in their facing direction.
-      // Am I inside the cone?
-      const angleToMe = Math.atan2(-dy, -dx); // angle from Recon to me
-      let delta = angleToMe - pl.angle;
-      while (delta > Math.PI) delta -= Math.PI * 2;
-      while (delta < -Math.PI) delta += Math.PI * 2;
-      if (Math.abs(delta) > TRACTOR_HALF_ANGLE) continue;
-      // Pull me
-      const pullStrength = TRACTOR_FORCE * (1 - dist / TRACTOR_RANGE);
-      myState.vx += (dx / dist) * pullStrength * dt;
-      myState.vy += (dy / dist) * pullStrength * dt;
-      // Kill on touch
+      // Kill on touch (always)
       if (dist <= RECON_KILL_R) {
         handleDeath({ owner: pid, team: pl.team });
         break;
       }
+      // Pull only if tractor is on and we're in the cone
+      if (!pl.tractoring) continue;
+      if (dist > TRACTOR_RANGE) continue;
+      const angleToMe = Math.atan2(-dy, -dx);
+      let delta = angleToMe - pl.angle;
+      while (delta > Math.PI) delta -= Math.PI * 2;
+      while (delta < -Math.PI) delta += Math.PI * 2;
+      if (Math.abs(delta) > TRACTOR_HALF_ANGLE) continue;
+      const pullStrength = TRACTOR_FORCE * (1 - dist / TRACTOR_RANGE);
+      myState.vx += (dx / dist) * pullStrength * dt;
+      myState.vy += (dy / dist) * pullStrength * dt;
     }
   }
 
@@ -2419,7 +2731,7 @@ function tick(dt) {
     for (const [pid, pl] of players) {
       if (pid === myId || !pl.alive || sameSide(pl.team, myTeam)) continue;
       const d = Math.hypot(pl.x - myState.x, pl.y - myState.y);
-      if (d < SHIP_R * 1.6) {
+      if (d < SHIP_R * 2.8) {
         if (pl.team === 'MG') {
           handleDeath({ owner: pid, team: pl.team });
           break;
@@ -2582,12 +2894,12 @@ function fireNet() {
 }
 
 function fireSpirals() {
-  // Fraud fires many flaming spirals in a 360° burst
-  const count = 8;
+  // Fraud fires many flaming spirals in a 360° burst — they corkscrew outward
+  const count = 14;
   for (let i = 0; i < count; i++) {
     const r = push(ref(db, 'spirals'));
     const id = r.key;
-    const baseAngle = (i / count) * Math.PI * 2 + Math.random() * 0.2;
+    const baseAngle = (i / count) * Math.PI * 2 + Math.random() * 0.15;
     const spinDir = Math.random() < 0.5 ? 1 : -1;
     const s = {
       x: myState.x, y: myState.y,
@@ -2629,19 +2941,26 @@ function spawnMiniXs() {
 }
 
 function fireAutoLaser() {
-  // AP's weapon — finds nearest enemy within range and fires a short instant laser at them
+  // AP's weapon — finds nearest enemy within range and fires a short instant laser at them.
+  // If no target, fires forward along current heading so the ship still feels alive.
   let target = null, bestDist = AUTOLASER_RANGE;
   for (const [pid, pl] of players) {
     if (pid === myId || !pl.alive || sameSide(pl.team, myTeam)) continue;
     const d = Math.hypot(pl.x - myState.x, pl.y - myState.y);
     if (d < bestDist) { bestDist = d; target = pl; }
   }
-  if (!target) return;
   const r = push(ref(db, 'lasers'));
   const id = r.key;
+  let tx, ty;
+  if (target) {
+    tx = target.x; ty = target.y;
+  } else {
+    tx = myState.x + Math.cos(myState.angle) * AUTOLASER_RANGE;
+    ty = myState.y + Math.sin(myState.angle) * AUTOLASER_RANGE;
+  }
   const l = {
     x: myState.x, y: myState.y,
-    tx: target.x, ty: target.y,
+    tx, ty,
     team: myTeam, owner: myId, ts: Date.now()
   };
   set(r, l);
@@ -2863,19 +3182,19 @@ function render() {
     if (!m.exploded) {
       // Pulsing orb — accelerating pulse as it nears detonation
       const urgency = age / MINE_LIFE;
-      const pulseSpeed = 2 + urgency * 10;
+      const pulseSpeed = 3 + urgency * 18;
       const pulse = 0.5 + 0.5 * Math.sin(age * pulseSpeed * Math.PI);
       ctx.fillStyle = TEAM_COLORS.Risk;
       ctx.shadowColor = TEAM_COLORS.Risk;
-      ctx.shadowBlur = 8 + pulse * 12;
+      ctx.shadowBlur = 8 + pulse * 14;
       ctx.beginPath();
-      ctx.arc(m.x, m.y, 5 + pulse * 2, 0, Math.PI * 2);
+      ctx.arc(m.x, m.y, 5 + pulse * 3, 0, Math.PI * 2);
       ctx.fill();
-      // Outer ring
-      ctx.strokeStyle = `rgba(255, 77, 109, ${0.3 + pulse * 0.4})`;
-      ctx.lineWidth = 1.5;
+      // Outer ring — grows as it ages for extra warning
+      ctx.strokeStyle = `rgba(255, 77, 109, ${0.3 + pulse * 0.5 + urgency * 0.2})`;
+      ctx.lineWidth = 1.5 + urgency * 1.5;
       ctx.beginPath();
-      ctx.arc(m.x, m.y, 10, 0, Math.PI * 2);
+      ctx.arc(m.x, m.y, 10 + urgency * 6, 0, Math.PI * 2);
       ctx.stroke();
       ctx.shadowBlur = 0;
     } else {
@@ -3054,16 +3373,19 @@ function render() {
     ctx.shadowBlur = 0;
   }
 
-  // Recon tractor beam — draw the cone if any Recon is in the area
+  // Recon tractor beam — only draw when tractoring is active
   for (const [pid, pl] of players) {
     if (!pl.alive || pl.team !== 'Recon') continue;
+    // For my own Recon, show it live based on space key (no network lag)
+    const active = (pid === myId) ? !!keys[' '] : !!pl.tractoring;
+    if (!active) continue;
     ctx.save();
     ctx.translate(pl.x, pl.y);
     ctx.rotate(pl.angle);
     const pulsePhase = (performance.now() / 300) + pid.charCodeAt(0);
     const pulse = 0.5 + 0.5 * Math.sin(pulsePhase);
     const grad = ctx.createLinearGradient(0, 0, TRACTOR_RANGE, 0);
-    grad.addColorStop(0, `rgba(255, 182, 39, ${0.25 + pulse * 0.15})`);
+    grad.addColorStop(0, `rgba(255, 182, 39, ${0.35 + pulse * 0.2})`);
     grad.addColorStop(1, `rgba(255, 182, 39, 0)`);
     ctx.fillStyle = grad;
     ctx.beginPath();
@@ -3390,6 +3712,25 @@ function drawShip(p, isMe) {
     ctx.shadowBlur = 0;
     ctx.beginPath();
     ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Forward cone indicator — clearly shows which way it's pointing
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 14 : 8;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(22, 0);
+    ctx.lineTo(12, -5);
+    ctx.lineTo(12, 5);
+    ctx.closePath();
+    ctx.fill();
+    // Inner highlight on the nose cone
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.beginPath();
+    ctx.moveTo(20, 0);
+    ctx.lineTo(14, -2.5);
+    ctx.lineTo(14, 2.5);
+    ctx.closePath();
     ctx.fill();
   } else if (p.team === 'AP') {
     // "AP" letters forming the ship
