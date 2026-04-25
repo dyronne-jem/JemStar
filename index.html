@@ -1560,6 +1560,8 @@ const victoryScore = document.getElementById('victoryScore');
 const victoryDismiss = document.getElementById('victoryDismiss');
 victoryDismiss?.addEventListener('click', () => {
   victoryBanner.classList.remove('show');
+  // Remove the event from the database so it doesn't appear for future joiners
+  remove(ref(db, 'victoryEvent')).catch(()=>{});
 });
 
 // Trigger end-game victory after KCU boss falls. Reads scores, picks the highest
@@ -1625,8 +1627,16 @@ async function triggerBossVictory() {
 onValue(ref(db, 'victoryEvent'), snap => {
   const ev = snap.val();
   if (!ev || !ev.ts) return;
-  if (ev.ts < (window._joinTime || 0)) return;
+  // Skip if this browser has already seen this victory (prevents showing on reload)
+  let lastSeenVictory = 0;
+  try { lastSeenVictory = parseInt(localStorage.getItem('fars_lastVictory') || '0', 10); } catch(e) {}
+  if (ev.ts <= lastSeenVictory) return;
+  // Skip stale events (more than 60s old when received)
+  if (ev.ts < Date.now() - 60000) return;
+  // Skip if banner already showing
   if (victoryBanner.classList.contains('show')) return;
+  // Mark as seen so reload doesn't trigger again
+  try { localStorage.setItem('fars_lastVictory', String(ev.ts)); } catch(e) {}
   victoryTeam.textContent = ev.winner || '—';
   victoryTeam.style.color = TEAM_COLORS[ev.winner] || '#ffe600';
   victoryScore.textContent = (ev.score || 0) + ' point' + (ev.score === 1 ? '' : 's');
@@ -2498,11 +2508,24 @@ async function startGame() {
     renderRoster(data);
   });
 
+  // Stale weapon filter - any weapon entry older than 15s is from a previous session
+  // (longer than any weapon's lifetime). Skip + delete so it doesn't render or trigger sounds.
+  const isStaleWeapon = (entry, id, node) => {
+    if (!entry || !entry.ts) return false;
+    if (Date.now() - entry.ts > 15000) {
+      // Clean up the orphan
+      remove(ref(db, `${node}/${id}`)).catch(()=>{});
+      return true;
+    }
+    return false;
+  };
+
   // Listen to bullets (fire-and-forget)
   onChildAdded(ref(db, 'bullets'), snap => {
     const b = snap.val();
     const id = snap.key;
     if (!b) return;
+    if (isStaleWeapon(b, id, 'bullets')) return;
     bullets.set(id, { ...b, birth: performance.now() / 1000 });
     // Auto-cleanup remote tracking after lifetime
     setTimeout(() => bullets.delete(id), BULLET_LIFE * 1000 + 500);
@@ -2518,6 +2541,7 @@ async function startGame() {
     const p = snap.val();
     const id = snap.key;
     if (!p) return;
+    if (isStaleWeapon(p, id, 'pulses')) return;
     pulses.set(id, { ...p, birth: performance.now() / 1000 });
     setTimeout(() => pulses.delete(id), CFO_PULSE_DURATION * 1000 + 200);
     if (p.owner === myId) {
@@ -2531,6 +2555,7 @@ async function startGame() {
     const t = snap.val();
     const id = snap.key;
     if (!t) return;
+    if (isStaleWeapon(t, id, 'torpedoes')) return;
     torpedoes.set(id, { ...t, birth: performance.now() / 1000 });
     setTimeout(() => torpedoes.delete(id), TORP_LIFE * 1000 + 500);
     if (t.owner === myId) {
@@ -2544,6 +2569,7 @@ async function startGame() {
     const m = snap.val();
     const id = snap.key;
     if (!m) return;
+    if (isStaleWeapon(m, id, 'mines')) return;
     mines.set(id, { ...m, birth: performance.now() / 1000, exploded: false });
     setTimeout(() => mines.delete(id), (MINE_LIFE + MINE_BLAST_DURATION) * 1000 + 500);
     if (m.owner === myId) {
@@ -2557,6 +2583,7 @@ async function startGame() {
     const c = snap.val();
     const id = snap.key;
     if (!c) return;
+    if (isStaleWeapon(c, id, 'cones')) return;
     cones.set(id, { ...c, birth: performance.now() / 1000 });
     setTimeout(() => cones.delete(id), CONE_DURATION * 1000 + 200);
     if (c.owner === myId) {
@@ -2570,6 +2597,7 @@ async function startGame() {
     const n = snap.val();
     const id = snap.key;
     if (!n) return;
+    if (isStaleWeapon(n, id, 'nets')) return;
     nets.set(id, { ...n, birth: performance.now() / 1000 });
     setTimeout(() => nets.delete(id), NET_LIFE * 1000 + 500);
     if (n.owner === myId) {
@@ -2583,6 +2611,7 @@ async function startGame() {
     const s = snap.val();
     const id = snap.key;
     if (!s) return;
+    if (isStaleWeapon(s, id, 'spirals')) return;
     spirals.set(id, { ...s, birth: performance.now() / 1000 });
     setTimeout(() => spirals.delete(id), SPIRAL_LIFE * 1000 + 500);
     if (s.owner === myId) {
@@ -2596,6 +2625,7 @@ async function startGame() {
     const tr = snap.val();
     const id = snap.key;
     if (!tr) return;
+    if (isStaleWeapon(tr, id, 'trails')) return;
     trails.set(id, { ...tr, birth: performance.now() / 1000 });
     setTimeout(() => trails.delete(id), TRAIL_LIFE * 1000 + 500);
     if (tr.owner === myId) {
@@ -2608,6 +2638,7 @@ async function startGame() {
     const x = snap.val();
     const id = snap.key;
     if (!x) return;
+    if (isStaleWeapon(x, id, 'minixs')) return;
     minixs.set(id, { ...x, birth: performance.now() / 1000 });
     setTimeout(() => minixs.delete(id), MINIX_LIFE * 1000 + 500);
     if (x.owner === myId) {
@@ -2620,6 +2651,7 @@ async function startGame() {
     const l = snap.val();
     const id = snap.key;
     if (!l) return;
+    if (isStaleWeapon(l, id, 'lasers')) return;
     lasers.set(id, { ...l, birth: performance.now() / 1000 });
     setTimeout(() => lasers.delete(id), AUTOLASER_LIFE * 1000 + 200);
     if (l.owner === myId) {
@@ -2633,6 +2665,7 @@ async function startGame() {
     const rb = snap.val();
     const id = snap.key;
     if (!rb) return;
+    if (isStaleWeapon(rb, id, 'ribbons')) return;
     ribbons.set(id, { ...rb, birth: performance.now() / 1000 });
     setTimeout(() => ribbons.delete(id), RIBBON_LIFE * 1000 + 200);
     if (rb.owner === myId) {
@@ -2645,6 +2678,7 @@ async function startGame() {
     const tp = snap.val();
     const id = snap.key;
     if (!tp) return;
+    if (isStaleWeapon(tp, id, 'trapezoids')) return;
     trapezoids.set(id, { ...tp, birth: performance.now() / 1000 });
     setTimeout(() => trapezoids.delete(id), TRAP_LIFE * 1000 + 200);
     if (tp.owner === myId) {
@@ -2673,6 +2707,11 @@ async function startGame() {
   onChildAdded(ref(db, 'killfeed'), snap => {
     const k = snap.val();
     if (!k) return;
+    // Skip stale kills from previous sessions
+    if (k.ts && Date.now() - k.ts > 15000) {
+      remove(ref(db, `killfeed/${snap.key}`)).catch(()=>{});
+      return;
+    }
     showKill(k);
     // Cleanup old killfeed entries (only the actor)
     if (k.killerId === myId) {
