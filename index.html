@@ -184,6 +184,25 @@
   }
   #skipIntro:hover { background: rgba(255,255,255,0.15); }
 
+  #soundPrompt {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 11;
+    background: rgba(255,230,0,0.12);
+    border: 1px solid rgba(255,230,0,0.4);
+    color: #ffe600;
+    padding: 10px 20px;
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    border-radius: 2px;
+    animation: soundPromptPulse 1.8s ease-in-out infinite;
+  }
+  #soundPrompt.fade { opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+  @keyframes soundPromptPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+
   /* ===== Login Screen ===== */
   #login {
     position: fixed; inset: 0;
@@ -197,6 +216,8 @@
   #login.hidden { display: none; }
   .login-card {
     width: min(560px, 92vw);
+    max-height: 92vh;
+    overflow-y: auto;
     padding: 40px 36px;
     background: rgba(10,13,31,0.85);
     border: 1px solid rgba(255,255,255,0.08);
@@ -204,6 +225,8 @@
     backdrop-filter: blur(20px);
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
   }
+  .login-card::-webkit-scrollbar { width: 6px; }
+  .login-card::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
   .title {
     font-family: 'Orbitron', 'JetBrains Mono', monospace;
     font-size: 28px;
@@ -282,6 +305,29 @@
     border-color: var(--team-color);
     background: rgba(255,255,255,0.04);
     box-shadow: inset 0 0 0 1px var(--team-color);
+  }
+  .sub-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .sub-btn {
+    padding: 10px 14px 10px 30px !important;
+    font-size: 11px !important;
+    letter-spacing: 0.15em !important;
+  }
+  .sub-btn::before {
+    width: 6px !important;
+    height: 6px !important;
+    left: 12px !important;
+  }
+  .sub-btn em {
+    font-style: normal;
+    font-size: 9px;
+    color: var(--ink-faint);
+    letter-spacing: 0.1em;
+    margin-left: 4px;
   }
   .cfo-btn {
     width: 100%;
@@ -432,6 +478,62 @@
   #stats .you { color: var(--ink); font-weight: 700; }
   #stats .num { font-family: 'Orbitron', monospace; font-size: 14px; }
 
+  #roster {
+    position: fixed;
+    top: 170px; right: 16px;
+    width: 200px;
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+    background: rgba(5,6,15,0.75);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 3px;
+    padding: 12px 14px;
+  }
+  #roster h3 {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  #roster::-webkit-scrollbar { width: 4px; }
+  #roster::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+  .roster-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+  .roster-entry .r-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px currentColor;
+  }
+  .roster-entry .r-name {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .roster-entry.me .r-name::after {
+    content: ' ◄';
+    color: var(--ink-dim);
+    font-weight: 400;
+  }
+  .roster-entry.dead { opacity: 0.45; }
+  .roster-entry.cfo-entry {
+    background: rgba(200, 121, 255, 0.08);
+    padding: 4px 6px;
+    margin: 2px -6px;
+    border-radius: 2px;
+  }
+
   #chat {
     position: fixed;
     bottom: 16px; left: 16px;
@@ -520,6 +622,91 @@
     font-weight: 900;
     color: var(--ink);
   }
+  .swap-btn {
+    margin-top: 16px;
+    padding: 10px 20px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--ink);
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    cursor: pointer;
+    border-radius: 2px;
+    pointer-events: auto;
+    transition: all 0.15s;
+  }
+  .swap-btn:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.4); }
+
+  #resetConfirm {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.6);
+    z-index: 60;
+  }
+  #resetConfirm.show { display: flex; }
+  #resetConfirm .panel {
+    background: rgba(5,6,15,0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,230,0,0.35);
+    padding: 28px 40px;
+    text-align: center;
+    border-radius: 3px;
+    min-width: 360px;
+  }
+  #resetConfirm .label {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    color: #ffe600;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  #resetConfirm .msg {
+    color: var(--ink-dim);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  #resetConfirm .btns { display: flex; gap: 10px; justify-content: center; }
+  #resetConfirm button {
+    padding: 10px 22px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--ink);
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+  #resetConfirm #resetYes { border-color: rgba(255,230,0,0.6); color: #ffe600; }
+  #resetConfirm #resetYes:hover { background: rgba(255,230,0,0.1); }
+  #resetConfirm #resetNo:hover { background: rgba(255,255,255,0.08); }
+
+  #resetToast {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(5,6,15,0.9);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,230,0,0.5);
+    color: #ffe600;
+    font-family: 'Orbitron', monospace;
+    font-size: 14px;
+    letter-spacing: 0.3em;
+    padding: 18px 36px;
+    border-radius: 3px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s;
+    z-index: 55;
+  }
+  #resetToast.show { opacity: 1; }
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
@@ -528,6 +715,7 @@
 <!-- Intro Crawl Screen -->
 <div id="intro">
   <div id="introStars"></div>
+  <div id="soundPrompt">🔊 Click anywhere for sound</div>
   <div id="introLogo">FARS WARS</div>
   <div id="introSubtitle">A long time ago in a finance department far, far away....</div>
   <div id="crawlContainer">
@@ -584,6 +772,18 @@
       <button class="team-btn" data-team="Strategy" style="--team-color: var(--strategy)">Strategy</button>
     </div>
 
+    <label class="field-label">Or Pick a Specialist Division</label>
+    <div class="sub-grid">
+      <button class="team-btn sub-btn" data-team="Budget"     style="--team-color: var(--finance)">Budget <em>(Finance)</em></button>
+      <button class="team-btn sub-btn" data-team="Payroll"    style="--team-color: var(--finance)">Payroll <em>(Finance)</em></button>
+      <button class="team-btn sub-btn" data-team="AP"         style="--team-color: var(--accounting)">AP <em>(Accounting)</em></button>
+      <button class="team-btn sub-btn" data-team="Recon"      style="--team-color: var(--accounting)">Recon <em>(Accounting)</em></button>
+      <button class="team-btn sub-btn" data-team="Compliance" style="--team-color: var(--risk)">Compliance <em>(Risk)</em></button>
+      <button class="team-btn sub-btn" data-team="Fraud"      style="--team-color: var(--risk)">Fraud <em>(Risk)</em></button>
+      <button class="team-btn sub-btn" data-team="PMO"        style="--team-color: var(--strategy)">PMO <em>(Strategy)</em></button>
+      <button class="team-btn sub-btn" data-team="MG"         style="--team-color: var(--strategy)">MG <em>(Strategy)</em></button>
+    </div>
+
     <button id="cfoBtn" class="cfo-btn" data-team="CFO">
       <span class="cfo-label">★ CFO ★</span>
       <span class="cfo-status" id="cfoStatus">Available</span>
@@ -633,6 +833,11 @@
     <div style="margin-top:8px;"><button id="muteBtn" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);color:var(--ink-dim);font-family:inherit;font-size:10px;letter-spacing:0.2em;padding:4px 10px;cursor:pointer;border-radius:2px;">🔊 SOUND ON</button></div>
   </div>
 
+  <div id="roster">
+    <h3>// Pilots Online</h3>
+    <div id="rosterList"></div>
+  </div>
+
   <div id="chat">
     <div id="chatLog"></div>
     <input id="chatInput" type="text" maxlength="120" placeholder="Press Enter to chat..." />
@@ -644,8 +849,22 @@
     <div class="panel">
       <div class="label">// Hull Destroyed</div>
       <div class="countdown" id="countdownNum">3</div>
+      <button id="swapShipBtn" class="swap-btn">⇄ SWAP SHIP</button>
     </div>
   </div>
+
+  <div id="resetConfirm">
+    <div class="panel">
+      <div class="label">// Reset Scores?</div>
+      <div class="msg">All team scores and kill counts will return to zero.</div>
+      <div class="btns">
+        <button id="resetYes">RESET</button>
+        <button id="resetNo">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="resetToast"></div>
 </div>
 
 <!-- Firebase + Game Logic -->
@@ -692,8 +911,39 @@ const TEAM_STATS = {
   Accounting: { turn: 2.4, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'torpedo',  cooldown: 1.5, maxActive: 3 },
   Risk:       { turn: 3.8, accel: 340, maxSpeed: 360, drag: 0.5, weapon: 'mine',     cooldown: 0.5, maxActive: 12 },
   Strategy:   { turn: 3.0, accel: 240, maxSpeed: 650, drag: 0.5, weapon: 'cone',     cooldown: 0.9 },
-  CFO:        { turn: 3.4, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'pulse',    cooldown: CFO_PULSE_COOLDOWN }
+  CFO:        { turn: 3.4, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'pulse',    cooldown: CFO_PULSE_COOLDOWN },
+  // --- Risk subfactions ---
+  Compliance: { turn: 3.0, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'net',      cooldown: 1.4, maxActive: 4 },
+  Fraud:      { turn: 3.6, accel: 310, maxSpeed: 330, drag: 0.5, weapon: 'spiral',   cooldown: 0.9 },
+  // --- Finance subfactions ---
+  Budget:     { turn: 4.2, accel: 360, maxSpeed: 460, drag: 1.0, weapon: 'trail',    cooldown: 0.05 },
+  Payroll:    { turn: 4.8, accel: 360, maxSpeed: 460, drag: 1.0, weapon: 'miniX',    cooldown: 0.25 },
+  // --- Accounting subfactions ---
+  AP:         { turn: 4.5, accel: 200, maxSpeed: 220, drag: 0.5, weapon: 'autolaser', cooldown: 0.12 },
+  Recon:      { turn: 2.6, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'tractor',  cooldown: 0.0 },
+  // --- Strategy subfactions ---
+  PMO:        { turn: 3.4, accel: 260, maxSpeed: 320, drag: 0.5, weapon: 'ribbon',   cooldown: 0.18 },
+  MG:         { turn: 3.4, accel: 320, maxSpeed: 380, drag: 0.5, weapon: 'ram',      cooldown: 999 }
 };
+
+// Maps subfaction -> parent team (for color + score attribution)
+const PARENT_TEAM = {
+  Finance: 'Finance', Accounting: 'Accounting', Risk: 'Risk', Strategy: 'Strategy', CFO: 'CFO',
+  Compliance: 'Risk', Fraud: 'Risk',
+  Budget: 'Finance', Payroll: 'Finance',
+  AP: 'Accounting', Recon: 'Accounting',
+  PMO: 'Strategy', MG: 'Strategy'
+};
+
+// Resolve the color for any team OR subfaction
+function teamColor(team) {
+  return TEAM_COLORS[PARENT_TEAM[team] || team] || '#fff';
+}
+
+// Two ships on the same side? (parent team match)
+function sameSide(a, b) {
+  return (PARENT_TEAM[a] || a) === (PARENT_TEAM[b] || b);
+}
 
 // Torpedo constants
 const TORP_SPEED = 240;
@@ -712,6 +962,41 @@ const CONE_RANGE = 220;
 const CONE_HALF_ANGLE = Math.PI / 7;  // ~25° half-angle, ~50° total cone
 const CONE_DURATION = 0.25;
 const CONE_RECOIL = 900;              // instant velocity kick backwards
+
+// Compliance nets
+const NET_LIFE = 4.0;
+const NET_START_R = 10;
+const NET_END_R = 110;
+const NET_SPEED = 140;
+
+// Fraud flaming spirals
+const SPIRAL_LIFE = 0.9;
+const SPIRAL_SPEED = 280;
+const SPIRAL_HIT_R = 10;
+
+// Budget fire trail
+const TRAIL_LIFE = 2.0;
+const TRAIL_HIT_R = 14;
+
+// Payroll mini-X
+const MINIX_LIFE = 0.7;
+const MINIX_SPEED = 200;
+const MINIX_HIT_R = 8;
+
+// AP autolaser
+const AUTOLASER_RANGE = 260;
+const AUTOLASER_LIFE = 0.12;
+
+// Recon tractor
+const TRACTOR_RANGE = 450;
+const TRACTOR_HALF_ANGLE = Math.PI / 3;  // 60° half-angle, 120° cone
+const TRACTOR_FORCE = 280;               // px/s² pulled toward source
+const RECON_KILL_R = 24;                 // touching Recon = death
+
+// PMO ribbons
+const RIBBON_LIFE = 0.4;
+const RIBBON_LENGTH = 70;
+const RIBBON_HIT_R = 10;
 
 const TEAM_COLORS = {
   Finance:    "#00e5a8",
@@ -848,13 +1133,91 @@ const countdownNum = document.getElementById('countdownNum');
 const myKillsEl = document.getElementById('myKills');
 const myDeathsEl = document.getElementById('myDeaths');
 const onlineCountEl = document.getElementById('onlineCount');
+const rosterListEl = document.getElementById('rosterList');
+const resetConfirmEl = document.getElementById('resetConfirm');
+const resetYesBtn = document.getElementById('resetYes');
+const resetNoBtn = document.getElementById('resetNo');
+const resetToastEl = document.getElementById('resetToast');
+
+function renderRoster(playersData) {
+  if (!rosterListEl) return;
+  const entries = Object.entries(playersData);
+  // Sort: CFO first, then by team, then by name
+  const teamOrder = { CFO: 0, Finance: 1, Accounting: 2, Risk: 3, Strategy: 4 };
+  entries.sort((a, b) => {
+    const ta = teamOrder[a[1].team] ?? 99;
+    const tb = teamOrder[b[1].team] ?? 99;
+    if (ta !== tb) return ta - tb;
+    return (a[1].name || '').localeCompare(b[1].name || '');
+  });
+  rosterListEl.innerHTML = '';
+  for (const [id, p] of entries) {
+    const color = teamColor(p.team);
+    const div = document.createElement('div');
+    div.className = 'roster-entry';
+    if (id === myId) div.classList.add('me');
+    if (!p.alive) div.classList.add('dead');
+    if (p.team === 'CFO') div.classList.add('cfo-entry');
+    div.innerHTML = `<span class="r-dot" style="color:${color};background:${color}"></span><span class="r-name" style="color:${color}">${escapeHtml(p.name || '???')}</span>`;
+    rosterListEl.appendChild(div);
+  }
+}
 const muteBtn = document.getElementById('muteBtn');
 muteBtn.addEventListener('click', () => {
   muted = !muted;
   muteBtn.textContent = muted ? '🔇 SOUND OFF' : '🔊 SOUND ON';
 });
 
-// ---------- Intro Crawl ----------
+// ---------- Secret reset combo (Shift+R) ----------
+window.addEventListener('keydown', e => {
+  // Require shift+R, ignore when typing in chat or name
+  if (document.activeElement === chatInput || document.activeElement === nameInput) return;
+  if (e.shiftKey && (e.key === 'R' || e.key === 'r')) {
+    if (!myId) return; // only show in-game
+    e.preventDefault();
+    resetConfirmEl.classList.add('show');
+  }
+});
+resetNoBtn.addEventListener('click', () => {
+  resetConfirmEl.classList.remove('show');
+});
+resetYesBtn.addEventListener('click', async () => {
+  resetConfirmEl.classList.remove('show');
+  // Reset team scores
+  try {
+    await set(ref(db, 'scores'), { Finance: 0, Accounting: 0, Risk: 0, Strategy: 0, CFO: 0 });
+  } catch(e) {}
+  // Reset everyone's kills & deaths
+  try {
+    const snap = await get(ref(db, 'players'));
+    const data = snap.val() || {};
+    const updates = {};
+    for (const id in data) {
+      updates[`players/${id}/kills`] = 0;
+      updates[`players/${id}/deaths`] = 0;
+    }
+    if (Object.keys(updates).length) await update(ref(db), updates);
+  } catch(e) {}
+  // Broadcast a reset event so everyone sees a toast
+  try {
+    await set(ref(db, 'resetEvent'), { by: myName, ts: Date.now() });
+  } catch(e) {}
+});
+
+// Listen for reset broadcasts
+onValue(ref(db, 'resetEvent'), snap => {
+  const ev = snap.val();
+  if (!ev || !ev.ts) return;
+  // Ignore old events from before this session
+  if (ev.ts < (window._joinTime || 0)) return;
+  showResetToast(ev.by);
+});
+
+function showResetToast(by) {
+  resetToastEl.textContent = `★ SCORES RESET BY ${String(by || 'unknown').toUpperCase()} ★`;
+  resetToastEl.classList.add('show');
+  setTimeout(() => resetToastEl.classList.remove('show'), 2800);
+}
 const introEl = document.getElementById('intro');
 const skipBtn = document.getElementById('skipIntro');
 let introMusicTimers = [];
@@ -887,12 +1250,31 @@ let introMusicStarted = false;
 function startIntroMusicOnce() {
   if (introMusicStarted) return;
   introMusicStarted = true;
+  const sp = document.getElementById('soundPrompt');
+  if (sp) sp.classList.add('fade');
   initAudio();
-  if (audioCtx && !muted) playIntroTheme();
+  // Resume if suspended (browsers suspend AudioContext until gesture)
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume().then(() => {
+      if (!muted && !introStopped) playIntroTheme();
+    }).catch(() => {});
+  } else if (audioCtx && !muted && !introStopped) {
+    playIntroTheme();
+  }
 }
-document.addEventListener('click', startIntroMusicOnce, { once: true });
-document.addEventListener('keydown', startIntroMusicOnce, { once: true });
-document.addEventListener('touchstart', startIntroMusicOnce, { once: true });
+// Attach on multiple events for reliability
+['click', 'keydown', 'touchstart', 'pointerdown', 'mousedown'].forEach(ev => {
+  document.addEventListener(ev, startIntroMusicOnce, { once: true, capture: true });
+});
+// Also attempt to start as soon as page is interactive (may fail silently without gesture, that's OK)
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (!introMusicStarted) {
+      // Try anyway — on some browsers/configs this works
+      try { startIntroMusicOnce(); } catch(e) {}
+    }
+  }, 500);
+});
 
 // Original, non-copyrighted heroic theme
 function playIntroTheme() {
@@ -1249,8 +1631,23 @@ nameInput.addEventListener('input', validateLogin);
 function validateLogin() {
   joinBtn.disabled = !(nameInput.value.trim() && selectedTeam);
 }
-joinBtn.addEventListener('click', startGame);
-nameInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !joinBtn.disabled) startGame(); });
+joinBtn.addEventListener('click', async () => {
+  if (swapMode) {
+    const ok = await performSwap();
+    if (ok) exitSwapMode();
+  } else {
+    startGame();
+  }
+});
+nameInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !joinBtn.disabled) {
+    if (swapMode) {
+      performSwap().then(ok => { if (ok) exitSwapMode(); });
+    } else {
+      startGame();
+    }
+  }
+});
 
 // ---------- Game State ----------
 const players = new Map();   // id -> {x,y,angle,vx,vy,name,team,alive,kills,deaths}
@@ -1259,6 +1656,12 @@ const pulses = new Map();    // id -> {x,y,owner,birth,team} - CFO pulse weapons
 const torpedoes = new Map(); // id -> {x,y,angle,team,owner,birth,targetId?}
 const mines = new Map();     // id -> {x,y,team,owner,birth,exploded}
 const cones = new Map();     // id -> {x,y,angle,team,owner,birth}
+const nets = new Map();      // Compliance
+const spirals = new Map();   // Fraud
+const trails = new Map();    // Budget (local-only rendering, but hit detection network)
+const minixs = new Map();    // Payroll
+const lasers = new Map();    // AP
+const ribbons = new Map();   // PMO
 const stars = [];
 const particles = [];        // local-only explosion FX
 let lastShot = 0;
@@ -1307,6 +1710,7 @@ window.addEventListener('resize', resize);
 async function startGame() {
   myName = nameInput.value.trim().slice(0, 16);
   myTeam = selectedTeam;
+  window._joinTime = Date.now();
   initAudio();
 
   // If user picked CFO, attempt atomic claim first
@@ -1365,6 +1769,7 @@ async function startGame() {
       if (!data[id]) players.delete(id);
     }
     onlineCountEl.textContent = Object.keys(data).length;
+    renderRoster(data);
   });
 
   // Listen to bullets (fire-and-forget)
@@ -1432,6 +1837,81 @@ async function startGame() {
       setTimeout(() => remove(ref(db, `cones/${id}`)).catch(()=>{}), CONE_DURATION * 1000);
     }
     sfxNearby('cone', c.x, c.y);
+  });
+
+  // Listen to nets (Compliance)
+  onChildAdded(ref(db, 'nets'), snap => {
+    const n = snap.val();
+    const id = snap.key;
+    if (!n) return;
+    nets.set(id, { ...n, birth: performance.now() / 1000 });
+    setTimeout(() => nets.delete(id), NET_LIFE * 1000 + 500);
+    if (n.owner === myId) {
+      setTimeout(() => remove(ref(db, `nets/${id}`)).catch(()=>{}), NET_LIFE * 1000);
+    }
+    sfxNearby('cone', n.x, n.y);
+  });
+
+  // Listen to spirals (Fraud)
+  onChildAdded(ref(db, 'spirals'), snap => {
+    const s = snap.val();
+    const id = snap.key;
+    if (!s) return;
+    spirals.set(id, { ...s, birth: performance.now() / 1000 });
+    setTimeout(() => spirals.delete(id), SPIRAL_LIFE * 1000 + 500);
+    if (s.owner === myId) {
+      setTimeout(() => remove(ref(db, `spirals/${id}`)).catch(()=>{}), SPIRAL_LIFE * 1000);
+    }
+    sfxNearby('bullet', s.x, s.y);
+  });
+
+  // Listen to trails (Budget)
+  onChildAdded(ref(db, 'trails'), snap => {
+    const tr = snap.val();
+    const id = snap.key;
+    if (!tr) return;
+    trails.set(id, { ...tr, birth: performance.now() / 1000 });
+    setTimeout(() => trails.delete(id), TRAIL_LIFE * 1000 + 500);
+    if (tr.owner === myId) {
+      setTimeout(() => remove(ref(db, `trails/${id}`)).catch(()=>{}), TRAIL_LIFE * 1000);
+    }
+  });
+
+  // Listen to miniX (Payroll)
+  onChildAdded(ref(db, 'minixs'), snap => {
+    const x = snap.val();
+    const id = snap.key;
+    if (!x) return;
+    minixs.set(id, { ...x, birth: performance.now() / 1000 });
+    setTimeout(() => minixs.delete(id), MINIX_LIFE * 1000 + 500);
+    if (x.owner === myId) {
+      setTimeout(() => remove(ref(db, `minixs/${id}`)).catch(()=>{}), MINIX_LIFE * 1000);
+    }
+  });
+
+  // Listen to lasers (AP)
+  onChildAdded(ref(db, 'lasers'), snap => {
+    const l = snap.val();
+    const id = snap.key;
+    if (!l) return;
+    lasers.set(id, { ...l, birth: performance.now() / 1000 });
+    setTimeout(() => lasers.delete(id), AUTOLASER_LIFE * 1000 + 200);
+    if (l.owner === myId) {
+      setTimeout(() => remove(ref(db, `lasers/${id}`)).catch(()=>{}), AUTOLASER_LIFE * 1000);
+    }
+    sfxNearby('bullet', l.x, l.y);
+  });
+
+  // Listen to ribbons (PMO)
+  onChildAdded(ref(db, 'ribbons'), snap => {
+    const rb = snap.val();
+    const id = snap.key;
+    if (!rb) return;
+    ribbons.set(id, { ...rb, birth: performance.now() / 1000 });
+    setTimeout(() => ribbons.delete(id), RIBBON_LIFE * 1000 + 200);
+    if (rb.owner === myId) {
+      setTimeout(() => remove(ref(db, `ribbons/${id}`)).catch(()=>{}), RIBBON_LIFE * 1000);
+    }
   });
 
   // Listen to scores
@@ -1505,7 +1985,7 @@ function appendChatMsg(m) {
   if (m.system) {
     div.innerHTML = `<span class="text">${escapeHtml(m.text)}</span>`;
   } else {
-    const color = TEAM_COLORS[m.team] || '#fff';
+    const color = teamColor(m.team);
     div.innerHTML = `<span class="author" style="color:${color}">${escapeHtml(m.author)}:</span><span class="text">${escapeHtml(m.text)}</span>`;
   }
   chatLog.appendChild(div);
@@ -1519,8 +1999,8 @@ function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;'
 function showKill(k) {
   const div = document.createElement('div');
   div.className = 'kill-msg';
-  const kc = TEAM_COLORS[k.killerTeam] || '#fff';
-  const vc = TEAM_COLORS[k.victimTeam] || '#fff';
+  const kc = teamColor(k.killerTeam);
+  const vc = teamColor(k.victimTeam);
   div.innerHTML = `<span class="killer" style="color:${kc}">${escapeHtml(k.killer)}</span><span class="arrow">»</span><span class="victim" style="color:${vc}">${escapeHtml(k.victim)}</span>`;
   killfeed.appendChild(div);
   setTimeout(() => div.remove(), 5000);
@@ -1559,7 +2039,7 @@ function tick(dt) {
         vx: -Math.cos(myState.angle) * 80 + (Math.random() - 0.5) * 60,
         vy: -Math.sin(myState.angle) * 80 + (Math.random() - 0.5) * 60,
         life: 0.4, max: 0.4,
-        color: TEAM_COLORS[myTeam],
+        color: teamColor(myTeam),
         size: 2
       });
     }
@@ -1596,6 +2076,32 @@ function tick(dt) {
         }
       } else if (weapon === 'cone') {
         if (t - lastShot > cd) { lastShot = t; fireCone(); }
+      } else if (weapon === 'net') {
+        if (t - lastShot > cd && countMyActive(nets) < TEAM_STATS.Compliance.maxActive) {
+          lastShot = t; fireNet();
+        }
+      } else if (weapon === 'spiral') {
+        if (t - lastShot > cd) { lastShot = t; fireSpirals(); }
+      } else if (weapon === 'trail') {
+        // Handled automatically while moving — see below
+      } else if (weapon === 'miniX') {
+        if (t - lastShot > cd) { lastShot = t; spawnMiniXs(); }
+      } else if (weapon === 'autolaser') {
+        if (t - lastShot > cd) { lastShot = t; fireAutoLaser(); }
+      } else if (weapon === 'tractor') {
+        // Tractor is continuous — handled in tick loop separately
+      } else if (weapon === 'ribbon') {
+        if (t - lastShot > cd) { lastShot = t; fireRibbons(); }
+      }
+      // 'ram' has no button action; collision handled in tick loop
+    }
+
+    // Auto-emitting weapons (independent of space key)
+    if (myTeam === 'Budget') {
+      const speed = Math.hypot(myState.vx, myState.vy);
+      if (speed > 60 && t - lastShot > TEAM_STATS.Budget.cooldown) {
+        lastShot = t;
+        dropTrail();
       }
     }
 
@@ -1630,7 +2136,7 @@ function tick(dt) {
     if (t - b.birth > BULLET_LIFE) { bullets.delete(id); continue; }
 
     // Collide only against MY ship; the victim reports the death.
-    if (!dead && myState && b.owner !== myId && b.team !== myTeam) {
+    if (!dead && myState && b.owner !== myId && !sameSide(b.team, myTeam)) {
       const dx = b.x - myState.x;
       const dy = b.y - myState.y;
       if (dx*dx + dy*dy < (SHIP_R + 4) * (SHIP_R + 4)) {
@@ -1694,7 +2200,7 @@ function tick(dt) {
       });
     }
     // Collision (victim-authoritative)
-    if (!dead && myState && tor.owner !== myId && tor.team !== myTeam) {
+    if (!dead && myState && tor.owner !== myId && !sameSide(tor.team, myTeam)) {
       const dx = tor.x - myState.x;
       const dy = tor.y - myState.y;
       if (dx*dx + dy*dy < TORP_HIT_R * TORP_HIT_R) {
@@ -1730,7 +2236,7 @@ function tick(dt) {
       continue;
     }
     // Collision during blast window (victim-authoritative)
-    if (m.exploded && !dead && myState && m.owner !== myId && m.team !== myTeam) {
+    if (m.exploded && !dead && myState && m.owner !== myId && !sameSide(m.team, myTeam)) {
       const dx = myState.x - m.x;
       const dy = myState.y - m.y;
       const dist = Math.hypot(dx, dy);
@@ -1746,7 +2252,7 @@ function tick(dt) {
     const age = t - c.birth;
     if (age > CONE_DURATION) { cones.delete(id); continue; }
     // Collision: am I in the cone?
-    if (!dead && myState && c.owner !== myId && c.team !== myTeam && !c._hitMe) {
+    if (!dead && myState && c.owner !== myId && !sameSide(c.team, myTeam) && !c._hitMe) {
       const dx = myState.x - c.x;
       const dy = myState.y - c.y;
       const dist = Math.hypot(dx, dy);
@@ -1758,6 +2264,165 @@ function tick(dt) {
         if (Math.abs(delta) <= CONE_HALF_ANGLE) {
           c._hitMe = true;
           handleDeath(c);
+        }
+      }
+    }
+  }
+
+  // ----- Nets (Compliance) -----
+  for (const [id, n] of nets) {
+    const age = t - n.birth;
+    if (age > NET_LIFE) { nets.delete(id); continue; }
+    n.x += n.vx * dt;
+    n.y += n.vy * dt;
+    // Decelerate
+    n.vx *= Math.pow(0.3, dt);
+    n.vy *= Math.pow(0.3, dt);
+    // Wrap
+    if (n.x < 0) n.x += WORLD_W;
+    if (n.x > WORLD_W) n.x -= WORLD_W;
+    if (n.y < 0) n.y += WORLD_H;
+    if (n.y > WORLD_H) n.y -= WORLD_H;
+    if (!dead && myState && n.owner !== myId && !sameSide(n.team, myTeam) && !n._hitMe) {
+      const radius = NET_START_R + (NET_END_R - NET_START_R) * (age / NET_LIFE);
+      const d = Math.hypot(myState.x - n.x, myState.y - n.y);
+      if (d <= radius) {
+        n._hitMe = true;
+        handleDeath(n);
+      }
+    }
+  }
+
+  // ----- Spirals (Fraud) -----
+  for (const [id, s] of spirals) {
+    const age = t - s.birth;
+    if (age > SPIRAL_LIFE) { spirals.delete(id); continue; }
+    // Position updates locally each frame (spiral path)
+    const speedFactor = Math.max(0.2, 1 - age / SPIRAL_LIFE);
+    const travel = SPIRAL_SPEED * age * speedFactor;
+    const spiralPhase = s.baseAngle + s.spinDir * age * 6;
+    s.curX = s.x + Math.cos(spiralPhase) * travel;
+    s.curY = s.y + Math.sin(spiralPhase) * travel;
+    if (!dead && myState && s.owner !== myId && !sameSide(s.team, myTeam) && !s._hitMe) {
+      const d = Math.hypot(myState.x - s.curX, myState.y - s.curY);
+      if (d <= SPIRAL_HIT_R) {
+        s._hitMe = true;
+        handleDeath(s);
+      }
+    }
+  }
+
+  // ----- Trails (Budget) -----
+  for (const [id, tr] of trails) {
+    const age = t - tr.birth;
+    if (age > TRAIL_LIFE) { trails.delete(id); continue; }
+    if (!dead && myState && tr.owner !== myId && !sameSide(tr.team, myTeam) && !tr._hitMe) {
+      const d = Math.hypot(myState.x - tr.x, myState.y - tr.y);
+      if (d <= TRAIL_HIT_R) {
+        tr._hitMe = true;
+        handleDeath(tr);
+      }
+    }
+  }
+
+  // ----- Mini-Xs (Payroll) -----
+  for (const [id, x] of minixs) {
+    const age = t - x.birth;
+    if (age > MINIX_LIFE) { minixs.delete(id); continue; }
+    x.x += x.vx * dt;
+    x.y += x.vy * dt;
+    x.vx *= Math.pow(0.5, dt);
+    x.vy *= Math.pow(0.5, dt);
+    if (x.x < 0) x.x += WORLD_W;
+    if (x.x > WORLD_W) x.x -= WORLD_W;
+    if (x.y < 0) x.y += WORLD_H;
+    if (x.y > WORLD_H) x.y -= WORLD_H;
+    if (!dead && myState && x.owner !== myId && !sameSide(x.team, myTeam) && !x._hitMe) {
+      const d = Math.hypot(myState.x - x.x, myState.y - x.y);
+      if (d <= MINIX_HIT_R) {
+        x._hitMe = true;
+        handleDeath(x);
+      }
+    }
+  }
+
+  // ----- Lasers (AP) -----
+  for (const [id, l] of lasers) {
+    const age = t - l.birth;
+    if (age > AUTOLASER_LIFE) { lasers.delete(id); continue; }
+    // Instant line hit detection at creation only (against me)
+    if (!dead && myState && l.owner !== myId && !sameSide(l.team, myTeam) && !l._checked) {
+      l._checked = true;
+      // Distance from point (myState) to segment (l.x,l.y -> l.tx,l.ty)
+      const ax = l.x, ay = l.y, bx = l.tx, by = l.ty;
+      const dx = bx - ax, dy = by - ay;
+      const len2 = dx*dx + dy*dy || 1;
+      const t2 = Math.max(0, Math.min(1, ((myState.x - ax)*dx + (myState.y - ay)*dy) / len2));
+      const cx = ax + t2 * dx, cy = ay + t2 * dy;
+      const d = Math.hypot(myState.x - cx, myState.y - cy);
+      if (d <= 8) handleDeath(l);
+    }
+  }
+
+  // ----- Ribbons (PMO) -----
+  for (const [id, rb] of ribbons) {
+    const age = t - rb.birth;
+    if (age > RIBBON_LIFE) { ribbons.delete(id); continue; }
+    if (!dead && myState && rb.owner !== myId && !sameSide(rb.team, myTeam) && !rb._hitMe) {
+      // Hit anywhere along the ribbon segment
+      const ex = rb.x + Math.cos(rb.angle) * RIBBON_LENGTH;
+      const ey = rb.y + Math.sin(rb.angle) * RIBBON_LENGTH;
+      const dx = ex - rb.x, dy = ey - rb.y;
+      const len2 = dx*dx + dy*dy || 1;
+      const t2 = Math.max(0, Math.min(1, ((myState.x - rb.x)*dx + (myState.y - rb.y)*dy) / len2));
+      const cx = rb.x + t2 * dx, cy = rb.y + t2 * dy;
+      const d = Math.hypot(myState.x - cx, myState.y - cy);
+      if (d <= RIBBON_HIT_R) {
+        rb._hitMe = true;
+        handleDeath(rb);
+      }
+    }
+  }
+
+  // ----- Recon tractor beam + kill-on-touch (Accounting subfaction) -----
+  // Every Recon ship pulls nearby enemies toward it. Touch = death.
+  // Apply pull only to ME, based on all enemy Recon ships.
+  if (!dead && myState && myTeam !== 'Recon') {
+    for (const [pid, pl] of players) {
+      if (pid === myId || !pl.alive || pl.team !== 'Recon' || sameSide(pl.team, myTeam)) continue;
+      const dx = pl.x - myState.x, dy = pl.y - myState.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 1) continue;
+      if (dist > TRACTOR_RANGE) continue;
+      // Recon's tractor cone points in their facing direction.
+      // Am I inside the cone?
+      const angleToMe = Math.atan2(-dy, -dx); // angle from Recon to me
+      let delta = angleToMe - pl.angle;
+      while (delta > Math.PI) delta -= Math.PI * 2;
+      while (delta < -Math.PI) delta += Math.PI * 2;
+      if (Math.abs(delta) > TRACTOR_HALF_ANGLE) continue;
+      // Pull me
+      const pullStrength = TRACTOR_FORCE * (1 - dist / TRACTOR_RANGE);
+      myState.vx += (dx / dist) * pullStrength * dt;
+      myState.vy += (dy / dist) * pullStrength * dt;
+      // Kill on touch
+      if (dist <= RECON_KILL_R) {
+        handleDeath({ owner: pid, team: pl.team });
+        break;
+      }
+    }
+  }
+
+  // ----- MG collision-kill (Strategy subfaction) -----
+  // Any MG that touches me kills me. Also if I'm MG and I touch someone, they die.
+  if (!dead && myState) {
+    for (const [pid, pl] of players) {
+      if (pid === myId || !pl.alive || sameSide(pl.team, myTeam)) continue;
+      const d = Math.hypot(pl.x - myState.x, pl.y - myState.y);
+      if (d < SHIP_R * 1.6) {
+        if (pl.team === 'MG') {
+          handleDeath({ owner: pid, team: pl.team });
+          break;
         }
       }
     }
@@ -1839,7 +2504,7 @@ function fireTorpedo() {
   // Acquire nearest enemy target at launch
   let target = null, bestDist = TORP_ACQUIRE_RANGE;
   for (const [pid, pl] of players) {
-    if (pid === myId || !pl.alive || pl.team === myTeam) continue;
+    if (pid === myId || !pl.alive || sameSide(pl.team, myTeam)) continue;
     const d = Math.hypot(pl.x - myState.x, pl.y - myState.y);
     if (d < bestDist) { bestDist = d; target = pid; }
   }
@@ -1896,9 +2561,109 @@ function fireCone() {
       y: myState.y + Math.sin(myState.angle) * 14,
       vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
       life: 0.5, max: 0.5,
-      color: TEAM_COLORS[myTeam],
+      color: teamColor(myTeam),
       size: 2 + Math.random() * 2
     });
+  }
+}
+
+function fireNet() {
+  const r = push(ref(db, 'nets'));
+  const id = r.key;
+  const n = {
+    x: myState.x + Math.cos(myState.angle) * 20,
+    y: myState.y + Math.sin(myState.angle) * 20,
+    vx: Math.cos(myState.angle) * NET_SPEED,
+    vy: Math.sin(myState.angle) * NET_SPEED,
+    team: myTeam, owner: myId, ts: Date.now()
+  };
+  set(r, n);
+  nets.set(id, { ...n, birth: performance.now()/1000 });
+}
+
+function fireSpirals() {
+  // Fraud fires many flaming spirals in a 360° burst
+  const count = 8;
+  for (let i = 0; i < count; i++) {
+    const r = push(ref(db, 'spirals'));
+    const id = r.key;
+    const baseAngle = (i / count) * Math.PI * 2 + Math.random() * 0.2;
+    const spinDir = Math.random() < 0.5 ? 1 : -1;
+    const s = {
+      x: myState.x, y: myState.y,
+      baseAngle, spinDir,
+      team: myTeam, owner: myId, ts: Date.now()
+    };
+    set(r, s);
+    spirals.set(id, { ...s, birth: performance.now()/1000 });
+  }
+}
+
+function dropTrail() {
+  const r = push(ref(db, 'trails'));
+  const id = r.key;
+  const tr = {
+    x: myState.x, y: myState.y,
+    team: myTeam, owner: myId, ts: Date.now()
+  };
+  set(r, tr);
+  trails.set(id, { ...tr, birth: performance.now()/1000 });
+}
+
+function spawnMiniXs() {
+  const count = 5;
+  for (let i = 0; i < count; i++) {
+    const r = push(ref(db, 'minixs'));
+    const id = r.key;
+    const angle = Math.random() * Math.PI * 2;
+    const speed = MINIX_SPEED * (0.5 + Math.random() * 0.6);
+    const x = {
+      x: myState.x, y: myState.y,
+      vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+      spin: (Math.random() - 0.5) * 20,
+      team: myTeam, owner: myId, ts: Date.now()
+    };
+    set(r, x);
+    minixs.set(id, { ...x, birth: performance.now()/1000 });
+  }
+}
+
+function fireAutoLaser() {
+  // AP's weapon — finds nearest enemy within range and fires a short instant laser at them
+  let target = null, bestDist = AUTOLASER_RANGE;
+  for (const [pid, pl] of players) {
+    if (pid === myId || !pl.alive || sameSide(pl.team, myTeam)) continue;
+    const d = Math.hypot(pl.x - myState.x, pl.y - myState.y);
+    if (d < bestDist) { bestDist = d; target = pl; }
+  }
+  if (!target) return;
+  const r = push(ref(db, 'lasers'));
+  const id = r.key;
+  const l = {
+    x: myState.x, y: myState.y,
+    tx: target.x, ty: target.y,
+    team: myTeam, owner: myId, ts: Date.now()
+  };
+  set(r, l);
+  lasers.set(id, { ...l, birth: performance.now()/1000 });
+}
+
+function fireRibbons() {
+  // PMO fires multiple short ribbons that detach and linger
+  const count = 3;
+  for (let i = 0; i < count; i++) {
+    const r = push(ref(db, 'ribbons'));
+    const id = r.key;
+    const spread = (i - 1) * 0.35;
+    const angle = myState.angle + spread;
+    const rb = {
+      x: myState.x + Math.cos(myState.angle) * 10,
+      y: myState.y + Math.sin(myState.angle) * 10,
+      angle,
+      team: myTeam, owner: myId, ts: Date.now()
+    };
+    set(r, rb);
+    ribbons.set(id, { ...rb, birth: performance.now()/1000 });
   }
 }
 
@@ -1917,7 +2682,7 @@ function handleDeath(bullet) {
       x: myState.x, y: myState.y,
       vx: Math.cos(a)*sp, vy: Math.sin(a)*sp,
       life: 0.8, max: 0.8,
-      color: TEAM_COLORS[myTeam],
+      color: teamColor(myTeam),
       size: 2 + Math.random() * 2
     });
   }
@@ -1932,8 +2697,9 @@ function handleDeath(bullet) {
   if (killer) {
     // Increment killer's kills (transaction so concurrent kills don't clobber)
     runTransaction(ref(db, `players/${bullet.owner}/kills`), v => (v || 0) + 1).catch(()=>{});
-    // Award team score
-    runTransaction(ref(db, `scores/${bullet.team}`), v => (v || 0) + 1).catch(()=>{});
+    // Award team score to the PARENT team (subfactions share their parent's score)
+    const parent = PARENT_TEAM[bullet.team] || bullet.team;
+    runTransaction(ref(db, `scores/${parent}`), v => (v || 0) + 1).catch(()=>{});
     // Push killfeed
     const kr = push(ref(db, 'killfeed'));
     set(kr, {
@@ -1955,6 +2721,67 @@ function doRespawn() {
     x: myState.x, y: myState.y, vx: 0, vy: 0,
     angle: myState.angle, alive: true
   });
+}
+
+// ---------- Swap ship (only available while dead) ----------
+let swapMode = false;
+const swapShipBtn = document.getElementById('swapShipBtn');
+swapShipBtn.addEventListener('click', () => {
+  if (!dead) return;
+  swapMode = true;
+  respawnEl.classList.remove('show');
+  // Freeze respawn countdown while picking
+  respawnAt = Infinity;
+  // Re-open login screen in "swap" mode
+  loginEl.classList.remove('hidden');
+  // Clear selections so user makes a fresh choice
+  teamBtns.forEach(b => b.classList.remove('selected'));
+  cfoBtn.classList.remove('selected');
+  selectedTeam = null;
+  // Keep their name pre-filled and disabled (they don't need to re-enter)
+  nameInput.value = myName;
+  nameInput.disabled = true;
+  joinBtn.textContent = 'SWAP';
+  validateLogin();
+  // If they were CFO, release the slot so others can grab it
+  if (myTeam === 'CFO') {
+    remove(ref(db, 'cfoSlot')).catch(() => {});
+  }
+});
+
+async function performSwap() {
+  const newTeam = selectedTeam;
+  // If picking CFO, must claim the slot
+  if (newTeam === 'CFO') {
+    const claimRef = ref(db, 'cfoSlot');
+    const result = await runTransaction(claimRef, current => {
+      if (current === null || !current.id) {
+        return { id: myId, name: myName, ts: Date.now() };
+      }
+      return;
+    });
+    if (!result.committed || !result.snapshot.val() || result.snapshot.val().id !== myId) {
+      const holder = result.snapshot.val();
+      alert(`CFO already claimed by ${holder ? holder.name : 'another player'}. Pick a department.`);
+      return false;
+    }
+    onDisconnect(claimRef).remove();
+  }
+  myTeam = newTeam;
+  // Update player record
+  await update_db(`players/${myId}`, { team: myTeam, alive: true });
+  return true;
+}
+
+function exitSwapMode() {
+  swapMode = false;
+  nameInput.disabled = false;
+  joinBtn.textContent = 'Launch';
+  loginEl.classList.add('hidden');
+  // Immediately respawn at a new position
+  respawnAt = 0;
+  dead = true; // forces doRespawn to run next tick
+  doRespawn();
 }
 
 // ---------- Render ----------
@@ -1999,8 +2826,8 @@ function render() {
 
   // Bullets
   for (const [id, b] of bullets) {
-    ctx.fillStyle = TEAM_COLORS[b.team] || '#fff';
-    ctx.shadowColor = TEAM_COLORS[b.team];
+    ctx.fillStyle = teamColor(b.team);
+    ctx.shadowColor = teamColor(b.team);
     ctx.shadowBlur = 8;
     ctx.beginPath();
     ctx.arc(b.x, b.y, 3, 0, Math.PI * 2);
@@ -2104,6 +2931,149 @@ function render() {
     ctx.restore();
   }
 
+  // Nets (Compliance) — expanding mesh ring
+  for (const [id, n] of nets) {
+    const age = tNow2 - n.birth;
+    const radius = NET_START_R + (NET_END_R - NET_START_R) * (age / NET_LIFE);
+    const alpha = Math.max(0, 1 - age / NET_LIFE);
+    ctx.strokeStyle = `rgba(255, 77, 109, ${alpha * 0.85})`;
+    ctx.shadowColor = TEAM_COLORS.Risk;
+    ctx.shadowBlur = 12;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, radius, 0, Math.PI * 2);
+    ctx.stroke();
+    // Spokes — the "net" look
+    const spokes = 8;
+    for (let i = 0; i < spokes; i++) {
+      const a = (i / spokes) * Math.PI * 2 + age * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(n.x + Math.cos(a) * radius * 0.2, n.y + Math.sin(a) * radius * 0.2);
+      ctx.lineTo(n.x + Math.cos(a) * radius, n.y + Math.sin(a) * radius);
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+  }
+
+  // Spirals (Fraud) — flaming pixel trails
+  for (const [id, s] of spirals) {
+    if (s.curX === undefined) continue;
+    ctx.fillStyle = `rgba(255, 120, 60, 0.9)`;
+    ctx.shadowColor = '#ff6b2b';
+    ctx.shadowBlur = 10;
+    ctx.fillRect(s.curX - SHIP_R/2, s.curY - SHIP_R/2, SHIP_R, SHIP_R);
+    // Inner core
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = `rgba(255, 220, 100, 0.9)`;
+    ctx.fillRect(s.curX - 3, s.curY - 3, 6, 6);
+  }
+
+  // Trails (Budget) — lingering fire trail
+  for (const [id, tr] of trails) {
+    const age = tNow2 - tr.birth;
+    const alpha = Math.max(0, 1 - age / TRAIL_LIFE);
+    // Outer glow
+    ctx.fillStyle = `rgba(255, 140, 40, ${alpha * 0.4})`;
+    ctx.shadowColor = '#ff8c28';
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.arc(tr.x, tr.y, 10 * alpha + 4, 0, Math.PI * 2);
+    ctx.fill();
+    // Inner hot core
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = `rgba(255, 240, 180, ${alpha * 0.9})`;
+    ctx.beginPath();
+    ctx.arc(tr.x, tr.y, 4 * alpha + 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Mini-Xs (Payroll) — tiny spinning X shapes
+  for (const [id, x] of minixs) {
+    const age = tNow2 - x.birth;
+    const alpha = Math.max(0, 1 - age / MINIX_LIFE);
+    const spin = (x.spin || 0) * age + age * 8;
+    ctx.save();
+    ctx.translate(x.x, x.y);
+    ctx.rotate(spin);
+    ctx.strokeStyle = `rgba(0, 229, 168, ${alpha})`;
+    ctx.shadowColor = TEAM_COLORS.Finance;
+    ctx.shadowBlur = 8;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(-5, -5); ctx.lineTo(5, 5);
+    ctx.moveTo(-5, 5); ctx.lineTo(5, -5);
+    ctx.stroke();
+    ctx.restore();
+    ctx.shadowBlur = 0;
+  }
+
+  // Lasers (AP) — instant beam
+  for (const [id, l] of lasers) {
+    const age = tNow2 - l.birth;
+    const alpha = Math.max(0, 1 - age / AUTOLASER_LIFE);
+    ctx.strokeStyle = `rgba(255, 182, 39, ${alpha})`;
+    ctx.shadowColor = TEAM_COLORS.Accounting;
+    ctx.shadowBlur = 12;
+    ctx.lineWidth = 2 + alpha * 2;
+    ctx.beginPath();
+    ctx.moveTo(l.x, l.y);
+    ctx.lineTo(l.tx, l.ty);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Ribbons (PMO) — short ribbon streaks
+  for (const [id, rb] of ribbons) {
+    const age = tNow2 - rb.birth;
+    const alpha = Math.max(0, 1 - age / RIBBON_LIFE);
+    ctx.save();
+    ctx.translate(rb.x, rb.y);
+    ctx.rotate(rb.angle);
+    const grad = ctx.createLinearGradient(0, 0, RIBBON_LENGTH, 0);
+    grad.addColorStop(0, `rgba(109, 211, 255, ${alpha * 0.9})`);
+    grad.addColorStop(1, `rgba(109, 211, 255, 0)`);
+    ctx.fillStyle = grad;
+    ctx.shadowColor = TEAM_COLORS.Strategy;
+    ctx.shadowBlur = 10;
+    // Wavy ribbon
+    ctx.beginPath();
+    ctx.moveTo(0, -3);
+    for (let i = 0; i <= 10; i++) {
+      const px = (i / 10) * RIBBON_LENGTH;
+      const py = Math.sin(i * 0.8 + age * 10) * 4 - 3;
+      ctx.lineTo(px, py);
+    }
+    for (let i = 10; i >= 0; i--) {
+      const px = (i / 10) * RIBBON_LENGTH;
+      const py = Math.sin(i * 0.8 + age * 10) * 4 + 3;
+      ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    ctx.shadowBlur = 0;
+  }
+
+  // Recon tractor beam — draw the cone if any Recon is in the area
+  for (const [pid, pl] of players) {
+    if (!pl.alive || pl.team !== 'Recon') continue;
+    ctx.save();
+    ctx.translate(pl.x, pl.y);
+    ctx.rotate(pl.angle);
+    const pulsePhase = (performance.now() / 300) + pid.charCodeAt(0);
+    const pulse = 0.5 + 0.5 * Math.sin(pulsePhase);
+    const grad = ctx.createLinearGradient(0, 0, TRACTOR_RANGE, 0);
+    grad.addColorStop(0, `rgba(255, 182, 39, ${0.25 + pulse * 0.15})`);
+    grad.addColorStop(1, `rgba(255, 182, 39, 0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, TRACTOR_RANGE, -TRACTOR_HALF_ANGLE, TRACTOR_HALF_ANGLE);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
   // CFO Pulses — expanding shockwave rings
   const tNow = performance.now() / 1000;
   for (const [id, p] of pulses) {
@@ -2142,7 +3112,7 @@ function drawWrapped(x, y, fn) {
 }
 
 function drawShip(p, isMe) {
-  const color = TEAM_COLORS[p.team] || '#fff';
+  const color = teamColor(p.team);
   ctx.save();
   ctx.translate(p.x, p.y);
 
@@ -2316,6 +3286,212 @@ function drawShip(p, isMe) {
     ctx.shadowBlur = 0;
     ctx.fillStyle = 'rgba(255,255,255,0.25)';
     ctx.fillRect(-4, -3, 20, 6);
+  } else if (p.team === 'Compliance') {
+    // Warbird shape — Romulan-inspired: forward head with swept-back wings
+    ctx.rotate(p.angle);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 16 : 10;
+    ctx.fillStyle = color;
+    // Central head/body
+    ctx.beginPath();
+    ctx.moveTo(18, 0);
+    ctx.lineTo(8, -3);
+    ctx.lineTo(-4, -3);
+    ctx.lineTo(-4, 3);
+    ctx.lineTo(8, 3);
+    ctx.closePath();
+    ctx.fill();
+    // Swept wings
+    ctx.beginPath();
+    ctx.moveTo(-2, -2);
+    ctx.lineTo(-14, -12);
+    ctx.lineTo(-18, -10);
+    ctx.lineTo(-6, 0);
+    ctx.lineTo(-18, 10);
+    ctx.lineTo(-14, 12);
+    ctx.lineTo(-2, 2);
+    ctx.closePath();
+    ctx.fill();
+    // Wing tips
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.beginPath(); ctx.arc(-17, -11, 1.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(-17, 11, 1.5, 0, Math.PI * 2); ctx.fill();
+  } else if (p.team === 'Fraud') {
+    // Pentagon
+    ctx.rotate(p.angle);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 16 : 10;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2;
+      const x = Math.cos(a) * 14;
+      const y = Math.sin(a) * 14;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    // Inner ember
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255, 220, 100, 0.6)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 4, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (p.team === 'Budget') {
+    // Baseball with crossed bats behind
+    ctx.rotate(p.angle);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 14 : 8;
+    // Bats (drawn first, behind ball)
+    ctx.strokeStyle = 'rgba(180, 120, 60, 0.95)';
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-16, -10); ctx.lineTo(8, 6);
+    ctx.moveTo(-16, 10); ctx.lineTo(8, -6);
+    ctx.stroke();
+    // Bat handles (thinner end near ship center)
+    ctx.strokeStyle = 'rgba(240, 210, 160, 0.9)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-16, -10); ctx.lineTo(-10, -6);
+    ctx.moveTo(-16, 10); ctx.lineTo(-10, 6);
+    ctx.stroke();
+    // Baseball
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(4, 0, 9, 0, Math.PI * 2);
+    ctx.fill();
+    // Red stitches
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(4, 0, 6, -Math.PI/3, Math.PI/3);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(4, 0, 6, Math.PI - Math.PI/3, Math.PI + Math.PI/3);
+    ctx.stroke();
+  } else if (p.team === 'Payroll') {
+    // X-shape
+    ctx.rotate(p.angle);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 16 : 10;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(-12, -12); ctx.lineTo(12, 12);
+    ctx.moveTo(-12, 12); ctx.lineTo(12, -12);
+    ctx.stroke();
+    // Center knot
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.arc(0, 0, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (p.team === 'AP') {
+    // "AP" letters forming the ship
+    ctx.rotate(p.angle);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 14 : 8;
+    ctx.fillStyle = color;
+    ctx.font = 'bold 18px Orbitron, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    // Rotate text so it's readable with the forward direction
+    ctx.save();
+    ctx.rotate(Math.PI / 2); // letters stand up when ship points right
+    ctx.fillText('AP', 0, 0);
+    ctx.restore();
+    // Small forward indicator
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.beginPath();
+    ctx.moveTo(14, 0); ctx.lineTo(10, -2); ctx.lineTo(10, 2);
+    ctx.closePath();
+    ctx.fill();
+  } else if (p.team === 'Recon') {
+    // Dish-on-arm shape (like a scanner/tractor rig) — main body with prominent dish forward
+    ctx.rotate(p.angle);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 16 : 10;
+    ctx.fillStyle = color;
+    // Rear body
+    ctx.beginPath();
+    ctx.ellipse(-6, 0, 9, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Arm
+    ctx.fillRect(0, -1.5, 10, 3);
+    // Dish (forward)
+    ctx.beginPath();
+    ctx.arc(14, 0, 8, Math.PI * 0.55, Math.PI * 1.45, true);
+    ctx.lineTo(10, 0);
+    ctx.closePath();
+    ctx.fill();
+    // Dish inner highlight
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.arc(13, 0, 5, Math.PI * 0.6, Math.PI * 1.4, true);
+    ctx.lineTo(11, 0);
+    ctx.closePath();
+    ctx.fill();
+  } else if (p.team === 'PMO') {
+    // Spiral shape
+    ctx.rotate(p.angle);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 14 : 8;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    const spin = performance.now() / 200;
+    ctx.beginPath();
+    for (let i = 0; i < 60; i++) {
+      const a = (i / 60) * Math.PI * 3 + spin;
+      const r = (i / 60) * 14;
+      const x = Math.cos(a) * r;
+      const y = Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    // Nose pointer
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.beginPath();
+    ctx.moveTo(18, 0); ctx.lineTo(12, -3); ctx.lineTo(12, 3);
+    ctx.closePath();
+    ctx.fill();
+  } else if (p.team === 'MG') {
+    // Aggressive dart/arrow — kill on contact
+    ctx.rotate(p.angle);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 18 : 12;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(18, 0);
+    ctx.lineTo(-8, -12);
+    ctx.lineTo(-14, 0);
+    ctx.lineTo(-8, 12);
+    ctx.closePath();
+    ctx.fill();
+    // Spiky edges
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(14, -3); ctx.lineTo(20, -1);
+    ctx.moveTo(14, 3);  ctx.lineTo(20, 1);
+    ctx.moveTo(-5, -11); ctx.lineTo(-3, -15);
+    ctx.moveTo(-5, 11);  ctx.lineTo(-3, 15);
+    ctx.stroke();
+    // Warning pulse
+    const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 120);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = `rgba(255, 255, 255, ${pulse * 0.8})`;
+    ctx.beginPath();
+    ctx.arc(0, 0, 3, 0, Math.PI * 2);
+    ctx.fill();
   } else {
     ctx.rotate(p.angle);
     // Fallback ship — triangle with notch
