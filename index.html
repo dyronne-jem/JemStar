@@ -820,6 +820,58 @@
   #resetConfirm #resetYes:hover { background: rgba(255,230,0,0.1); }
   #resetConfirm #resetNo:hover { background: rgba(255,255,255,0.08); }
 
+  /* Purge modal — red/danger styling */
+  #purgeConfirm {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+  }
+  #purgeConfirm.show { display: flex; }
+  #purgeConfirm .panel {
+    background: rgba(15,5,5,0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,80,80,0.5);
+    padding: 28px 40px;
+    text-align: center;
+    border-radius: 3px;
+    max-width: 480px;
+    box-shadow: 0 0 32px rgba(255,80,80,0.2);
+  }
+  #purgeConfirm .label {
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    letter-spacing: 0.35em;
+    color: #ff8866;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  #purgeConfirm .msg {
+    color: var(--ink-dim);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    margin-bottom: 22px;
+    line-height: 1.55;
+  }
+  #purgeConfirm .btns { display: flex; gap: 10px; justify-content: center; }
+  #purgeConfirm button {
+    padding: 10px 22px;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--ink);
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+  #purgeConfirm #purgeYes { border-color: rgba(255,80,80,0.7); color: #ff8866; }
+  #purgeConfirm #purgeYes:hover { background: rgba(255,80,80,0.15); }
+  #purgeConfirm #purgeNo:hover { background: rgba(255,255,255,0.08); }
+
   #resetToast {
     position: fixed;
     top: 50%; left: 50%;
@@ -1140,6 +1192,23 @@
       <div class="btns">
         <button id="resetYes">RESET</button>
         <button id="resetNo">CANCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="purgeConfirm">
+    <div class="panel">
+      <div class="label">// HOST PURGE</div>
+      <div class="msg">
+        Wipe ALL game state? This removes every player, bullet, mine, bot, boss, and the killfeed across ALL clients.
+        <br><br>
+        <strong style="color:#ff8866;">Everyone will be kicked back to the login screen.</strong>
+        <br><br>
+        Use this only if the game state is broken or you're starting fresh.
+      </div>
+      <div class="btns">
+        <button id="purgeYes">PURGE EVERYTHING</button>
+        <button id="purgeNo">CANCEL</button>
       </div>
     </div>
   </div>
@@ -1566,6 +1635,9 @@ const rosterListEl = document.getElementById('rosterList');
 const resetConfirmEl = document.getElementById('resetConfirm');
 const resetYesBtn = document.getElementById('resetYes');
 const resetNoBtn = document.getElementById('resetNo');
+const purgeConfirmEl = document.getElementById('purgeConfirm');
+const purgeYesBtn = document.getElementById('purgeYes');
+const purgeNoBtn = document.getElementById('purgeNo');
 const resetToastEl = document.getElementById('resetToast');
 
 function renderRoster(playersData) {
@@ -1630,6 +1702,12 @@ window.addEventListener('keydown', e => {
       spawnAIBot(level);
     }
   }
+  // Host purge — Shift+Z wipes all game state (players, bullets, mines, etc)
+  if (e.shiftKey && (e.code === 'KeyZ')) {
+    if (!myId) return;
+    e.preventDefault();
+    purgeConfirmEl.classList.add('show');
+  }
 });
 resetNoBtn.addEventListener('click', () => {
   resetConfirmEl.classList.remove('show');
@@ -1664,6 +1742,50 @@ onValue(ref(db, 'resetEvent'), snap => {
   // Ignore old events from before this session
   if (ev.ts < (window._joinTime || 0)) return;
   showResetToast(ev.by);
+});
+
+// ---------- Host Purge (Shift+Z) — wipe all game state ----------
+purgeNoBtn.addEventListener('click', () => {
+  purgeConfirmEl.classList.remove('show');
+});
+purgeYesBtn.addEventListener('click', async () => {
+  purgeConfirmEl.classList.remove('show');
+  console.log('[FARS] Host purge initiated by', myName);
+  // Broadcast purge event so all clients reload BEFORE we wipe
+  // (gives clients ~1s to see the toast and detach listeners cleanly)
+  try {
+    await set(ref(db, 'purgeEvent'), { by: myName, ts: Date.now() });
+  } catch(e) {}
+  // Brief delay to let the broadcast propagate
+  await new Promise(r => setTimeout(r, 300));
+  // Wipe every game-state node
+  const nodesToWipe = [
+    'players', 'bullets', 'torpedoes', 'mines', 'cones', 'nets',
+    'spirals', 'trails', 'minixs', 'lasers', 'ribbons', 'trapezoids',
+    'pulses', 'killfeed', 'chat', 'cfoSlot', 'victoryEvent'
+  ];
+  await Promise.all(nodesToWipe.map(node =>
+    remove(ref(db, node)).catch(err => console.warn('[FARS] purge node failed:', node, err))
+  ));
+  // Reset scores to zero (don't remove the node — keeps schema consistent)
+  try {
+    await set(ref(db, 'scores'), { Finance: 0, Accounting: 0, Risk: 0, Strategy: 0, CFO: 0, AI: 0 });
+  } catch(e) {}
+  console.log('[FARS] Purge complete - reloading');
+  // Force this client to fully reload — cleanest way to re-init listeners
+  setTimeout(() => location.reload(), 400);
+});
+
+// Listen for purge broadcasts from other hosts — force everyone to reload
+onValue(ref(db, 'purgeEvent'), snap => {
+  const ev = snap.val();
+  if (!ev || !ev.ts) return;
+  if (ev.ts < (window._joinTime || 0)) return;
+  console.log('[FARS] Purge event received from', ev.by);
+  // Show a brief toast then reload
+  resetToastEl.textContent = `★ HOST PURGE BY ${String(ev.by || 'unknown').toUpperCase()} — RELOADING ★`;
+  resetToastEl.classList.add('show');
+  setTimeout(() => location.reload(), 1500);
 });
 
 function showResetToast(by) {
