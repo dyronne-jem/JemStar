@@ -431,6 +431,7 @@
     <div class="you">YOU</div>
     <div>K <span class="num" id="myKills">0</span> &nbsp; D <span class="num" id="myDeaths">0</span></div>
     <div>Online <span class="num" id="onlineCount">0</span></div>
+    <div style="margin-top:8px;"><button id="muteBtn" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);color:var(--ink-dim);font-family:inherit;font-size:10px;letter-spacing:0.2em;padding:4px 10px;cursor:pointer;border-radius:2px;">🔊 SOUND ON</button></div>
   </div>
 
   <div id="chat">
@@ -485,6 +486,34 @@ const NETWORK_TICK = 1 / 15; // 15 Hz position broadcast
 const CFO_PULSE_RADIUS = SHIP_R * 15;   // 210 px
 const CFO_PULSE_COOLDOWN = 1.6;          // pulse fires every 1.6s
 const CFO_PULSE_DURATION = 0.6;          // visual + damage window
+
+// Per-team ship stats & weapon configs
+const TEAM_STATS = {
+  Finance:    { turn: 5.0, accel: 420, maxSpeed: 380, drag: 0.5, weapon: 'bullet',   cooldown: 0.18 },
+  Accounting: { turn: 2.4, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'torpedo',  cooldown: 1.5, maxActive: 3 },
+  Risk:       { turn: 3.2, accel: 250, maxSpeed: 290, drag: 0.5, weapon: 'mine',     cooldown: 1.2, maxActive: 4 },
+  Strategy:   { turn: 3.0, accel: 240, maxSpeed: 280, drag: 0.5, weapon: 'cone',     cooldown: 1.2 },
+  CFO:        { turn: 3.4, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'pulse',    cooldown: CFO_PULSE_COOLDOWN }
+};
+
+// Torpedo constants
+const TORP_SPEED = 240;
+const TORP_LIFE = 6.0;
+const TORP_TURN = 2.0;        // rad/s — how fast it can curve
+const TORP_HIT_R = 14;
+const TORP_ACQUIRE_RANGE = 900;
+
+// Mine constants
+const MINE_LIFE = 5.0;        // seconds before auto-detonate
+const MINE_BLAST_R = 100;
+const MINE_BLAST_DURATION = 0.4;
+
+// Cone (Strategy) constants
+const CONE_RANGE = 220;
+const CONE_HALF_ANGLE = Math.PI / 7;  // ~25° half-angle, ~50° total cone
+const CONE_DURATION = 0.25;
+const CONE_RECOIL = 420;              // instant velocity kick backwards
+
 const TEAM_COLORS = {
   Finance:    "#00e5a8",
   Accounting: "#ffb627",
@@ -493,6 +522,115 @@ const TEAM_COLORS = {
   CFO:        "#c879ff"
 };
 const TEAMS = Object.keys(TEAM_COLORS);
+
+// ---------- Audio (synthesized, subtle) ----------
+let audioCtx = null;
+let masterGain = null;
+let muted = false;
+function initAudio() {
+  if (audioCtx) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.18; // master volume — subtle
+    masterGain.connect(audioCtx.destination);
+  } catch(e) { audioCtx = null; }
+}
+function sfx(type) {
+  if (muted || !audioCtx) return;
+  const t = audioCtx.currentTime;
+  const out = audioCtx.createGain();
+  out.connect(masterGain);
+
+  if (type === 'bullet') {
+    const o = audioCtx.createOscillator();
+    o.type = 'square';
+    o.frequency.setValueAtTime(820, t);
+    o.frequency.exponentialRampToValueAtTime(260, t + 0.08);
+    out.gain.setValueAtTime(0.15, t);
+    out.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+    o.connect(out); o.start(t); o.stop(t + 0.1);
+  } else if (type === 'torpedo') {
+    const o = audioCtx.createOscillator();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(120, t);
+    o.frequency.exponentialRampToValueAtTime(55, t + 0.35);
+    out.gain.setValueAtTime(0.2, t);
+    out.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    o.connect(out); o.start(t); o.stop(t + 0.36);
+  } else if (type === 'mine_place') {
+    const o = audioCtx.createOscillator();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(380, t);
+    o.frequency.linearRampToValueAtTime(180, t + 0.1);
+    out.gain.setValueAtTime(0.15, t);
+    out.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    o.connect(out); o.start(t); o.stop(t + 0.13);
+  } else if (type === 'mine_boom' || type === 'boom') {
+    // Noise burst
+    const bufSize = audioCtx.sampleRate * 0.3;
+    const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    const filt = audioCtx.createBiquadFilter();
+    filt.type = 'lowpass';
+    filt.frequency.value = 600;
+    out.gain.setValueAtTime(0.35, t);
+    out.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    src.connect(filt); filt.connect(out); src.start(t); src.stop(t + 0.3);
+  } else if (type === 'cone') {
+    const bufSize = audioCtx.sampleRate * 0.25;
+    const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / bufSize);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    const filt = audioCtx.createBiquadFilter();
+    filt.type = 'bandpass';
+    filt.frequency.setValueAtTime(2200, t);
+    filt.frequency.exponentialRampToValueAtTime(400, t + 0.25);
+    filt.Q.value = 4;
+    out.gain.setValueAtTime(0.3, t);
+    out.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    src.connect(filt); filt.connect(out); src.start(t); src.stop(t + 0.26);
+  } else if (type === 'pulse') {
+    const o = audioCtx.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(180, t);
+    o.frequency.exponentialRampToValueAtTime(720, t + 0.5);
+    out.gain.setValueAtTime(0.18, t);
+    out.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    o.connect(out); o.start(t); o.stop(t + 0.51);
+  } else if (type === 'death') {
+    const o = audioCtx.createOscillator();
+    o.type = 'square';
+    o.frequency.setValueAtTime(260, t);
+    o.frequency.exponentialRampToValueAtTime(40, t + 0.6);
+    out.gain.setValueAtTime(0.2, t);
+    out.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+    o.connect(out); o.start(t); o.stop(t + 0.61);
+  } else if (type === 'hit') {
+    const o = audioCtx.createOscillator();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(600, t);
+    o.frequency.exponentialRampToValueAtTime(200, t + 0.06);
+    out.gain.setValueAtTime(0.15, t);
+    out.gain.exponentialRampToValueAtTime(0.001, t + 0.07);
+    o.connect(out); o.start(t); o.stop(t + 0.08);
+  }
+}
+// Only play sounds when the originating event is close to the camera
+function sfxNearby(type, x, y) {
+  if (!myState) return;
+  const dx = x - myState.x, dy = y - myState.y;
+  const dist = Math.hypot(dx, dy);
+  const maxDist = 700;
+  if (dist > maxDist) return;
+  // Could attenuate here; keep simple, just gate by distance
+  sfx(type);
+}
 
 // ---------- DOM ----------
 const loginEl = document.getElementById('login');
@@ -511,6 +649,11 @@ const countdownNum = document.getElementById('countdownNum');
 const myKillsEl = document.getElementById('myKills');
 const myDeathsEl = document.getElementById('myDeaths');
 const onlineCountEl = document.getElementById('onlineCount');
+const muteBtn = document.getElementById('muteBtn');
+muteBtn.addEventListener('click', () => {
+  muted = !muted;
+  muteBtn.textContent = muted ? '🔇 SOUND OFF' : '🔊 SOUND ON';
+});
 
 let selectedTeam = null;
 let myId = null;
@@ -573,6 +716,9 @@ nameInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !joinBtn.d
 const players = new Map();   // id -> {x,y,angle,vx,vy,name,team,alive,kills,deaths}
 const bullets = new Map();   // id -> {x,y,vx,vy,team,owner,birth}
 const pulses = new Map();    // id -> {x,y,owner,birth,team} - CFO pulse weapons
+const torpedoes = new Map(); // id -> {x,y,angle,team,owner,birth,targetId?}
+const mines = new Map();     // id -> {x,y,team,owner,birth,exploded}
+const cones = new Map();     // id -> {x,y,angle,team,owner,birth}
 const stars = [];
 const particles = [];        // local-only explosion FX
 let lastShot = 0;
@@ -621,6 +767,7 @@ window.addEventListener('resize', resize);
 async function startGame() {
   myName = nameInput.value.trim().slice(0, 16);
   myTeam = selectedTeam;
+  initAudio();
 
   // If user picked CFO, attempt atomic claim first
   if (myTeam === 'CFO') {
@@ -692,6 +839,7 @@ async function startGame() {
     if (b.owner === myId) {
       setTimeout(() => remove(ref(db, `bullets/${id}`)).catch(()=>{}), BULLET_LIFE * 1000);
     }
+    sfxNearby('bullet', b.x, b.y);
   });
 
   // Listen to CFO pulses
@@ -704,6 +852,46 @@ async function startGame() {
     if (p.owner === myId) {
       setTimeout(() => remove(ref(db, `pulses/${id}`)).catch(()=>{}), CFO_PULSE_DURATION * 1000);
     }
+    sfxNearby('pulse', p.x, p.y);
+  });
+
+  // Listen to torpedoes
+  onChildAdded(ref(db, 'torpedoes'), snap => {
+    const t = snap.val();
+    const id = snap.key;
+    if (!t) return;
+    torpedoes.set(id, { ...t, birth: performance.now() / 1000 });
+    setTimeout(() => torpedoes.delete(id), TORP_LIFE * 1000 + 500);
+    if (t.owner === myId) {
+      setTimeout(() => remove(ref(db, `torpedoes/${id}`)).catch(()=>{}), TORP_LIFE * 1000);
+    }
+    sfxNearby('torpedo', t.x, t.y);
+  });
+
+  // Listen to mines
+  onChildAdded(ref(db, 'mines'), snap => {
+    const m = snap.val();
+    const id = snap.key;
+    if (!m) return;
+    mines.set(id, { ...m, birth: performance.now() / 1000, exploded: false });
+    setTimeout(() => mines.delete(id), (MINE_LIFE + MINE_BLAST_DURATION) * 1000 + 500);
+    if (m.owner === myId) {
+      setTimeout(() => remove(ref(db, `mines/${id}`)).catch(()=>{}), (MINE_LIFE + MINE_BLAST_DURATION) * 1000);
+    }
+    sfxNearby('mine_place', m.x, m.y);
+  });
+
+  // Listen to cone blasts
+  onChildAdded(ref(db, 'cones'), snap => {
+    const c = snap.val();
+    const id = snap.key;
+    if (!c) return;
+    cones.set(id, { ...c, birth: performance.now() / 1000 });
+    setTimeout(() => cones.delete(id), CONE_DURATION * 1000 + 200);
+    if (c.owner === myId) {
+      setTimeout(() => remove(ref(db, `cones/${id}`)).catch(()=>{}), CONE_DURATION * 1000);
+    }
+    sfxNearby('cone', c.x, c.y);
   });
 
   // Listen to scores
@@ -816,13 +1004,14 @@ function tick(dt) {
 
   // ----- My ship -----
   if (!dead && myState) {
+    const stats = TEAM_STATS[myTeam] || TEAM_STATS.Finance;
     // Rotate
-    if (keys['a'] || keys['arrowleft'])  myState.angle -= 3.4 * dt;
-    if (keys['d'] || keys['arrowright']) myState.angle += 3.4 * dt;
+    if (keys['a'] || keys['arrowleft'])  myState.angle -= stats.turn * dt;
+    if (keys['d'] || keys['arrowright']) myState.angle += stats.turn * dt;
     // Thrust
     if (keys['w'] || keys['arrowup']) {
-      myState.vx += Math.cos(myState.angle) * 280 * dt;
-      myState.vy += Math.sin(myState.angle) * 280 * dt;
+      myState.vx += Math.cos(myState.angle) * stats.accel * dt;
+      myState.vy += Math.sin(myState.angle) * stats.accel * dt;
       // Engine particles
       particles.push({
         x: myState.x - Math.cos(myState.angle) * 12,
@@ -835,12 +1024,11 @@ function tick(dt) {
       });
     }
     // Drag
-    myState.vx *= Math.pow(0.5, dt);
-    myState.vy *= Math.pow(0.5, dt);
+    myState.vx *= Math.pow(stats.drag, dt);
+    myState.vy *= Math.pow(stats.drag, dt);
     // Cap speed
     const sp = Math.hypot(myState.vx, myState.vy);
-    const maxSp = 320;
-    if (sp > maxSp) { myState.vx *= maxSp/sp; myState.vy *= maxSp/sp; }
+    if (sp > stats.maxSpeed) { myState.vx *= stats.maxSpeed/sp; myState.vy *= stats.maxSpeed/sp; }
     // Move
     myState.x += myState.vx * dt;
     myState.y += myState.vy * dt;
@@ -850,18 +1038,24 @@ function tick(dt) {
     if (myState.y < 0) myState.y += WORLD_H;
     if (myState.y > WORLD_H) myState.y -= WORLD_H;
 
-    // Fire
+    // Fire — dispatched by team weapon
     if (keys[' ']) {
-      if (myTeam === 'CFO') {
-        if (t - lastPulse > CFO_PULSE_COOLDOWN) {
-          lastPulse = t;
-          fireCFOPulse();
+      const weapon = TEAM_STATS[myTeam].weapon;
+      const cd = TEAM_STATS[myTeam].cooldown;
+      if (weapon === 'pulse') {
+        if (t - lastPulse > cd) { lastPulse = t; fireCFOPulse(); }
+      } else if (weapon === 'bullet') {
+        if (t - lastShot > cd) { lastShot = t; fireBullet(); }
+      } else if (weapon === 'torpedo') {
+        if (t - lastShot > cd && countMyActive(torpedoes) < TEAM_STATS.Accounting.maxActive) {
+          lastShot = t; fireTorpedo();
         }
-      } else {
-        if (t - lastShot > FIRE_COOLDOWN) {
-          lastShot = t;
-          fireBullet();
+      } else if (weapon === 'mine') {
+        if (t - lastShot > cd && countMyActive(mines) < TEAM_STATS.Risk.maxActive) {
+          lastShot = t; dropMine();
         }
+      } else if (weapon === 'cone') {
+        if (t - lastShot > cd) { lastShot = t; fireCone(); }
       }
     }
 
@@ -922,6 +1116,109 @@ function tick(dt) {
       if (dist <= currentRadius && !p._hitMe) {
         p._hitMe = true;
         handleDeath({ owner: p.owner, team: p.team });
+      }
+    }
+  }
+
+  // ----- Torpedoes (Accounting) -----
+  for (const [id, tor] of torpedoes) {
+    const age = t - tor.birth;
+    if (age > TORP_LIFE) { torpedoes.delete(id); continue; }
+    // Homing (only owner simulates & broadcasts? For simplicity every client simulates locally — that's fine for visual, and collision is victim-authoritative)
+    const target = tor.targetId ? players.get(tor.targetId) : null;
+    if (target && target.alive) {
+      const dx = target.x - tor.x;
+      const dy = target.y - tor.y;
+      const desiredAngle = Math.atan2(dy, dx);
+      let delta = desiredAngle - tor.angle;
+      while (delta > Math.PI) delta -= Math.PI * 2;
+      while (delta < -Math.PI) delta += Math.PI * 2;
+      const maxTurn = TORP_TURN * dt;
+      tor.angle += Math.max(-maxTurn, Math.min(maxTurn, delta));
+    }
+    tor.x += Math.cos(tor.angle) * TORP_SPEED * dt;
+    tor.y += Math.sin(tor.angle) * TORP_SPEED * dt;
+    // Wrap
+    if (tor.x < 0) tor.x += WORLD_W;
+    if (tor.x > WORLD_W) tor.x -= WORLD_W;
+    if (tor.y < 0) tor.y += WORLD_H;
+    if (tor.y > WORLD_H) tor.y -= WORLD_H;
+    // Trail
+    if (Math.random() < 0.6) {
+      particles.push({
+        x: tor.x, y: tor.y,
+        vx: (Math.random()-0.5)*40, vy: (Math.random()-0.5)*40,
+        life: 0.5, max: 0.5,
+        color: TEAM_COLORS.Accounting,
+        size: 2
+      });
+    }
+    // Collision (victim-authoritative)
+    if (!dead && myState && tor.owner !== myId && tor.team !== myTeam) {
+      const dx = tor.x - myState.x;
+      const dy = tor.y - myState.y;
+      if (dx*dx + dy*dy < TORP_HIT_R * TORP_HIT_R) {
+        torpedoes.delete(id);
+        handleDeath(tor);
+        sfx('boom');
+      }
+    }
+  }
+
+  // ----- Mines (Risk) -----
+  for (const [id, m] of mines) {
+    const age = t - m.birth;
+    if (!m.exploded && age >= MINE_LIFE) {
+      m.exploded = true;
+      m.explodeAt = t;
+      sfxNearby('mine_boom', m.x, m.y);
+      // Visual burst
+      for (let i = 0; i < 20; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const sp = 100 + Math.random() * 200;
+        particles.push({
+          x: m.x, y: m.y,
+          vx: Math.cos(a)*sp, vy: Math.sin(a)*sp,
+          life: 0.6, max: 0.6,
+          color: TEAM_COLORS.Risk,
+          size: 2 + Math.random() * 2
+        });
+      }
+    }
+    if (m.exploded && (t - m.explodeAt) > MINE_BLAST_DURATION) {
+      mines.delete(id);
+      continue;
+    }
+    // Collision during blast window (victim-authoritative)
+    if (m.exploded && !dead && myState && m.owner !== myId && m.team !== myTeam) {
+      const dx = myState.x - m.x;
+      const dy = myState.y - m.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= MINE_BLAST_R && !m._hitMe) {
+        m._hitMe = true;
+        handleDeath({ owner: m.owner, team: m.team });
+      }
+    }
+  }
+
+  // ----- Cone blasts (Strategy) -----
+  for (const [id, c] of cones) {
+    const age = t - c.birth;
+    if (age > CONE_DURATION) { cones.delete(id); continue; }
+    // Collision: am I in the cone?
+    if (!dead && myState && c.owner !== myId && c.team !== myTeam && !c._hitMe) {
+      const dx = myState.x - c.x;
+      const dy = myState.y - c.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist <= CONE_RANGE) {
+        const angleToMe = Math.atan2(dy, dx);
+        let delta = angleToMe - c.angle;
+        while (delta > Math.PI) delta -= Math.PI * 2;
+        while (delta < -Math.PI) delta += Math.PI * 2;
+        if (Math.abs(delta) <= CONE_HALF_ANGLE) {
+          c._hitMe = true;
+          handleDeath(c);
+        }
       }
     }
   }
@@ -990,11 +1287,87 @@ function fireCFOPulse() {
   }
 }
 
+function countMyActive(map) {
+  let n = 0;
+  for (const [_, v] of map) if (v.owner === myId) n++;
+  return n;
+}
+
+function fireTorpedo() {
+  const r = push(ref(db, 'torpedoes'));
+  const id = r.key;
+  // Acquire nearest enemy target at launch
+  let target = null, bestDist = TORP_ACQUIRE_RANGE;
+  for (const [pid, pl] of players) {
+    if (pid === myId || !pl.alive || pl.team === myTeam) continue;
+    const d = Math.hypot(pl.x - myState.x, pl.y - myState.y);
+    if (d < bestDist) { bestDist = d; target = pid; }
+  }
+  const tor = {
+    x: myState.x + Math.cos(myState.angle) * 22,
+    y: myState.y + Math.sin(myState.angle) * 22,
+    angle: myState.angle,
+    team: myTeam,
+    owner: myId,
+    targetId: target || null,
+    ts: Date.now()
+  };
+  set(r, tor);
+  torpedoes.set(id, { ...tor, birth: performance.now()/1000 });
+}
+
+function dropMine() {
+  const r = push(ref(db, 'mines'));
+  const id = r.key;
+  const m = {
+    x: myState.x,
+    y: myState.y,
+    team: myTeam,
+    owner: myId,
+    ts: Date.now()
+  };
+  set(r, m);
+  mines.set(id, { ...m, birth: performance.now()/1000, exploded: false });
+}
+
+function fireCone() {
+  const r = push(ref(db, 'cones'));
+  const id = r.key;
+  const c = {
+    x: myState.x,
+    y: myState.y,
+    angle: myState.angle,
+    team: myTeam,
+    owner: myId,
+    ts: Date.now()
+  };
+  set(r, c);
+  cones.set(id, { ...c, birth: performance.now()/1000 });
+  // Apply recoil to my ship (backwards along angle)
+  myState.vx -= Math.cos(myState.angle) * CONE_RECOIL;
+  myState.vy -= Math.sin(myState.angle) * CONE_RECOIL;
+  // Muzzle particles
+  for (let i = 0; i < 30; i++) {
+    const spread = (Math.random() - 0.5) * CONE_HALF_ANGLE * 2;
+    const sp = 200 + Math.random() * 200;
+    const a = myState.angle + spread;
+    particles.push({
+      x: myState.x + Math.cos(myState.angle) * 14,
+      y: myState.y + Math.sin(myState.angle) * 14,
+      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+      life: 0.5, max: 0.5,
+      color: TEAM_COLORS[myTeam],
+      size: 2 + Math.random() * 2
+    });
+  }
+}
+
 function handleDeath(bullet) {
   if (dead) return;
   dead = true;
   respawnAt = performance.now() / 1000 + RESPAWN_TIME;
   respawnEl.classList.add('show');
+  sfx('death');
 
   // Explosion particles
   for (let i = 0; i < 30; i++) {
@@ -1095,6 +1468,102 @@ function render() {
     ctx.shadowBlur = 0;
   }
 
+  // Torpedoes
+  for (const [id, tor] of torpedoes) {
+    ctx.save();
+    ctx.translate(tor.x, tor.y);
+    ctx.rotate(tor.angle);
+    ctx.shadowColor = TEAM_COLORS.Accounting;
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = TEAM_COLORS.Accounting;
+    // Elongated capsule
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 9, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Glow tip
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.beginPath();
+    ctx.arc(6, 0, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.shadowBlur = 0;
+  }
+
+  // Mines
+  const tNow2 = performance.now() / 1000;
+  for (const [id, m] of mines) {
+    const age = tNow2 - m.birth;
+    if (!m.exploded) {
+      // Pulsing orb — accelerating pulse as it nears detonation
+      const urgency = age / MINE_LIFE;
+      const pulseSpeed = 2 + urgency * 10;
+      const pulse = 0.5 + 0.5 * Math.sin(age * pulseSpeed * Math.PI);
+      ctx.fillStyle = TEAM_COLORS.Risk;
+      ctx.shadowColor = TEAM_COLORS.Risk;
+      ctx.shadowBlur = 8 + pulse * 12;
+      ctx.beginPath();
+      ctx.arc(m.x, m.y, 5 + pulse * 2, 0, Math.PI * 2);
+      ctx.fill();
+      // Outer ring
+      ctx.strokeStyle = `rgba(255, 77, 109, ${0.3 + pulse * 0.4})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(m.x, m.y, 10, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    } else {
+      // Explosion ring
+      const bAge = tNow2 - m.explodeAt;
+      const progress = Math.min(1, bAge / MINE_BLAST_DURATION);
+      const r = progress * MINE_BLAST_R;
+      const alpha = 1 - progress;
+      ctx.strokeStyle = `rgba(255, 77, 109, ${alpha})`;
+      ctx.lineWidth = 5;
+      ctx.shadowColor = TEAM_COLORS.Risk;
+      ctx.shadowBlur = 24;
+      ctx.beginPath();
+      ctx.arc(m.x, m.y, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = `rgba(255, 77, 109, ${alpha * 0.25})`;
+      ctx.beginPath();
+      ctx.arc(m.x, m.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  // Cone blasts
+  for (const [id, c] of cones) {
+    const age = tNow2 - c.birth;
+    const progress = Math.min(1, age / CONE_DURATION);
+    const alpha = 1 - progress;
+    ctx.save();
+    ctx.translate(c.x, c.y);
+    ctx.rotate(c.angle);
+    const gradient = ctx.createLinearGradient(0, 0, CONE_RANGE, 0);
+    gradient.addColorStop(0, `rgba(109, 211, 255, ${alpha * 0.9})`);
+    gradient.addColorStop(1, `rgba(109, 211, 255, 0)`);
+    ctx.fillStyle = gradient;
+    ctx.shadowColor = TEAM_COLORS.Strategy;
+    ctx.shadowBlur = 24;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.arc(0, 0, CONE_RANGE, -CONE_HALF_ANGLE, CONE_HALF_ANGLE);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // Edge outline
+    ctx.strokeStyle = `rgba(255,255,255,${alpha * 0.8})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(-CONE_HALF_ANGLE) * CONE_RANGE, Math.sin(-CONE_HALF_ANGLE) * CONE_RANGE);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(CONE_HALF_ANGLE) * CONE_RANGE, Math.sin(CONE_HALF_ANGLE) * CONE_RANGE);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   // CFO Pulses — expanding shockwave rings
   const tNow = performance.now() / 1000;
   for (const [id, p] of pulses) {
@@ -1169,9 +1638,123 @@ function drawShip(p, isMe) {
       ctx.lineTo(Math.cos(a) * 22, Math.sin(a) * 22);
       ctx.stroke();
     }
+  } else if (p.team === 'Finance') {
+    // $ shaped ship — vertical body with two curved arms like an S, stem at top/bottom
+    ctx.rotate(p.angle);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 16 : 10;
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    // S-curve — body of the $
+    ctx.beginPath();
+    ctx.moveTo(10, -8);
+    ctx.quadraticCurveTo(-6, -11, -6, -2);
+    ctx.quadraticCurveTo(-6, 4, 6, 4);
+    ctx.quadraticCurveTo(16, 4, 16, 10);
+    ctx.quadraticCurveTo(16, 14, 0, 13);
+    ctx.stroke();
+    // Vertical stem through the middle — nose at front (right, since angle=0 points +x)
+    ctx.beginPath();
+    ctx.moveTo(18, 0);
+    ctx.lineTo(-12, 0);
+    ctx.stroke();
+    // Filled core for visibility
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(0, 0, 3, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (p.team === 'Accounting') {
+    // Star Trek Enterprise-ish — saucer up front, nacelles back
+    ctx.rotate(p.angle);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 16 : 10;
+    ctx.fillStyle = color;
+    // Saucer (ellipse in front)
+    ctx.beginPath();
+    ctx.ellipse(10, 0, 10, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Neck
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = color;
+    ctx.fillRect(-4, -1.5, 10, 3);
+    // Secondary hull
+    ctx.beginPath();
+    ctx.ellipse(-7, 0, 6, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Nacelles (two parallel rods above & below)
+    ctx.fillRect(-14, -9, 14, 2.5);
+    ctx.fillRect(-14,  6.5, 14, 2.5);
+    // Pylons connecting nacelles to secondary hull
+    ctx.fillRect(-6, -7, 1.5, 4);
+    ctx.fillRect(-6, 3, 1.5, 4);
+    // Dark saucer detail
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.arc(10, 0, 4, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (p.team === 'Risk') {
+    // Chunky hex/diamond shape with warning markings
+    ctx.rotate(p.angle);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 16 : 10;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(15, 0);
+    ctx.lineTo(6, -11);
+    ctx.lineTo(-9, -9);
+    ctx.lineTo(-13, 0);
+    ctx.lineTo(-9, 9);
+    ctx.lineTo(6, 11);
+    ctx.closePath();
+    ctx.fill();
+    // Hazard stripes
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(-6, -3, 10, 2);
+    ctx.fillRect(-6, 1, 10, 2);
+    // Nose tip highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.beginPath();
+    ctx.arc(13, 0, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (p.team === 'Strategy') {
+    // U-shaped ship — two prongs forward with gap between them
+    ctx.rotate(p.angle);
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 16 : 10;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    // Upper prong
+    ctx.moveTo(16, -4);
+    ctx.lineTo(16, -10);
+    ctx.lineTo(-10, -10);
+    ctx.lineTo(-12, -5);
+    ctx.lineTo(-4, -5);
+    ctx.lineTo(-4, -4);
+    ctx.closePath();
+    ctx.fill();
+    // Lower prong
+    ctx.beginPath();
+    ctx.moveTo(16, 4);
+    ctx.lineTo(16, 10);
+    ctx.lineTo(-10, 10);
+    ctx.lineTo(-12, 5);
+    ctx.lineTo(-4, 5);
+    ctx.lineTo(-4, 4);
+    ctx.closePath();
+    ctx.fill();
+    // Rear connector bar
+    ctx.fillRect(-12, -5, 4, 10);
+    // Muzzle glow in the gap
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fillRect(-4, -3, 20, 6);
   } else {
     ctx.rotate(p.angle);
-    // Ship body — triangle with notch
+    // Fallback ship — triangle with notch
     ctx.shadowColor = color;
     ctx.shadowBlur = isMe ? 16 : 10;
     ctx.fillStyle = color;
