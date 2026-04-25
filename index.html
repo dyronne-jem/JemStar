@@ -1606,437 +1606,295 @@ function playIntroTheme() {
     src.start(t); src.stop(t + 1.25);
   }
 
-  // --- Note frequencies in Bb major ---
-  // Bb = 233.08 (Bb3) / 466.16 (Bb4) / 932.33 (Bb5)
-  const Bb2=116.54, F2=87.31, Eb2=77.78, C2=65.41, D2=73.42, G2=98.00, A2=110.00;
-  const Bb3=233.08, F3=174.61, Eb3=155.56, C3=130.81, D3=146.83, G3=196.00, A3=220.00;
-  const C4=261.63, D4=293.66, Eb4=311.13, F4=349.23, G4=392.00, A4=440.00, Bb4=466.16;
-  const C5=523.25, D5=587.33, Eb5=622.25, F5=698.46, G5=783.99, A5=880.00, Bb5=932.33;
-  const C6=1046.50, D6=1174.66, Eb6=1244.51, F6=1396.91;
+  // --- Note frequencies (C minor / C major mixed mode for the FARS WARS motif) ---
+  // Core motif (decoded from user's MIDI): C4, Eb4, E4, E4, E4, E4, E4, E4 at ~0.24s/note
+  // We treat this as the "FARS WARS" leitmotif and develop it across the piece.
+  const C2=65.41, D2=73.42, Eb2=77.78, F2=87.31, G2=98.00, Ab2=103.83, Bb2=116.54;
+  const C3=130.81, D3=146.83, Eb3=155.56, F3=174.61, G3=196.00, Ab3=207.65, Bb3=233.08;
+  const C4=261.63, D4=293.66, Eb4=311.13, E4=329.63, F4=349.23, G4=392.00, Ab4=415.30, A4=440.00, Bb4=466.16, B4=493.88;
+  const E3=164.81, B3=246.94;
+  const C5=523.25, D5=587.33, Eb5=622.25, E5=659.25, F5=698.46, G5=783.99, Ab5=830.61, A5=880.00, Bb5=932.33;
+  const C6=1046.50, D6=1174.66, Eb6=1244.51, E6=1318.51, F6=1396.91, G6=1567.98;
 
-  // =============================================================
-  // Section A: Opening Fanfare (0–10s) — bold three-note call
-  // Uses classic heroic-leap intervals (fourth + fifth)
-  // =============================================================
-  // Pickup + downbeat hit
-  timpani(-0.05, 75, 0.4, 0.7);
-  cymbal(0.0, 0.22);
+  // ============================================================================
+  // Helper: play the FARS WARS motif at a given time, transposition, and voice
+  // motif = [C, Eb, E, E×6] at 0.24s/note.
+  // tonic = root frequency; the 8 notes are tonic, tonic+m3, tonic+M3, ×6 of M3
+  // ============================================================================
+  function motif(startOffset, tonic, voice = brass, baseVol = 0.24, noteDur = 0.22, gap = 0.24) {
+    // tonic, +3 semitones, +4 semitones, then 5 more of +4
+    const m3 = tonic * Math.pow(2, 3/12);   // minor third above tonic
+    const M3 = tonic * Math.pow(2, 4/12);   // major third above tonic
+    const notes = [tonic, m3, M3, M3, M3, M3, M3, M3];
+    notes.forEach((f, i) => {
+      const vol = i === 0 ? baseVol * 1.1 : (i >= 3 ? baseVol * (0.9 + (i-3) * 0.04) : baseVol);
+      voice(startOffset + i * gap, f, noteDur, vol);
+    });
+  }
 
-  // Fanfare melody — rising fourth to sustain, stepwise descend, leap
-  brass(0.0, F4, 0.55, 0.28);
-  brass(0.55, Bb4, 0.55, 0.28);
-  brass(1.1, D5, 0.45, 0.28);
-  brass(1.55, F5, 1.6, 0.32);       // held high note
-  horn(0.0, Bb3, 2.2, 0.15);
-  horn(0.0, D4, 2.2, 0.12);
+  // Doubled motif — two voices an octave apart
+  function motifDoubled(startOffset, tonic, voiceLow, voiceHigh, volLow, volHigh, noteDur = 0.22, gap = 0.24) {
+    motif(startOffset, tonic, voiceLow, volLow, noteDur, gap);
+    motif(startOffset, tonic * 2, voiceHigh, volHigh, noteDur, gap);
+  }
 
-  // Answer phrase
-  brass(3.2, Eb5, 0.5, 0.26);
-  brass(3.7, D5, 0.5, 0.26);
-  brass(4.2, C5, 0.5, 0.26);
-  brass(4.7, Bb4, 1.6, 0.3);
-  horn(3.2, G3, 2.1, 0.14);
-  horn(3.2, Bb3, 2.1, 0.12);
+  // ============================================================================
+  // Section A: Statement of the motif (0–6s)
+  // Clean, alone, brass solo — establishes the FARS WARS theme
+  // ============================================================================
+  timpani(-0.05, 65, 0.4, 0.7);
+  cymbal(0.0, 0.18);
 
-  strings(0.0, [Bb2, F3, Bb3, D4], 3.2, 0.09);
-  strings(3.2, [Eb3, G3, Bb3, Eb4], 2.1, 0.09);
-  timpani(0.0, 75, 0.5, 0.7);
-  timpani(1.6, 75, 0.4, 0.6);
-  timpani(3.2, 75, 0.5, 0.6);
-  timpani(4.7, 75, 0.4, 0.6);
+  // First statement of the motif in C
+  motif(0.0, C4, brass, 0.3, 0.22, 0.24);
 
-  // Second half of Section A — repetition with octave lift
-  brass(6.4, F4, 0.4, 0.26);
-  brass(6.8, Bb4, 0.4, 0.26);
-  brass(7.2, D5, 0.4, 0.26);
-  brass(7.6, F5, 0.4, 0.3);
-  brass(8.0, Bb5, 1.8, 0.34);        // dramatic octave leap
-  horn(6.4, Bb3, 3.4, 0.16);
-  horn(6.4, F4, 3.4, 0.12);
-  strings(6.4, [Bb2, F3, Bb3, D4, F4], 3.4, 0.1);
-  timpani(6.4, 75, 0.5, 0.7);
-  timpani(7.6, 75, 0.4, 0.7);
-  timpani(8.0, 75, 0.5, 0.8);
-  cymbal(8.0, 0.2);
+  // Background sustained chord (C minor, mysterious)
+  strings(0.0, [C3, Eb3, G3], 2.2, 0.1);
+  horn(0.0, C3, 2.0, 0.16);
 
-  // =============================================================
-  // Section B: Main Theme (10–24s) — march feel, triumphant
-  // Classic I-V-vi-IV-I progression in Bb
-  // =============================================================
-  // Theme statement — bar 1 (I: Bb)
-  brass(10.0, Bb4, 0.35, 0.26);
-  brass(10.35, D5, 0.35, 0.26);
-  brass(10.7, F5, 0.7, 0.28);
-  brass(11.4, Eb5, 0.3, 0.25);
-  brass(11.7, D5, 0.3, 0.25);
-  horn(10.0, F3, 1.9, 0.14);
-  horn(10.0, Bb3, 1.9, 0.12);
-  strings(10.0, [Bb2, F3, Bb3, D4], 1.9, 0.1);
-  timpani(10.0, 75, 0.4, 0.6);
-  snare(10.9, 0.1);
+  // Echo of the motif's last note
+  brass(2.0, E4, 1.5, 0.22);
+  strings(2.0, [Ab2, C3, Eb3], 2.0, 0.1);
+  timpani(2.0, 65, 0.4, 0.5);
 
-  // Bar 2 (V: F)
-  brass(12.0, C5, 0.4, 0.26);
-  brass(12.4, F5, 0.4, 0.26);
-  brass(12.8, A5, 0.6, 0.3);
-  brass(13.4, G5, 0.3, 0.25);
-  brass(13.7, F5, 0.3, 0.25);
-  horn(12.0, C3, 1.9, 0.14);
-  horn(12.0, A3, 1.9, 0.12);
-  strings(12.0, [F2, C3, F3, A3, C4], 1.9, 0.1);
-  timpani(12.0, 70, 0.4, 0.6);
-  snare(12.9, 0.1);
+  // Second statement — answered higher, more dramatic
+  motif(4.0, F4, brass, 0.3, 0.22, 0.24);
+  strings(4.0, [F3, Ab3, C4], 2.2, 0.1);
+  horn(4.0, F3, 2.0, 0.16);
+  timpani(4.0, 70, 0.4, 0.6);
 
-  // Bar 3 (vi: Gm)
-  brass(14.0, G4, 0.4, 0.24);
-  brass(14.4, Bb4, 0.4, 0.24);
-  brass(14.8, D5, 0.6, 0.28);
-  brass(15.4, C5, 0.3, 0.24);
-  brass(15.7, Bb4, 0.3, 0.24);
-  horn(14.0, G3, 1.9, 0.14);
-  horn(14.0, D4, 1.9, 0.12);
-  strings(14.0, [G2, D3, G3, Bb3], 1.9, 0.1);
-  timpani(14.0, 75, 0.4, 0.6);
-  snare(14.9, 0.1);
+  // ============================================================================
+  // Section B: Motif harmonized (6–14s)
+  // Two voices — bass and lead doing the motif together
+  // ============================================================================
+  cymbal(6.0, 0.2);
+  timpani(6.0, 65, 0.5, 0.7);
 
-  // Bar 4 (IV: Eb)
-  brass(16.0, Eb5, 0.4, 0.26);
-  brass(16.4, G5, 0.4, 0.28);
-  brass(16.8, Bb5, 0.8, 0.32);
-  brass(17.6, A5, 0.4, 0.28);
-  horn(16.0, Eb3, 1.9, 0.14);
-  horn(16.0, G3, 1.9, 0.12);
-  strings(16.0, [Eb2, Bb2, Eb3, G3, Bb3], 1.9, 0.1);
-  timpani(16.0, 75, 0.4, 0.6);
-  cymbal(16.0, 0.14);
-  snare(16.9, 0.1);
+  // Motif in C, doubled with horn an octave below + brass on top
+  motif(6.0, C4, brass, 0.28, 0.22, 0.24);
+  motif(6.0, C3, horn, 0.18, 0.22, 0.24);
 
-  // Bars 5-8: continuation with more movement
-  brass(18.0, G5, 0.35, 0.28);
-  brass(18.35, F5, 0.35, 0.26);
-  brass(18.7, D5, 0.35, 0.26);
-  brass(19.05, Bb4, 0.35, 0.26);
-  brass(19.4, F5, 0.6, 0.3);
-  horn(18.0, Bb3, 1.9, 0.14);
-  strings(18.0, [Bb2, D3, F3, Bb3], 1.9, 0.1);
-  timpani(18.0, 75, 0.4, 0.6);
-  snare(18.9, 0.1);
-
-  brass(20.0, Eb5, 0.4, 0.26);
-  brass(20.4, D5, 0.4, 0.26);
-  brass(20.8, C5, 0.4, 0.26);
-  brass(21.2, Bb4, 0.4, 0.28);
-  brass(21.6, F5, 0.4, 0.3);
-  horn(20.0, F3, 1.9, 0.14);
-  strings(20.0, [F2, A2, C3, F3], 1.9, 0.1);
-  timpani(20.0, 70, 0.4, 0.6);
-
-  // Cadence to rest
-  brass(22.0, Bb4, 0.6, 0.28);
-  brass(22.6, D5, 0.6, 0.28);
-  brass(23.2, F5, 1.2, 0.32);
-  horn(22.0, Bb3, 2.4, 0.16);
-  horn(22.0, F4, 2.4, 0.14);
-  strings(22.0, [Bb2, F3, Bb3, D4, F4], 2.4, 0.12);
-  timpani(22.0, 75, 0.4, 0.7);
-  timpani(23.2, 75, 0.5, 0.7);
-  cymbal(23.2, 0.18);
-
-  // =============================================================
-  // Section C: Lyrical bridge (24–40s) — softer, mysterious
-  // Suspended harmonies, string-forward
-  // =============================================================
-  strings(24.5, [C3, G3, C4, Eb4], 4.0, 0.12);
-  horn(25.0, Eb4, 1.5, 0.12);
-  horn(26.5, G4, 1.5, 0.12);
-  brass(25.5, C5, 0.8, 0.18);
-  brass(26.3, Eb5, 0.8, 0.18);
-  brass(27.1, G5, 1.2, 0.22);
-
-  strings(28.5, [Bb2, F3, Bb3, D4], 4.0, 0.12);
-  horn(29.0, D4, 1.5, 0.12);
-  horn(30.5, F4, 1.5, 0.12);
-  brass(29.5, Bb4, 0.8, 0.18);
-  brass(30.3, D5, 0.8, 0.18);
-  brass(31.1, F5, 1.4, 0.22);
-
-  strings(32.5, [A2, E3, A3, C4], 3.5, 0.12);  // minor color
-  horn(33.0, C4, 1.3, 0.12);
-  brass(33.5, E4, 0.6, 0.18);
-  brass(34.1, A4, 0.6, 0.18);
-  brass(34.7, C5, 1.2, 0.22);
-
-  strings(36.0, [D3, A3, D4, F4], 4.0, 0.12);
-  horn(36.5, F4, 1.5, 0.14);
-  brass(37.0, A4, 0.5, 0.2);
-  brass(37.5, D5, 0.5, 0.2);
-  brass(38.0, F5, 1.8, 0.26);
-  timpani(38.0, 73, 0.5, 0.6);
-
-  // =============================================================
-  // Section D: Rising tension / minor turn (40–56s)
-  // Fraud / compliance / dark humor beats
-  // =============================================================
-  strings(40.0, [G2, D3, G3, Bb3], 3.5, 0.12);
-  brass(40.0, D5, 0.35, 0.24);
-  brass(40.35, Eb5, 0.35, 0.24);
-  brass(40.7, F5, 0.35, 0.24);
-  brass(41.05, G5, 0.9, 0.28);
-  timpani(40.0, 60, 0.4, 0.6);
-  timpani(41.0, 60, 0.4, 0.6);
-  snare(40.5, 0.12); snare(41.0, 0.12); snare(41.5, 0.12);
-
-  strings(43.5, [F2, C3, F3, A3], 3.5, 0.12);
-  brass(43.5, C5, 0.35, 0.24);
-  brass(43.85, D5, 0.35, 0.24);
-  brass(44.2, Eb5, 0.35, 0.24);
-  brass(44.55, F5, 0.9, 0.28);
-  timpani(43.5, 65, 0.4, 0.6);
-  snare(44.0, 0.12); snare(44.5, 0.12);
-
-  // Dark march (47-52): marching eighths rising
-  const darkBass = [F3, F3, G3, G3, A3, A3, Bb3, Bb3];
+  // Sustained chord pad evolves
+  strings(6.0, [C3, Eb3, G3, C4], 4.4, 0.12);
+  // Bass quarter notes underneath for march feel
   for (let i = 0; i < 8; i++) {
-    horn(47.0 + i * 0.5, darkBass[i], 0.45, 0.15);
+    horn(6.0 + i * 0.55, i % 2 === 0 ? C2 : G2, 0.5, 0.14);
+    if (i % 2 === 0) timpani(6.0 + i * 0.55, 65, 0.35, 0.5);
   }
-  strings(47.0, [Bb2, D3, F3], 4.5, 0.1);
-  brass(47.0, F4, 0.45, 0.22);
-  brass(47.5, A4, 0.45, 0.22);
-  brass(48.0, C5, 0.45, 0.22);
-  brass(48.5, F5, 0.45, 0.24);
-  brass(49.0, A5, 0.45, 0.26);
-  brass(49.5, F5, 0.45, 0.24);
-  brass(50.0, G5, 0.45, 0.26);
-  brass(50.5, A5, 0.9, 0.3);
-  for (let i = 0; i < 9; i++) timpani(47.0 + i * 0.5, 70, 0.35, 0.5);
-  snare(47.0, 0.1); snare(47.5, 0.12); snare(48.0, 0.1); snare(48.5, 0.12);
-  snare(49.0, 0.1); snare(49.5, 0.12); snare(50.0, 0.1); snare(50.5, 0.14);
-  cymbal(51.5, 0.16);
 
-  // Release to major (52-56)
-  brass(52.0, Bb5, 1.2, 0.32);
-  brass(53.2, A5, 0.4, 0.28);
-  brass(53.6, G5, 0.4, 0.28);
-  brass(54.0, F5, 1.8, 0.3);
-  horn(52.0, Bb3, 3.5, 0.16);
-  horn(52.0, F4, 3.5, 0.14);
-  strings(52.0, [Bb2, F3, Bb3, D4, F4], 3.5, 0.12);
-  timpani(52.0, 75, 0.5, 0.7);
-  timpani(53.5, 75, 0.4, 0.6);
-  cymbal(52.0, 0.2);
+  // Bridge into next phrase with rising line
+  brass(10.0, G4, 0.3, 0.26);
+  brass(10.3, Ab4, 0.3, 0.26);
+  brass(10.6, Bb4, 0.3, 0.28);
+  brass(10.9, C5, 1.1, 0.32);
+  strings(10.0, [Ab2, C3, Eb3, Ab3], 2.0, 0.12);
+  timpani(10.0, 70, 0.4, 0.6);
+  timpani(10.9, 70, 0.4, 0.7);
 
-  // =============================================================
-  // Section E: Reprise of Main Theme (56–72s) — fuller orchestration
-  // =============================================================
-  // Same theme as B but with octave doubling in brass
-  brass(56.0, Bb4, 0.35, 0.26);
-  brass(56.0, Bb5, 0.35, 0.22);
-  brass(56.35, D5, 0.35, 0.26);
-  brass(56.35, D6, 0.35, 0.2);
-  brass(56.7, F5, 0.7, 0.3);
-  brass(56.7, F6, 0.7, 0.22);
-  brass(57.4, Eb5, 0.3, 0.26);
-  brass(57.7, D5, 0.3, 0.26);
-  horn(56.0, Bb2, 2.0, 0.15);
-  horn(56.0, F3, 2.0, 0.13);
-  strings(56.0, [Bb2, F3, Bb3, D4, F4], 2.0, 0.12);
-  timpani(56.0, 75, 0.4, 0.7);
-  snare(56.9, 0.12);
+  // Full motif again, now in F (subdominant) — different color
+  motif(12.0, G4, brass, 0.3, 0.22, 0.24);
+  motif(12.0, G3, horn, 0.18, 0.22, 0.24);
+  strings(12.0, [C3, G3, C4, Eb4], 2.5, 0.12);
+  timpani(12.0, 65, 0.4, 0.6);
 
-  brass(58.0, C5, 0.4, 0.26);
-  brass(58.0, C6, 0.4, 0.2);
-  brass(58.4, F5, 0.4, 0.26);
-  brass(58.4, F6, 0.4, 0.2);
-  brass(58.8, A5, 0.6, 0.3);
-  brass(59.4, G5, 0.3, 0.26);
-  brass(59.7, F5, 0.3, 0.26);
-  horn(58.0, C3, 1.9, 0.15);
-  strings(58.0, [F2, C3, F3, A3, C4], 1.9, 0.12);
-  timpani(58.0, 70, 0.4, 0.7);
-  snare(58.9, 0.12);
+  // ============================================================================
+  // Section C: Lyrical bridge (14–28s)
+  // Slow expansion of the motif — strings and horns lead, less brass
+  // ============================================================================
+  // Half-tempo motif on horns — meditative
+  horn(14.5, C4, 0.6, 0.18);
+  horn(15.1, Eb4, 0.6, 0.18);
+  horn(15.7, E4, 1.2, 0.2);
+  horn(16.9, E4, 1.2, 0.2);
+  strings(14.5, [C3, Eb3, G3], 4.0, 0.13);
 
-  brass(60.0, G4, 0.4, 0.24);
-  brass(60.0, G5, 0.4, 0.22);
-  brass(60.4, Bb4, 0.4, 0.24);
-  brass(60.4, Bb5, 0.4, 0.22);
-  brass(60.8, D5, 0.6, 0.28);
-  brass(60.8, D6, 0.6, 0.24);
-  brass(61.4, C5, 0.3, 0.24);
-  brass(61.7, Bb4, 0.3, 0.24);
-  horn(60.0, G2, 1.9, 0.15);
-  strings(60.0, [G2, D3, G3, Bb3], 1.9, 0.12);
-  timpani(60.0, 75, 0.4, 0.7);
+  horn(18.5, F4, 0.6, 0.18);
+  horn(19.1, Ab4, 0.6, 0.18);
+  horn(19.7, A4, 1.2, 0.2);
+  horn(20.9, A4, 1.2, 0.2);
+  strings(18.5, [F3, Ab3, C4], 4.0, 0.13);
 
-  brass(62.0, Eb5, 0.4, 0.26);
-  brass(62.0, Eb6, 0.4, 0.22);
-  brass(62.4, G5, 0.4, 0.28);
-  brass(62.8, Bb5, 0.8, 0.34);
-  brass(63.6, A5, 0.4, 0.3);
-  horn(62.0, Eb3, 1.9, 0.16);
-  strings(62.0, [Eb2, Bb2, Eb3, G3, Bb3], 1.9, 0.12);
-  timpani(62.0, 75, 0.4, 0.7);
-  cymbal(62.0, 0.18);
+  // Counter-melody enters with brass softly
+  brass(22.5, C5, 0.5, 0.18);
+  brass(23.0, Eb5, 0.5, 0.18);
+  brass(23.5, E5, 0.5, 0.2);
+  brass(24.0, G5, 1.5, 0.24);
+  strings(22.5, [C3, G3, C4, Eb4], 3.5, 0.13);
+  timpani(22.5, 65, 0.4, 0.5);
+  timpani(24.0, 65, 0.4, 0.6);
 
-  // Big pushed continuation
-  brass(64.0, G5, 0.3, 0.3);
-  brass(64.3, A5, 0.3, 0.3);
-  brass(64.6, Bb5, 0.3, 0.32);
-  brass(64.9, C6, 0.3, 0.32);
-  brass(65.2, D6, 0.8, 0.36);
-  horn(64.0, Bb3, 2.0, 0.16);
-  strings(64.0, [Bb2, D3, F3, Bb3, D4], 2.0, 0.12);
-  timpani(64.0, 75, 0.4, 0.7);
+  // Descending answer
+  brass(25.5, F5, 0.4, 0.22);
+  brass(25.9, Eb5, 0.4, 0.22);
+  brass(26.3, D5, 0.4, 0.22);
+  brass(26.7, C5, 1.3, 0.26);
+  strings(25.5, [F2, C3, F3, Ab3], 3.0, 0.13);
+  timpani(25.5, 70, 0.4, 0.5);
+  timpani(26.7, 65, 0.4, 0.6);
 
-  brass(66.0, Eb6, 0.4, 0.32);
-  brass(66.4, D6, 0.4, 0.3);
-  brass(66.8, C6, 0.4, 0.3);
-  brass(67.2, Bb5, 0.4, 0.3);
-  brass(67.6, F5, 0.4, 0.28);
-  horn(66.0, F3, 2.0, 0.16);
-  strings(66.0, [F2, A2, C3, F3, A3], 2.0, 0.12);
-  timpani(66.0, 70, 0.4, 0.6);
+  // ============================================================================
+  // Section D: Dark turn (28–42s)
+  // Motif in minor with tense harmonies — for the fraud/compliance beats
+  // ============================================================================
+  cymbal(28.5, 0.18);
+  timpani(28.5, 60, 0.5, 0.7);
 
-  brass(68.0, Bb4, 0.4, 0.28);
-  brass(68.4, D5, 0.4, 0.28);
-  brass(68.8, F5, 0.4, 0.3);
-  brass(69.2, Bb5, 1.6, 0.36);
-  horn(68.0, Bb3, 2.8, 0.18);
-  horn(68.0, F4, 2.8, 0.14);
-  strings(68.0, [Bb2, F3, Bb3, D4, F4], 2.8, 0.14);
-  timpani(68.0, 75, 0.5, 0.7);
-  timpani(69.2, 75, 0.5, 0.8);
-  cymbal(69.2, 0.22);
+  // Motif on Ab (relative major's parallel — dark color)
+  motif(28.5, Ab4, brass, 0.26, 0.2, 0.22);
+  motif(28.5, Ab3, horn, 0.16, 0.2, 0.22);
+  strings(28.5, [Ab2, C3, Eb3], 2.5, 0.13);
+  // Marching bass underneath
+  for (let i = 0; i < 4; i++) {
+    timpani(28.5 + i * 0.5, 60, 0.35, 0.5);
+    snare(28.5 + i * 0.5, 0.1);
+  }
 
-  // =============================================================
-  // Section F: Quieter interlude (72–86s)
-  // Gives ears a rest before the big finale
-  // =============================================================
-  strings(72.0, [Bb2, D3, F3, Bb3], 5.0, 0.11);
-  horn(72.5, Bb3, 1.3, 0.14);
-  horn(73.8, D4, 1.3, 0.14);
-  brass(75.0, F4, 0.5, 0.18);
-  brass(75.5, Bb4, 0.5, 0.18);
-  brass(76.0, D5, 1.0, 0.22);
+  // Tension build — chromatic ascent
+  brass(31.0, F4, 0.3, 0.22);
+  brass(31.3, F4, 0.3, 0.22);
+  brass(31.6, Ab4, 0.3, 0.24);
+  brass(31.9, B4, 0.3, 0.26);
+  brass(32.2, C5, 0.6, 0.3);
+  strings(31.0, [F3, Ab3, B3, D4], 2.0, 0.12);
+  timpani(31.0, 60, 0.4, 0.6);
+  snare(31.5, 0.12);
+  snare(32.0, 0.12);
 
-  strings(77.0, [G2, D3, G3, Bb3], 5.0, 0.11);
-  horn(77.5, G3, 1.3, 0.14);
-  horn(78.8, Bb3, 1.3, 0.14);
-  brass(80.0, D5, 0.5, 0.2);
-  brass(80.5, G5, 0.5, 0.2);
-  brass(81.0, Bb5, 1.2, 0.26);
+  // Big motif statement — full force
+  motif(33.0, C5, brass, 0.32, 0.22, 0.22);
+  motif(33.0, C4, horn, 0.22, 0.22, 0.22);
+  motif(33.0, C3, horn, 0.16, 0.22, 0.22);
+  strings(33.0, [C3, Eb3, G3, C4], 2.2, 0.14);
+  timpani(33.0, 65, 0.4, 0.7);
+  timpani(33.5, 65, 0.4, 0.6);
+  timpani(34.0, 70, 0.4, 0.6);
+  cymbal(33.0, 0.22);
 
-  // Build-up
-  strings(82.5, [Eb3, G3, Bb3, Eb4], 3.5, 0.12);
-  brass(82.5, Bb5, 0.25, 0.24);
-  brass(82.75, C6, 0.25, 0.26);
-  brass(83.0, D6, 0.25, 0.28);
-  brass(83.25, Eb6, 0.25, 0.3);
-  brass(83.5, F6, 0.5, 0.32);
-  brass(84.0, Eb6, 0.3, 0.3);
-  brass(84.3, D6, 0.3, 0.28);
-  brass(84.6, C6, 0.3, 0.28);
-  brass(84.9, Bb5, 1.0, 0.3);
-  timpani(82.5, 75, 0.4, 0.6);
-  timpani(83.5, 75, 0.4, 0.7);
-  timpani(84.9, 75, 0.5, 0.7);
+  // Wind-down to next section
+  horn(35.5, G3, 1.5, 0.16);
+  horn(35.5, C4, 1.5, 0.14);
+  brass(35.5, E5, 1.0, 0.22);
+  brass(36.5, C5, 1.5, 0.22);
+  strings(35.5, [C3, G3, C4], 3.0, 0.13);
+  timpani(35.5, 65, 0.4, 0.5);
 
-  // =============================================================
-  // Section G: Grand Finale (86–107s)
-  // Full orchestration, dramatic cadence
-  // =============================================================
-  // Pickup to finale
-  cymbal(86.0, 0.24);
-  timpani(86.0, 75, 0.5, 0.8);
+  // Quieter passage
+  strings(38.5, [F2, C3, F3, Ab3], 4.0, 0.11);
+  horn(39.0, F3, 1.0, 0.14);
+  horn(40.0, Ab3, 1.0, 0.14);
+  brass(39.5, F4, 0.6, 0.18);
+  brass(40.1, Ab4, 0.6, 0.18);
+  brass(40.7, C5, 1.3, 0.22);
 
-  // First big statement of finale
-  brass(86.0, F5, 0.4, 0.32);
-  brass(86.4, Bb5, 0.4, 0.32);
-  brass(86.8, D6, 1.0, 0.36);
-  brass(86.0, Bb4, 0.4, 0.28);
-  brass(86.4, D5, 0.4, 0.28);
-  brass(86.8, F5, 1.0, 0.3);
-  horn(86.0, Bb2, 2.0, 0.18);
-  horn(86.0, F3, 2.0, 0.16);
-  strings(86.0, [Bb2, F3, Bb3, D4, F4, Bb4], 2.0, 0.14);
-  timpani(86.8, 75, 0.5, 0.7);
+  // ============================================================================
+  // Section E: Reprise — full triumphant version (42–60s)
+  // Motif now stated with fullest orchestration: brass + horns + octave double + strings
+  // ============================================================================
+  cymbal(42.5, 0.24);
+  timpani(42.5, 65, 0.5, 0.8);
 
-  brass(88.0, C6, 0.4, 0.32);
-  brass(88.4, D6, 0.4, 0.32);
-  brass(88.8, F6, 1.0, 0.38);
-  horn(88.0, F3, 2.0, 0.18);
-  strings(88.0, [F2, C3, F3, A3, C4, F4], 2.0, 0.14);
-  timpani(88.0, 70, 0.4, 0.7);
-  timpani(88.8, 70, 0.5, 0.8);
-  cymbal(88.8, 0.2);
+  // The motif, now grand
+  motif(42.5, C5, brass, 0.34, 0.24, 0.26);     // Lead voice
+  motif(42.5, C4, brass, 0.24, 0.24, 0.26);     // Octave below
+  motif(42.5, C3, horn, 0.18, 0.24, 0.26);      // Bass voice
+  strings(42.5, [C3, Eb3, G3, C4, Eb4], 2.6, 0.16);
+  // Heavy march underneath
+  for (let i = 0; i < 5; i++) {
+    timpani(42.5 + i * 0.52, i % 2 === 0 ? 65 : 70, 0.4, 0.65);
+    snare(42.5 + i * 0.52 + 0.26, 0.1);
+  }
 
-  // Second phrase of finale — slightly higher peak
-  brass(90.0, Eb6, 0.3, 0.32);
-  brass(90.3, D6, 0.3, 0.3);
-  brass(90.6, C6, 0.3, 0.3);
-  brass(90.9, Bb5, 0.3, 0.3);
-  brass(91.2, A5, 0.3, 0.3);
-  brass(91.5, Bb5, 0.5, 0.32);
-  brass(92.0, F5, 1.4, 0.3);
-  horn(90.0, Bb3, 3.4, 0.18);
-  strings(90.0, [Bb2, F3, Bb3, D4, F4], 3.4, 0.14);
-  timpani(90.0, 75, 0.4, 0.7);
-  timpani(91.5, 75, 0.4, 0.7);
+  // Answering phrase a fourth higher
+  motif(45.5, F5, brass, 0.34, 0.24, 0.26);
+  motif(45.5, F4, brass, 0.24, 0.24, 0.26);
+  motif(45.5, F3, horn, 0.18, 0.24, 0.26);
+  strings(45.5, [F2, C3, F3, Ab3, C4], 2.6, 0.16);
+  for (let i = 0; i < 5; i++) {
+    timpani(45.5 + i * 0.52, 70, 0.4, 0.65);
+    snare(45.5 + i * 0.52 + 0.26, 0.1);
+  }
 
-  brass(93.5, Bb4, 0.5, 0.3);
-  brass(94.0, D5, 0.5, 0.3);
-  brass(94.5, F5, 0.5, 0.32);
-  brass(95.0, Bb5, 2.0, 0.36);
-  horn(93.5, Bb3, 3.5, 0.2);
-  horn(93.5, F4, 3.5, 0.16);
-  strings(93.5, [Bb2, F3, Bb3, D4, F4, Bb4], 3.5, 0.16);
-  timpani(93.5, 75, 0.5, 0.7);
-  timpani(95.0, 75, 0.5, 0.8);
-  cymbal(95.0, 0.22);
+  // Climbing line into climax
+  brass(48.5, G5, 0.3, 0.3);
+  brass(48.8, Ab5, 0.3, 0.3);
+  brass(49.1, Bb5, 0.3, 0.32);
+  brass(49.4, C6, 0.6, 0.36);
+  brass(50.0, Bb5, 0.3, 0.3);
+  brass(50.3, G5, 0.3, 0.3);
+  brass(50.6, E5, 0.3, 0.3);
+  brass(50.9, C5, 1.1, 0.32);
+  horn(48.5, C3, 3.5, 0.18);
+  horn(48.5, G3, 3.5, 0.16);
+  strings(48.5, [C3, G3, C4, Eb4], 3.5, 0.16);
+  timpani(48.5, 65, 0.4, 0.7);
+  timpani(49.4, 65, 0.4, 0.7);
+  timpani(50.9, 65, 0.5, 0.8);
 
-  // =============================================================
-  // Coda (97–110s) — final cadence and massive chord
-  // =============================================================
-  // Descending bass crush
-  horn(97.0, Bb4, 0.4, 0.2);
-  horn(97.4, Bb4, 0.4, 0.2);
-  horn(97.8, F4, 0.4, 0.2);
-  horn(98.2, F4, 0.4, 0.2);
-  brass(97.0, D5, 0.4, 0.24);
-  brass(97.4, F5, 0.4, 0.26);
-  brass(97.8, Bb5, 0.4, 0.28);
-  brass(98.2, D6, 0.4, 0.3);
-  brass(98.6, F6, 0.6, 0.36);
-  strings(97.0, [Bb2, F3, Bb3, D4], 2.2, 0.14);
-  timpani(97.0, 75, 0.4, 0.7);
-  timpani(97.8, 75, 0.4, 0.7);
-  timpani(98.6, 75, 0.5, 0.8);
+  // Final motif blow-up — five-octave spread
+  motif(52.5, C5, brass, 0.36, 0.26, 0.26);     // Top voice
+  motif(52.5, C4, brass, 0.28, 0.26, 0.26);     // Mid
+  motif(52.5, C3, horn, 0.22, 0.26, 0.26);      // Low
+  motif(52.5, C2, horn, 0.18, 0.26, 0.26);      // Subterranean
+  strings(52.5, [C2, G2, C3, Eb3, G3, C4, Eb4, G4], 3.0, 0.18);
+  cymbal(52.5, 0.26);
+  for (let i = 0; i < 6; i++) {
+    timpani(52.5 + i * 0.43, 65, 0.4, 0.7);
+    snare(52.5 + i * 0.43 + 0.21, 0.12);
+  }
 
-  // Final sustained chord with timpani roll
-  strings(99.5, [Bb2, F3, Bb3, D4, F4, Bb4, D5, F5], 8.0, 0.18);
-  brass(99.5, Bb5, 4.0, 0.32);
-  brass(99.5, F5, 4.0, 0.28);
-  brass(99.5, D5, 4.0, 0.26);
-  horn(99.5, Bb2, 6.0, 0.2);
-  horn(99.5, F3, 6.0, 0.18);
-  cymbal(99.5, 0.28);
+  // ============================================================================
+  // Section F: Coda (60–75s)
+  // Final cadence with sustained chord and motif fragments
+  // ============================================================================
+  cymbal(55.5, 0.24);
+  // Last echo of the motif — distant, slow
+  brass(56.0, C5, 0.5, 0.26);
+  brass(56.5, Eb5, 0.5, 0.26);
+  brass(57.0, E5, 2.0, 0.32);
+  horn(56.0, C3, 3.0, 0.18);
+  strings(56.0, [C3, Eb3, G3, C4, Eb4], 3.0, 0.16);
+  timpani(56.0, 65, 0.4, 0.6);
+  timpani(57.0, 65, 0.5, 0.7);
+
+  // Bigger statement
+  brass(59.5, C5, 0.4, 0.3);
+  brass(59.9, Eb5, 0.4, 0.3);
+  brass(60.3, E5, 0.4, 0.3);
+  brass(60.7, G5, 0.4, 0.32);
+  brass(61.1, C6, 2.4, 0.4);
+  horn(59.5, C2, 4.0, 0.22);
+  horn(59.5, C3, 4.0, 0.2);
+  strings(59.5, [C2, G2, C3, Eb3, G3, C4, Eb4, G4, C5], 4.0, 0.2);
+  timpani(59.5, 65, 0.4, 0.7);
+  timpani(60.7, 65, 0.4, 0.7);
+  timpani(61.1, 65, 0.5, 0.8);
+  cymbal(61.1, 0.28);
+
+  // Sustained final chord
+  strings(63.5, [C2, G2, C3, Eb3, G3, C4, Eb4, G4, C5, Eb5, G5, C6], 8.0, 0.22);
+  brass(63.5, C6, 4.0, 0.32);
+  brass(63.5, G5, 4.0, 0.26);
+  brass(63.5, Eb5, 4.0, 0.24);
+  horn(63.5, C2, 7.0, 0.24);
+  horn(63.5, C3, 7.0, 0.2);
+
   // Timpani roll
-  for (let i = 0; i < 12; i++) {
-    timpani(99.5 + i * 0.12, 75, 0.3, 0.5 + i * 0.02);
+  for (let i = 0; i < 14; i++) {
+    timpani(63.5 + i * 0.13, 65, 0.3, 0.45 + i * 0.025);
   }
 
-  // Climactic final hit
-  timpani(102.0, 70, 0.8, 0.9);
-  timpani(103.0, 75, 0.8, 0.9);
-  cymbal(103.0, 0.3);
-  brass(103.0, Bb5, 3.5, 0.38);
-  brass(103.0, D6, 3.5, 0.34);
-  brass(103.0, F6, 3.5, 0.3);
-  strings(103.0, [Bb2, F3, Bb3, D4, F4, Bb4, D5, F5, Bb5], 5.0, 0.2);
-  horn(103.0, Bb2, 5.0, 0.22);
+  // Final crash + chord
+  cymbal(67.0, 0.32);
+  timpani(67.0, 60, 0.9, 0.95);
+  timpani(68.5, 65, 0.9, 0.95);
+  brass(67.0, C6, 4.0, 0.42);
+  brass(67.0, E5, 4.0, 0.32);
+  brass(67.0, G5, 4.0, 0.32);
+  strings(67.0, [C2, G2, C3, E3, G3, C4, E4, G4, C5], 6.0, 0.24);
 
-  // Very final punctuation
-  timpani(106.5, 60, 1.0, 0.9);
-  cymbal(106.5, 0.28);
+  // Very last hit
+  timpani(72.0, 60, 1.2, 1.0);
+  cymbal(72.0, 0.3);
 }
 
 let selectedTeam = null;
