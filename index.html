@@ -928,7 +928,7 @@
       <div class="score" style="color: var(--cfo)">0</div>
     </div>
     <div class="team-row" data-team="AI">
-      <div class="name"><span class="dot" style="color: #ff2020; background: #ff2020"></span>AI Bots</div>
+      <div class="name"><span class="dot" style="color: #ff2020; background: #ff2020"></span>C-Suite</div>
       <div class="score" style="color: #ff2020">0</div>
     </div>
   </div>
@@ -1056,8 +1056,8 @@ const PARENT_TEAM = {
   Budget: 'Finance', Payroll: 'Finance',
   AP: 'Accounting', Recon: 'Accounting',
   PMO: 'Strategy', MG: 'Strategy',
-  // All AI bots share the AI faction — they team up against players
-  // and their kills/deaths credit a single shared "AI" score
+  // All AI bots share the AI faction (displayed as "C-Suite") — they team up against players
+  // and their kills/deaths credit a single shared score
   CRO: 'AI', CCLO: 'AI', CDEO: 'AI', CPO: 'AI', CTO: 'AI', CI: 'AI', CEO: 'AI'
 };
 
@@ -1606,295 +1606,125 @@ function playIntroTheme() {
     src.start(t); src.stop(t + 1.25);
   }
 
-  // --- Note frequencies (C minor / C major mixed mode for the FARS WARS motif) ---
-  // Core motif (decoded from user's MIDI): C4, Eb4, E4, E4, E4, E4, E4, E4 at ~0.24s/note
-  // We treat this as the "FARS WARS" leitmotif and develop it across the piece.
-  const C2=65.41, D2=73.42, Eb2=77.78, F2=87.31, G2=98.00, Ab2=103.83, Bb2=116.54;
-  const C3=130.81, D3=146.83, Eb3=155.56, F3=174.61, G3=196.00, Ab3=207.65, Bb3=233.08;
-  const C4=261.63, D4=293.66, Eb4=311.13, E4=329.63, F4=349.23, G4=392.00, Ab4=415.30, A4=440.00, Bb4=466.16, B4=493.88;
-  const E3=164.81, B3=246.94;
-  const C5=523.25, D5=587.33, Eb5=622.25, E5=659.25, F5=698.46, G5=783.99, Ab5=830.61, A5=880.00, Bb5=932.33;
-  const C6=1046.50, D6=1174.66, Eb6=1244.51, E6=1318.51, F6=1396.91, G6=1567.98;
+  // ============================================================================
+  // FARS WARS opening fanfare — transcribed from user's MML score
+  // 180 notes, ~52.5 seconds. G minor opening, classic G-G-G-Eb-D-C-Bb-A motif.
+  // We layer: brass (lead), horn (octave below for warmth), strings pad on chord changes,
+  // and timpani/snare on the strong beats.
+  // ============================================================================
+  const SCORE = [
+    [0.5,392.0,0.25], [0.75,392.0,0.25], [1.0,392.0,0.25], [1.25,622.25,0.25], [1.5,587.33,0.25],
+    [1.75,523.25,0.25], [2.0,466.16,0.25], [2.25,440.0,0.25], [2.5,783.99,0.25], [2.75,783.99,0.25],
+    [3.0,783.99,0.25], [3.25,622.25,0.25], [3.5,587.33,0.25], [3.75,523.25,0.25], [4.0,466.16,0.25],
+    [4.25,440.0,0.25], [4.5,783.99,0.25], [4.75,783.99,0.25], [5.0,783.99,0.25], [5.25,622.25,0.25],
+    [5.5,587.33,0.25], [5.75,523.25,0.25], [6.0,466.16,0.25], [6.25,440.0,0.25], [7.0,783.99,0.25],
+    [7.25,783.99,0.25], [7.5,783.99,0.25], [7.75,622.25,0.25], [8.0,587.33,0.25], [8.25,523.25,0.25],
+    [8.5,466.16,0.25], [8.75,440.0,0.25], [9.0,587.33,0.25], [9.25,587.33,0.25], [9.5,587.33,0.25],
+    [9.75,622.25,0.25], [10.0,587.33,0.25], [10.25,523.25,0.25], [10.5,466.16,0.25], [10.75,440.0,0.25],
+    [11.0,783.99,0.25], [11.25,783.99,0.25], [11.5,783.99,0.25], [11.75,622.25,0.25], [12.0,587.33,0.25],
+    [12.25,523.25,0.25], [12.5,466.16,0.25], [12.75,440.0,0.25], [13.5,523.25,0.25], [13.75,523.25,0.25],
+    [14.0,523.25,0.25], [14.25,466.16,0.25], [14.5,440.0,0.25], [14.75,392.0,0.25], [15.0,349.23,0.25],
+    [15.25,311.13,0.25], [15.5,293.66,0.25], [15.75,293.66,0.25], [16.0,293.66,0.25], [16.25,311.13,0.25],
+    [16.5,349.23,0.25], [16.75,392.0,0.25], [17.0,440.0,0.25], [17.25,466.16,0.25], [17.5,523.25,0.25],
+    [17.75,523.25,0.25], [18.0,523.25,0.25], [18.25,466.16,0.25], [18.5,440.0,0.25], [18.75,392.0,0.25],
+    [19.0,349.23,0.25], [19.25,311.13,0.25], [20.0,783.99,0.25], [20.25,783.99,0.25], [20.5,783.99,0.25],
+    [20.75,622.25,0.25], [21.0,587.33,0.25], [21.25,523.25,0.25], [21.5,466.16,0.25], [21.75,440.0,0.25],
+    [22.0,783.99,0.25], [22.25,783.99,0.25], [22.5,783.99,0.25], [22.75,622.25,0.25], [23.0,587.33,0.25],
+    [23.25,523.25,0.25], [23.5,466.16,0.25], [23.75,440.0,0.25], [24.0,587.33,0.25], [24.25,587.33,0.25],
+    [24.5,587.33,0.25], [24.75,622.25,0.25], [25.0,587.33,0.25], [25.25,523.25,0.25], [25.5,466.16,0.25],
+    [25.75,440.0,0.25], [26.5,783.99,0.25], [26.75,880.0,0.25], [27.0,932.33,0.25], [27.25,880.0,0.25],
+    [27.5,783.99,0.25], [27.75,698.46,0.25], [28.0,622.25,0.25], [28.25,587.33,0.25], [28.5,523.25,0.25],
+    [28.75,587.33,0.25], [29.0,622.25,0.25], [29.25,587.33,0.25], [29.5,523.25,0.25], [29.75,466.16,0.25],
+    [30.0,440.0,0.25], [30.25,392.0,0.25], [30.5,783.99,0.25], [30.75,880.0,0.25], [31.0,932.33,0.25],
+    [31.25,880.0,0.25], [31.5,783.99,0.25], [31.75,698.46,0.25], [32.0,622.25,0.25], [32.25,587.33,0.25],
+    [33.0,392.0,0.25], [33.25,392.0,0.25], [33.5,392.0,0.25], [33.75,622.25,0.25], [34.0,587.33,0.25],
+    [34.25,523.25,0.25], [34.5,466.16,0.25], [34.75,440.0,0.25], [35.0,783.99,0.25], [35.25,783.99,0.25],
+    [35.5,783.99,0.25], [35.75,622.25,0.25], [36.0,587.33,0.25], [36.25,523.25,0.25], [36.5,466.16,0.25],
+    [36.75,440.0,0.25], [37.0,783.99,0.25], [37.25,783.99,0.25], [37.5,783.99,0.25], [37.75,622.25,0.25],
+    [38.0,587.33,0.25], [38.25,523.25,0.25], [38.5,466.16,0.25], [38.75,440.0,0.25], [39.0,587.33,0.25],
+    [39.25,587.33,0.25], [39.5,587.33,0.25], [39.75,622.25,0.25], [40.0,587.33,0.25], [40.25,523.25,0.25],
+    [40.5,466.16,0.25], [40.75,440.0,0.25], [41.0,783.99,0.25], [41.25,783.99,0.25], [41.5,783.99,0.25],
+    [41.75,622.25,0.25], [42.0,587.33,0.25], [42.25,523.25,0.25], [42.5,466.16,0.25], [42.75,440.0,0.25],
+    [43.0,783.99,0.25], [43.25,783.99,0.25], [43.5,783.99,0.25], [43.75,622.25,0.25], [44.0,587.33,0.25],
+    [44.25,523.25,0.25], [44.5,466.16,0.25], [44.75,440.0,0.25], [45.0,587.33,0.25], [45.25,587.33,0.25],
+    [45.5,587.33,0.25], [45.75,622.25,0.25], [46.0,587.33,0.25], [46.25,523.25,0.25], [46.5,466.16,0.25],
+    [46.75,440.0,0.25], [47.0,783.99,0.5], [48.0,783.99,0.5], [49.0,783.99,0.5], [49.5,783.99,1.0]
+  ];
 
-  // ============================================================================
-  // Helper: play the FARS WARS motif at a given time, transposition, and voice
-  // motif = [C, Eb, E, E×6] at 0.24s/note.
-  // tonic = root frequency; the 8 notes are tonic, tonic+m3, tonic+M3, ×6 of M3
-  // ============================================================================
-  function motif(startOffset, tonic, voice = brass, baseVol = 0.24, noteDur = 0.22, gap = 0.24) {
-    // tonic, +3 semitones, +4 semitones, then 5 more of +4
-    const m3 = tonic * Math.pow(2, 3/12);   // minor third above tonic
-    const M3 = tonic * Math.pow(2, 4/12);   // major third above tonic
-    const notes = [tonic, m3, M3, M3, M3, M3, M3, M3];
-    notes.forEach((f, i) => {
-      const vol = i === 0 ? baseVol * 1.1 : (i >= 3 ? baseVol * (0.9 + (i-3) * 0.04) : baseVol);
-      voice(startOffset + i * gap, f, noteDur, vol);
-    });
+  // Play each MML note on brass (with octave-down horn doubling for richness)
+  for (const [start, freq, dur] of SCORE) {
+    brass(start, freq, dur, 0.26);
+    horn(start, freq * 0.5, dur, 0.14);  // octave below
   }
 
-  // Doubled motif — two voices an octave apart
-  function motifDoubled(startOffset, tonic, voiceLow, voiceHigh, volLow, volHigh, noteDur = 0.22, gap = 0.24) {
-    motif(startOffset, tonic, voiceLow, volLow, noteDur, gap);
-    motif(startOffset, tonic * 2, voiceHigh, volHigh, noteDur, gap);
+  // Strings pad — follows chord changes (G minor through the piece)
+  // Establishes harmonic floor under the melody
+  const Gm = [196.00, 233.08, 293.66];        // G3, Bb3, D4
+  const Cm = [261.63, 311.13, 392.00];        // C4, Eb4, G4
+  const F  = [174.61, 220.00, 261.63];        // F3, A3, C4
+  const Bb = [233.08, 293.66, 349.23];        // Bb3, D4, F4
+  const D7 = [146.83, 185.00, 220.00];        // D3, F#3, A3 (dominant)
+
+  // Section 1 (0-12s): G minor
+  strings(0.5, [98.00, ...Gm], 12.0, 0.1);
+  // Section 2 (12-18s): hint of relative
+  strings(12.5, [87.31, 174.61, ...F], 6.0, 0.1);
+  // Bridge in O5 (18-30s): C minor descending pattern
+  strings(18.5, [130.81, ...Cm], 12.0, 0.1);
+  // Return to G minor (30-36s)
+  strings(30.5, [98.00, ...Gm], 6.0, 0.11);
+  // Extended variation (36-44s): bigger sound
+  strings(36.5, [98.00, 147.0, ...Gm, 392.00], 8.0, 0.12);
+  // Build (44-50s): tension chord
+  strings(44.5, [73.42, ...D7, 293.66], 5.5, 0.13);
+  // Final statement (50s+): G minor triumphant
+  strings(50.0, [49.00, 98.00, ...Gm, 392.00, 466.16], 5.5, 0.16);
+
+  // Timpani — downbeats throughout (every 2 seconds = downbeat every other bar)
+  const downbeats = [
+    0.5, 2.5, 4.5, 6.5,           // Section 1
+    8.5, 10.5, 12.5, 14.5,        // Section 2
+    16.5, 18.5, 20.5, 22.5,       // Bridge
+    24.5, 26.5, 28.5, 30.5,       // Return
+    32.5, 34.5, 36.5, 38.5,       // Extended
+    40.5, 42.5, 44.5, 46.5,       // Build
+    47.0, 48.0, 49.0, 49.5        // Final
+  ];
+  for (const beat of downbeats) {
+    timpani(beat, 65, 0.4, 0.55);
   }
 
-  // ============================================================================
-  // Section A: Statement of the motif (0–6s)
-  // Clean, alone, brass solo — establishes the FARS WARS theme
-  // ============================================================================
-  timpani(-0.05, 65, 0.4, 0.7);
-  cymbal(0.0, 0.18);
+  // Snare on offbeats during the build sections (24-50s)
+  for (let t = 24.5; t < 47; t += 1.0) {
+    snare(t, 0.08);
+  }
+  // Heavier snare in the final stretch
+  for (let t = 36.5; t < 47; t += 0.5) {
+    snare(t, 0.1);
+  }
 
-  // First statement of the motif in C
-  motif(0.0, C4, brass, 0.3, 0.22, 0.24);
+  // Crash on big section starts
+  cymbal(0.5, 0.22);     // intro
+  cymbal(12.5, 0.18);    // section 2
+  cymbal(24.5, 0.18);    // bridge return
+  cymbal(36.5, 0.22);    // extended variation
+  cymbal(44.5, 0.22);    // build
+  cymbal(47.0, 0.26);    // final statement entry
+  cymbal(50.0, 0.32);    // sustained ending
 
-  // Background sustained chord (C minor, mysterious)
-  strings(0.0, [C3, Eb3, G3], 2.2, 0.1);
-  horn(0.0, C3, 2.0, 0.16);
-
-  // Echo of the motif's last note
-  brass(2.0, E4, 1.5, 0.22);
-  strings(2.0, [Ab2, C3, Eb3], 2.0, 0.1);
-  timpani(2.0, 65, 0.4, 0.5);
-
-  // Second statement — answered higher, more dramatic
-  motif(4.0, F4, brass, 0.3, 0.22, 0.24);
-  strings(4.0, [F3, Ab3, C4], 2.2, 0.1);
-  horn(4.0, F3, 2.0, 0.16);
-  timpani(4.0, 70, 0.4, 0.6);
-
-  // ============================================================================
-  // Section B: Motif harmonized (6–14s)
-  // Two voices — bass and lead doing the motif together
-  // ============================================================================
-  cymbal(6.0, 0.2);
-  timpani(6.0, 65, 0.5, 0.7);
-
-  // Motif in C, doubled with horn an octave below + brass on top
-  motif(6.0, C4, brass, 0.28, 0.22, 0.24);
-  motif(6.0, C3, horn, 0.18, 0.22, 0.24);
-
-  // Sustained chord pad evolves
-  strings(6.0, [C3, Eb3, G3, C4], 4.4, 0.12);
-  // Bass quarter notes underneath for march feel
+  // Final timpani roll into the sustained G
   for (let i = 0; i < 8; i++) {
-    horn(6.0 + i * 0.55, i % 2 === 0 ? C2 : G2, 0.5, 0.14);
-    if (i % 2 === 0) timpani(6.0 + i * 0.55, 65, 0.35, 0.5);
+    timpani(50.5 + i * 0.12, 65, 0.3, 0.5 + i * 0.04);
   }
+  // Big closing chord
+  brass(50.5, 392.00, 3.0, 0.34);     // G5
+  brass(50.5, 466.16, 3.0, 0.28);     // Bb5
+  brass(50.5, 587.33, 3.0, 0.26);     // D6
+  horn(50.5, 196.00, 4.0, 0.22);      // G3
+  horn(50.5, 98.00, 4.0, 0.20);       // G2
+  cymbal(53.0, 0.28);
+  timpani(53.0, 60, 1.2, 0.95);
 
-  // Bridge into next phrase with rising line
-  brass(10.0, G4, 0.3, 0.26);
-  brass(10.3, Ab4, 0.3, 0.26);
-  brass(10.6, Bb4, 0.3, 0.28);
-  brass(10.9, C5, 1.1, 0.32);
-  strings(10.0, [Ab2, C3, Eb3, Ab3], 2.0, 0.12);
-  timpani(10.0, 70, 0.4, 0.6);
-  timpani(10.9, 70, 0.4, 0.7);
-
-  // Full motif again, now in F (subdominant) — different color
-  motif(12.0, G4, brass, 0.3, 0.22, 0.24);
-  motif(12.0, G3, horn, 0.18, 0.22, 0.24);
-  strings(12.0, [C3, G3, C4, Eb4], 2.5, 0.12);
-  timpani(12.0, 65, 0.4, 0.6);
-
-  // ============================================================================
-  // Section C: Lyrical bridge (14–28s)
-  // Slow expansion of the motif — strings and horns lead, less brass
-  // ============================================================================
-  // Half-tempo motif on horns — meditative
-  horn(14.5, C4, 0.6, 0.18);
-  horn(15.1, Eb4, 0.6, 0.18);
-  horn(15.7, E4, 1.2, 0.2);
-  horn(16.9, E4, 1.2, 0.2);
-  strings(14.5, [C3, Eb3, G3], 4.0, 0.13);
-
-  horn(18.5, F4, 0.6, 0.18);
-  horn(19.1, Ab4, 0.6, 0.18);
-  horn(19.7, A4, 1.2, 0.2);
-  horn(20.9, A4, 1.2, 0.2);
-  strings(18.5, [F3, Ab3, C4], 4.0, 0.13);
-
-  // Counter-melody enters with brass softly
-  brass(22.5, C5, 0.5, 0.18);
-  brass(23.0, Eb5, 0.5, 0.18);
-  brass(23.5, E5, 0.5, 0.2);
-  brass(24.0, G5, 1.5, 0.24);
-  strings(22.5, [C3, G3, C4, Eb4], 3.5, 0.13);
-  timpani(22.5, 65, 0.4, 0.5);
-  timpani(24.0, 65, 0.4, 0.6);
-
-  // Descending answer
-  brass(25.5, F5, 0.4, 0.22);
-  brass(25.9, Eb5, 0.4, 0.22);
-  brass(26.3, D5, 0.4, 0.22);
-  brass(26.7, C5, 1.3, 0.26);
-  strings(25.5, [F2, C3, F3, Ab3], 3.0, 0.13);
-  timpani(25.5, 70, 0.4, 0.5);
-  timpani(26.7, 65, 0.4, 0.6);
-
-  // ============================================================================
-  // Section D: Dark turn (28–42s)
-  // Motif in minor with tense harmonies — for the fraud/compliance beats
-  // ============================================================================
-  cymbal(28.5, 0.18);
-  timpani(28.5, 60, 0.5, 0.7);
-
-  // Motif on Ab (relative major's parallel — dark color)
-  motif(28.5, Ab4, brass, 0.26, 0.2, 0.22);
-  motif(28.5, Ab3, horn, 0.16, 0.2, 0.22);
-  strings(28.5, [Ab2, C3, Eb3], 2.5, 0.13);
-  // Marching bass underneath
-  for (let i = 0; i < 4; i++) {
-    timpani(28.5 + i * 0.5, 60, 0.35, 0.5);
-    snare(28.5 + i * 0.5, 0.1);
-  }
-
-  // Tension build — chromatic ascent
-  brass(31.0, F4, 0.3, 0.22);
-  brass(31.3, F4, 0.3, 0.22);
-  brass(31.6, Ab4, 0.3, 0.24);
-  brass(31.9, B4, 0.3, 0.26);
-  brass(32.2, C5, 0.6, 0.3);
-  strings(31.0, [F3, Ab3, B3, D4], 2.0, 0.12);
-  timpani(31.0, 60, 0.4, 0.6);
-  snare(31.5, 0.12);
-  snare(32.0, 0.12);
-
-  // Big motif statement — full force
-  motif(33.0, C5, brass, 0.32, 0.22, 0.22);
-  motif(33.0, C4, horn, 0.22, 0.22, 0.22);
-  motif(33.0, C3, horn, 0.16, 0.22, 0.22);
-  strings(33.0, [C3, Eb3, G3, C4], 2.2, 0.14);
-  timpani(33.0, 65, 0.4, 0.7);
-  timpani(33.5, 65, 0.4, 0.6);
-  timpani(34.0, 70, 0.4, 0.6);
-  cymbal(33.0, 0.22);
-
-  // Wind-down to next section
-  horn(35.5, G3, 1.5, 0.16);
-  horn(35.5, C4, 1.5, 0.14);
-  brass(35.5, E5, 1.0, 0.22);
-  brass(36.5, C5, 1.5, 0.22);
-  strings(35.5, [C3, G3, C4], 3.0, 0.13);
-  timpani(35.5, 65, 0.4, 0.5);
-
-  // Quieter passage
-  strings(38.5, [F2, C3, F3, Ab3], 4.0, 0.11);
-  horn(39.0, F3, 1.0, 0.14);
-  horn(40.0, Ab3, 1.0, 0.14);
-  brass(39.5, F4, 0.6, 0.18);
-  brass(40.1, Ab4, 0.6, 0.18);
-  brass(40.7, C5, 1.3, 0.22);
-
-  // ============================================================================
-  // Section E: Reprise — full triumphant version (42–60s)
-  // Motif now stated with fullest orchestration: brass + horns + octave double + strings
-  // ============================================================================
-  cymbal(42.5, 0.24);
-  timpani(42.5, 65, 0.5, 0.8);
-
-  // The motif, now grand
-  motif(42.5, C5, brass, 0.34, 0.24, 0.26);     // Lead voice
-  motif(42.5, C4, brass, 0.24, 0.24, 0.26);     // Octave below
-  motif(42.5, C3, horn, 0.18, 0.24, 0.26);      // Bass voice
-  strings(42.5, [C3, Eb3, G3, C4, Eb4], 2.6, 0.16);
-  // Heavy march underneath
-  for (let i = 0; i < 5; i++) {
-    timpani(42.5 + i * 0.52, i % 2 === 0 ? 65 : 70, 0.4, 0.65);
-    snare(42.5 + i * 0.52 + 0.26, 0.1);
-  }
-
-  // Answering phrase a fourth higher
-  motif(45.5, F5, brass, 0.34, 0.24, 0.26);
-  motif(45.5, F4, brass, 0.24, 0.24, 0.26);
-  motif(45.5, F3, horn, 0.18, 0.24, 0.26);
-  strings(45.5, [F2, C3, F3, Ab3, C4], 2.6, 0.16);
-  for (let i = 0; i < 5; i++) {
-    timpani(45.5 + i * 0.52, 70, 0.4, 0.65);
-    snare(45.5 + i * 0.52 + 0.26, 0.1);
-  }
-
-  // Climbing line into climax
-  brass(48.5, G5, 0.3, 0.3);
-  brass(48.8, Ab5, 0.3, 0.3);
-  brass(49.1, Bb5, 0.3, 0.32);
-  brass(49.4, C6, 0.6, 0.36);
-  brass(50.0, Bb5, 0.3, 0.3);
-  brass(50.3, G5, 0.3, 0.3);
-  brass(50.6, E5, 0.3, 0.3);
-  brass(50.9, C5, 1.1, 0.32);
-  horn(48.5, C3, 3.5, 0.18);
-  horn(48.5, G3, 3.5, 0.16);
-  strings(48.5, [C3, G3, C4, Eb4], 3.5, 0.16);
-  timpani(48.5, 65, 0.4, 0.7);
-  timpani(49.4, 65, 0.4, 0.7);
-  timpani(50.9, 65, 0.5, 0.8);
-
-  // Final motif blow-up — five-octave spread
-  motif(52.5, C5, brass, 0.36, 0.26, 0.26);     // Top voice
-  motif(52.5, C4, brass, 0.28, 0.26, 0.26);     // Mid
-  motif(52.5, C3, horn, 0.22, 0.26, 0.26);      // Low
-  motif(52.5, C2, horn, 0.18, 0.26, 0.26);      // Subterranean
-  strings(52.5, [C2, G2, C3, Eb3, G3, C4, Eb4, G4], 3.0, 0.18);
-  cymbal(52.5, 0.26);
-  for (let i = 0; i < 6; i++) {
-    timpani(52.5 + i * 0.43, 65, 0.4, 0.7);
-    snare(52.5 + i * 0.43 + 0.21, 0.12);
-  }
-
-  // ============================================================================
-  // Section F: Coda (60–75s)
-  // Final cadence with sustained chord and motif fragments
-  // ============================================================================
-  cymbal(55.5, 0.24);
-  // Last echo of the motif — distant, slow
-  brass(56.0, C5, 0.5, 0.26);
-  brass(56.5, Eb5, 0.5, 0.26);
-  brass(57.0, E5, 2.0, 0.32);
-  horn(56.0, C3, 3.0, 0.18);
-  strings(56.0, [C3, Eb3, G3, C4, Eb4], 3.0, 0.16);
-  timpani(56.0, 65, 0.4, 0.6);
-  timpani(57.0, 65, 0.5, 0.7);
-
-  // Bigger statement
-  brass(59.5, C5, 0.4, 0.3);
-  brass(59.9, Eb5, 0.4, 0.3);
-  brass(60.3, E5, 0.4, 0.3);
-  brass(60.7, G5, 0.4, 0.32);
-  brass(61.1, C6, 2.4, 0.4);
-  horn(59.5, C2, 4.0, 0.22);
-  horn(59.5, C3, 4.0, 0.2);
-  strings(59.5, [C2, G2, C3, Eb3, G3, C4, Eb4, G4, C5], 4.0, 0.2);
-  timpani(59.5, 65, 0.4, 0.7);
-  timpani(60.7, 65, 0.4, 0.7);
-  timpani(61.1, 65, 0.5, 0.8);
-  cymbal(61.1, 0.28);
-
-  // Sustained final chord
-  strings(63.5, [C2, G2, C3, Eb3, G3, C4, Eb4, G4, C5, Eb5, G5, C6], 8.0, 0.22);
-  brass(63.5, C6, 4.0, 0.32);
-  brass(63.5, G5, 4.0, 0.26);
-  brass(63.5, Eb5, 4.0, 0.24);
-  horn(63.5, C2, 7.0, 0.24);
-  horn(63.5, C3, 7.0, 0.2);
-
-  // Timpani roll
-  for (let i = 0; i < 14; i++) {
-    timpani(63.5 + i * 0.13, 65, 0.3, 0.45 + i * 0.025);
-  }
-
-  // Final crash + chord
-  cymbal(67.0, 0.32);
-  timpani(67.0, 60, 0.9, 0.95);
-  timpani(68.5, 65, 0.9, 0.95);
-  brass(67.0, C6, 4.0, 0.42);
-  brass(67.0, E5, 4.0, 0.32);
-  brass(67.0, G5, 4.0, 0.32);
-  strings(67.0, [C2, G2, C3, E3, G3, C4, E4, G4, C5], 6.0, 0.24);
-
-  // Very last hit
-  timpani(72.0, 60, 1.2, 1.0);
-  cymbal(72.0, 0.3);
 }
 
 let selectedTeam = null;
