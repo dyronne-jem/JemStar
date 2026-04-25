@@ -1,791 +1,978 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Pellet Arena — Multiplayer Pac-Man</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Department Wars: 4-Team Space Battle</title>
 <style>
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    background: #0a0e1f;
-    color: #e5e7eb;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
+  :root {
+    --finance: #00e5a8;
+    --accounting: #ffb627;
+    --risk: #ff4d6d;
+    --strategy: #6dd3ff;
+    --bg-0: #05060f;
+    --bg-1: #0a0d1f;
+    --ink: #e8ecff;
+    --ink-dim: #8b92b8;
+    --ink-faint: #4a5078;
   }
-  .card {
-    background: #111827;
-    border: 1px solid #1f2937;
-    border-radius: 14px;
-    padding: 1.25rem;
-    max-width: 520px;
-    width: 100%;
-  }
-  h2 { margin: 0 0 4px; font-size: 22px; font-weight: 500; }
-  h3 { margin: 0; font-size: 16px; font-weight: 500; }
-  h4 { margin: 12px 0 6px; font-size: 14px; font-weight: 500; color: #9ca3af; }
-  .muted { font-size: 13px; color: #9ca3af; }
-  .input {
-    width: 100%;
-    padding: 11px 14px;
-    font-size: 15px;
-    border: 1px solid #374151;
-    border-radius: 8px;
-    background: #1f2937;
-    color: #e5e7eb;
-    margin-bottom: 12px;
-  }
-  .input:focus { outline: none; border-color: #6366f1; }
-  .btn {
-    padding: 10px 20px;
-    background: #1f2937;
-    border: 1px solid #374151;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    color: #e5e7eb;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .btn:hover:not(:disabled) { background: #374151; }
-  .btn-primary {
-    background: #fbbf24;
-    color: #111827;
-    border-color: #fbbf24;
-  }
-  .btn-primary:hover:not(:disabled) { background: #fcd34d; }
-  .row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 7px 11px;
-    border-radius: 8px;
-    margin-bottom: 4px;
-    font-size: 13px;
-  }
-  .row.me { background: #312e81; }
-  .row.other { background: #1f2937; }
-  .canvas-wrap {
-    background: #0c1024;
-    border-radius: 8px;
-    padding: 8px;
-    margin-bottom: 12px;
-  }
-  canvas {
-    display: block;
-    max-width: 100%;
-    height: auto;
-    margin: 0 auto;
-    image-rendering: pixelated;
-  }
-  .controls {
-    display: grid;
-    grid-template-columns: repeat(3, 56px);
-    grid-template-rows: repeat(3, 56px);
-    gap: 4px;
-    justify-content: center;
-    margin-top: 8px;
-  }
-  .controls button {
-    padding: 0;
-    font-size: 22px;
-    background: #1f2937;
-    border: 1px solid #374151;
-    border-radius: 8px;
-    color: #e5e7eb;
-    cursor: pointer;
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    height: 100%;
+    background: radial-gradient(ellipse at top, #0a0d1f 0%, #05060f 70%);
+    color: var(--ink);
+    font-family: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+    overflow: hidden;
     user-select: none;
-    -webkit-user-select: none;
-    -webkit-tap-highlight-color: transparent;
   }
-  .controls button:active { background: #374151; }
-  .controls .empty { background: transparent; border: none; pointer-events: none; }
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-bottom: 12px;
+
+  /* ===== Login Screen ===== */
+  #login {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(0,229,168,0.08), transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(255,77,109,0.08), transparent 40%),
+      var(--bg-0);
+    z-index: 100;
   }
-  .stat {
-    background: #1f2937;
-    border-radius: 8px;
-    padding: 10px;
-    text-align: center;
-  }
-  .stat-num { font-size: 20px; font-weight: 500; }
-  .stat-label { font-size: 11px; color: #9ca3af; }
-  .status {
-    font-size: 11px;
-    color: #6b7280;
-    text-align: center;
-    margin-top: 4px;
-    font-family: ui-monospace, monospace;
-  }
-  .status.connected { color: #34d399; }
-  .status.error { color: #f87171; }
-  .header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-  .config-warning {
-    background: #7c2d12;
-    border: 1px solid #c2410c;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 13px;
-    color: #fed7aa;
-    margin-bottom: 12px;
-  }
-  .config-warning code {
-    background: #431407;
-    padding: 2px 6px;
+  #login.hidden { display: none; }
+  .login-card {
+    width: min(560px, 92vw);
+    padding: 40px 36px;
+    background: rgba(10,13,31,0.85);
+    border: 1px solid rgba(255,255,255,0.08);
     border-radius: 4px;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .title {
+    font-family: 'Orbitron', 'JetBrains Mono', monospace;
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, var(--finance), var(--strategy), var(--accounting), var(--risk));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    color: var(--ink-dim);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+  .field-label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    margin-top: 18px;
+  }
+  #nameInput {
+    width: 100%;
+    padding: 14px 16px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 16px;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  #nameInput:focus { border-color: var(--strategy); }
+  .team-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .team-btn {
+    padding: 18px 14px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+    text-align: left;
+    position: relative;
+  }
+  .team-btn::before {
+    content: '';
+    position: absolute;
+    left: 14px; top: 50%;
+    transform: translateY(-50%);
+    width: 8px; height: 8px;
+    background: var(--team-color);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--team-color);
+  }
+  .team-btn { padding-left: 36px; }
+  .team-btn:hover { border-color: var(--team-color); background: rgba(0,0,0,0.6); }
+  .team-btn.selected {
+    border-color: var(--team-color);
+    background: rgba(255,255,255,0.04);
+    box-shadow: inset 0 0 0 1px var(--team-color);
+  }
+  #joinBtn {
+    width: 100%;
+    margin-top: 24px;
+    padding: 16px;
+    background: linear-gradient(90deg, var(--finance), var(--strategy));
+    border: none;
+    color: #000;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: transform 0.1s;
+  }
+  #joinBtn:hover { transform: translateY(-1px); }
+  #joinBtn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .controls-hint {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    color: var(--ink-faint);
+    font-size: 11px;
+    line-height: 1.8;
+    letter-spacing: 0.05em;
+  }
+  .controls-hint kbd {
+    display: inline-block;
+    padding: 2px 7px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 2px;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 10px;
+    margin: 0 2px;
+  }
+
+  /* ===== Game UI ===== */
+  #game { position: fixed; inset: 0; }
+  canvas { display: block; cursor: crosshair; }
+
+  #scoreboard {
+    position: fixed;
+    top: 16px; left: 16px;
+    background: rgba(5,6,15,0.75);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 3px;
+    padding: 14px 18px;
+    min-width: 220px;
+  }
+  #scoreboard h3 {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .team-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+  .team-row .name {
+    display: flex; align-items: center; gap: 8px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+  .team-row .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    box-shadow: 0 0 8px currentColor;
+  }
+  .team-row .score {
+    font-family: 'Orbitron', monospace;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  #stats {
+    position: fixed;
+    top: 16px; right: 16px;
+    background: rgba(5,6,15,0.75);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 3px;
+    padding: 12px 16px;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    text-align: right;
+  }
+  #stats .you { color: var(--ink); font-weight: 700; }
+  #stats .num { font-family: 'Orbitron', monospace; font-size: 14px; }
+
+  #chat {
+    position: fixed;
+    bottom: 16px; left: 16px;
+    width: 320px;
+    background: rgba(5,6,15,0.75);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 3px;
+    display: flex; flex-direction: column;
+  }
+  #chatLog {
+    height: 160px;
+    overflow-y: auto;
+    padding: 10px 14px;
     font-size: 12px;
+    line-height: 1.6;
+  }
+  #chatLog::-webkit-scrollbar { width: 4px; }
+  #chatLog::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+  .chat-msg { margin-bottom: 4px; word-wrap: break-word; }
+  .chat-msg .author { font-weight: 700; }
+  .chat-msg .text { color: var(--ink-dim); margin-left: 4px; }
+  .chat-msg.system .text { color: var(--ink-faint); font-style: italic; }
+  #chatInput {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(0,0,0,0.4);
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 12px;
+    outline: none;
+  }
+  #chatInput::placeholder { color: var(--ink-faint); }
+
+  #killfeed {
+    position: fixed;
+    bottom: 16px; right: 16px;
+    width: 280px;
+    pointer-events: none;
+  }
+  .kill-msg {
+    background: rgba(5,6,15,0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 2px;
+    padding: 6px 10px;
+    margin-top: 4px;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    animation: fadeIn 0.2s;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+  .kill-msg .killer { font-weight: 700; }
+  .kill-msg .victim { font-weight: 700; }
+  .kill-msg .arrow { color: var(--ink-faint); margin: 0 6px; }
+
+  #respawn {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center; justify-content: center;
+    pointer-events: none;
+    z-index: 50;
+  }
+  #respawn.show { display: flex; }
+  #respawn .panel {
+    background: rgba(5,6,15,0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,77,109,0.4);
+    padding: 32px 56px;
+    text-align: center;
+    border-radius: 3px;
+  }
+  #respawn .label {
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    color: var(--risk);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  #respawn .countdown {
+    font-family: 'Orbitron', monospace;
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--ink);
   }
 </style>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<div id="app" class="card">
-  <p class="muted">Loading…</p>
+<!-- Login Screen -->
+<div id="login">
+  <div class="login-card">
+    <div class="title">Department Wars</div>
+    <div class="subtitle">// 4-Team Orbital Combat</div>
+
+    <label class="field-label">Call Sign</label>
+    <input id="nameInput" type="text" maxlength="16" placeholder="Enter your name..." autocomplete="off" />
+
+    <label class="field-label">Choose Your Department</label>
+    <div class="team-grid">
+      <button class="team-btn" data-team="Finance" style="--team-color: var(--finance)">Finance</button>
+      <button class="team-btn" data-team="Accounting" style="--team-color: var(--accounting)">Accounting</button>
+      <button class="team-btn" data-team="Risk" style="--team-color: var(--risk)">Risk</button>
+      <button class="team-btn" data-team="Strategy" style="--team-color: var(--strategy)">Strategy</button>
+    </div>
+
+    <button id="joinBtn" disabled>Launch</button>
+
+    <div class="controls-hint">
+      <kbd>W</kbd>/<kbd>↑</kbd> thrust &nbsp; <kbd>A</kbd><kbd>D</kbd>/<kbd>←</kbd><kbd>→</kbd> rotate &nbsp; <kbd>Space</kbd> fire<br>
+      <kbd>Enter</kbd> chat &nbsp; Friendly fire is OFF — only enemies count.
+    </div>
+  </div>
 </div>
 
-<!-- Firebase SDK (modular, ESM) -->
+<!-- Game -->
+<div id="game">
+  <canvas id="canvas"></canvas>
+
+  <div id="scoreboard">
+    <h3>// Department Standings</h3>
+    <div class="team-row" data-team="Finance">
+      <div class="name"><span class="dot" style="color: var(--finance); background: var(--finance)"></span>Finance</div>
+      <div class="score" style="color: var(--finance)">0</div>
+    </div>
+    <div class="team-row" data-team="Accounting">
+      <div class="name"><span class="dot" style="color: var(--accounting); background: var(--accounting)"></span>Accounting</div>
+      <div class="score" style="color: var(--accounting)">0</div>
+    </div>
+    <div class="team-row" data-team="Risk">
+      <div class="name"><span class="dot" style="color: var(--risk); background: var(--risk)"></span>Risk</div>
+      <div class="score" style="color: var(--risk)">0</div>
+    </div>
+    <div class="team-row" data-team="Strategy">
+      <div class="name"><span class="dot" style="color: var(--strategy); background: var(--strategy)"></span>Strategy</div>
+      <div class="score" style="color: var(--strategy)">0</div>
+    </div>
+  </div>
+
+  <div id="stats">
+    <div class="you">YOU</div>
+    <div>K <span class="num" id="myKills">0</span> &nbsp; D <span class="num" id="myDeaths">0</span></div>
+    <div>Online <span class="num" id="onlineCount">0</span></div>
+  </div>
+
+  <div id="chat">
+    <div id="chatLog"></div>
+    <input id="chatInput" type="text" maxlength="120" placeholder="Press Enter to chat..." />
+  </div>
+
+  <div id="killfeed"></div>
+
+  <div id="respawn">
+    <div class="panel">
+      <div class="label">// Hull Destroyed</div>
+      <div class="countdown" id="countdownNum">3</div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase + Game Logic -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, update, remove, onDisconnect, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import {
+  getDatabase, ref, set, update, remove, onValue, onChildAdded,
+  onDisconnect, push, serverTimestamp, runTransaction, get, query, limitToLast
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-// =============================================================================
-// FIREBASE CONFIG — REPLACE THIS WITH YOUR OWN CONFIG FROM THE README
-// =============================================================================
+// =====================================================================
+// !! REPLACE WITH YOUR FIREBASE CONFIG !!
+// =====================================================================
 const firebaseConfig = {
-  apiKey: "AIzaSyD3UbKKUqkNjC-rZVLiKmpKI_mOxGjTFv8",
-  authDomain: "jemstar-f2b91.firebaseapp.com",
-  databaseURL: "https://jemstar-f2b91-default-rtdb.firebaseio.com",
-  projectId: "jemstar-f2b91",
-  storageBucket: "jemstar-f2b91.firebasestorage.app",
-  messagingSenderId: "946711565533",
-  appId: "1:946711565533:web:ee49d70e06e9315ea5b734",
-  measurementId: "G-B1YSMCRDVF"
+  apiKey: "AIzaSyCg1smUjIauImTeCWUK-gO4IGyS3kst1v0",
+  authDomain: "fars-wars.firebaseapp.com",
+  databaseURL: "https://fars-wars-default-rtdb.firebaseio.com",
+  projectId: "fars-wars",
+  storageBucket: "fars-wars.firebasestorage.app",
+  messagingSenderId: "238409729391",
+  appId: "1:238409729391:web:ddb3159361513ad428949a",
+  measurementId: "G-HBFF3D05FK"
 };
-// =============================================================================
+// =====================================================================
 
-const CONFIGURED = !firebaseConfig.apiKey.startsWith("YOUR_");
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-// ===== Game constants =====
-const MAZE = [
-  "###################",
-  "#........#........#",
-  "#o##.###.#.###.##o#",
-  "#.................#",
-  "#.##.#.#####.#.##.#",
-  "#....#...#...#....#",
-  "####.### # ###.####",
-  "...#.#       #.#...",
-  "####.# ##### #.####",
-  "       #   #       ",
-  "####.# ##### #.####",
-  "...#.#       #.#...",
-  "####.### # ###.####",
-  "#........#........#",
-  "#.##.###.#.###.##.#",
-  "#o.#...........#.o#",
-  "##.#.#.#####.#.#.##",
-  "#....#...#...#....#",
-  "###################",
-];
-const ROWS = MAZE.length;
-const COLS = MAZE[0].length;
-const TILE = 22;
-const W = COLS * TILE;
-const H = ROWS * TILE;
-const COLORS = ["#ffd23f", "#ff6b9d", "#4ecdc4", "#a78bfa", "#fb923c", "#34d399"];
-const STEP_MS = 160;
-const SYNC_MS = 120;
-const POWER_DURATION_MS = 6000;
-const GHOST_RESPAWN_MS = 4000;
-const PLAYER_TIMEOUT_MS = 10000;
-const ROOM = "main";
+// ---------- Game Constants ----------
+const WORLD_W = 2400, WORLD_H = 1600;
+const SHIP_R = 14;
+const BULLET_SPEED = 520;
+const BULLET_LIFE = 1.4;
+const FIRE_COOLDOWN = 0.22;
+const RESPAWN_TIME = 3;
+const NETWORK_TICK = 1 / 15; // 15 Hz position broadcast
+const TEAM_COLORS = {
+  Finance:    "#00e5a8",
+  Accounting: "#ffb627",
+  Risk:       "#ff4d6d",
+  Strategy:   "#6dd3ff"
+};
+const TEAMS = Object.keys(TEAM_COLORS);
 
-// ===== State =====
-let app, db;
-let me = null;            // { id, name, color }
-let myState = null;       // local truth for my player
-let players = {};         // { id: { name, color, r, c, dx, dy, score, poweredUntil, lastSeen } }
-let ghosts = [];
-let pellets = {};
-let power = {};
-let round = 1;
-let ghostHost = { id: null, expiresAt: 0 };
+// ---------- DOM ----------
+const loginEl = document.getElementById('login');
+const nameInput = document.getElementById('nameInput');
+const joinBtn = document.getElementById('joinBtn');
+const teamBtns = document.querySelectorAll('.team-btn');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const chatLog = document.getElementById('chatLog');
+const chatInput = document.getElementById('chatInput');
+const killfeed = document.getElementById('killfeed');
+const respawnEl = document.getElementById('respawn');
+const countdownNum = document.getElementById('countdownNum');
+const myKillsEl = document.getElementById('myKills');
+const myDeathsEl = document.getElementById('myDeaths');
+const onlineCountEl = document.getElementById('onlineCount');
 
-let nextDir = { dx: 0, dy: 0 };
-let lastTick = 0;
-let lastSync = 0;
-let rafHandle = null;
-let connected = false;
-let statusText = "starting";
+let selectedTeam = null;
+let myId = null;
+let myName = null;
+let myTeam = null;
 
-// ===== Maze helpers =====
-function isWall(r, c) {
-  if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return true;
-  return MAZE[r][c] === "#";
+// ---------- Login UI ----------
+teamBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    teamBtns.forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedTeam = btn.dataset.team;
+    validateLogin();
+  });
+});
+nameInput.addEventListener('input', validateLogin);
+function validateLogin() {
+  joinBtn.disabled = !(nameInput.value.trim() && selectedTeam);
 }
-function moveOne(r, c, dx, dy) {
-  let nr = r + dy;
-  let nc = c + dx;
-  if (r === 9 && nc < 0) nc = COLS - 1;
-  if (r === 9 && nc >= COLS) nc = 0;
-  if (isWall(nr, nc)) return null;
-  return { r: nr, c: nc };
+joinBtn.addEventListener('click', startGame);
+nameInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !joinBtn.disabled) startGame(); });
+
+// ---------- Game State ----------
+const players = new Map();   // id -> {x,y,angle,vx,vy,name,team,alive,kills,deaths}
+const bullets = new Map();   // id -> {x,y,vx,vy,team,owner,birth}
+const stars = [];
+const particles = [];        // local-only explosion FX
+let lastShot = 0;
+let dead = false;
+let respawnAt = 0;
+let lastNetSend = 0;
+let myState = null;
+
+// Camera
+const camera = { x: 0, y: 0 };
+
+// Input
+const keys = {};
+window.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !loginEl.classList.contains('hidden')) return;
+  if (document.activeElement === chatInput) return;
+  if (document.activeElement === nameInput) return;
+  keys[e.key.toLowerCase()] = true;
+  if (e.key === ' ') e.preventDefault();
+});
+window.addEventListener('keyup', e => {
+  keys[e.key.toLowerCase()] = false;
+});
+
+// Generate background stars
+for (let i = 0; i < 240; i++) {
+  stars.push({
+    x: Math.random() * WORLD_W,
+    y: Math.random() * WORLD_H,
+    s: Math.random() * 1.5 + 0.3,
+    p: Math.random() * 0.6 + 0.2
+  });
 }
-function freshPellets() {
-  const p = {}, pw = {};
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      const ch = MAZE[r][c];
-      if (ch === ".") p[r + "_" + c] = true;
-      if (ch === "o") pw[r + "_" + c] = true;
+
+// ---------- Resize ----------
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ---------- Start Game ----------
+async function startGame() {
+  myName = nameInput.value.trim().slice(0, 16);
+  myTeam = selectedTeam;
+  loginEl.classList.add('hidden');
+
+  // Generate unique player id
+  myId = 'p_' + Math.random().toString(36).slice(2, 10);
+
+  // Pick spawn position
+  const spawn = randomSpawn();
+  myState = {
+    x: spawn.x, y: spawn.y,
+    angle: -Math.PI / 2,
+    vx: 0, vy: 0,
+    name: myName, team: myTeam,
+    alive: true, kills: 0, deaths: 0,
+    last: Date.now()
+  };
+
+  // Register with Firebase
+  const playerRef = ref(db, `players/${myId}`);
+  await set(playerRef, myState);
+  onDisconnect(playerRef).remove();
+
+  // Listen to all players
+  onValue(ref(db, 'players'), snap => {
+    const data = snap.val() || {};
+    // Update local cache
+    for (const id in data) {
+      players.set(id, data[id]);
     }
+    // Remove disconnected
+    for (const id of [...players.keys()]) {
+      if (!data[id]) players.delete(id);
+    }
+    onlineCountEl.textContent = Object.keys(data).length;
+  });
+
+  // Listen to bullets (fire-and-forget)
+  onChildAdded(ref(db, 'bullets'), snap => {
+    const b = snap.val();
+    const id = snap.key;
+    if (!b) return;
+    bullets.set(id, { ...b, birth: performance.now() / 1000 });
+    // Auto-cleanup remote tracking after lifetime
+    setTimeout(() => bullets.delete(id), BULLET_LIFE * 1000 + 500);
+    // Owner cleans up the DB record after life
+    if (b.owner === myId) {
+      setTimeout(() => remove(ref(db, `bullets/${id}`)).catch(()=>{}), BULLET_LIFE * 1000);
+    }
+  });
+
+  // Listen to scores
+  onValue(ref(db, 'scores'), snap => {
+    const s = snap.val() || {};
+    TEAMS.forEach(t => {
+      const row = document.querySelector(`.team-row[data-team="${t}"] .score`);
+      if (row) row.textContent = s[t] || 0;
+    });
+  });
+
+  // Listen to chat (last 30)
+  const chatQuery = query(ref(db, 'chat'), limitToLast(30));
+  onChildAdded(chatQuery, snap => {
+    const m = snap.val();
+    appendChatMsg(m);
+  });
+
+  // Listen to killfeed
+  onChildAdded(ref(db, 'killfeed'), snap => {
+    const k = snap.val();
+    if (!k) return;
+    showKill(k);
+    // Cleanup old killfeed entries (only the actor)
+    if (k.killerId === myId) {
+      setTimeout(() => remove(ref(db, `killfeed/${snap.key}`)).catch(()=>{}), 6000);
+    }
+  });
+
+  // Send join message
+  pushChat({ system: true, text: `${myName} joined ${myTeam}` });
+
+  // Start loop
+  requestAnimationFrame(loop);
+}
+
+function randomSpawn() {
+  return {
+    x: 200 + Math.random() * (WORLD_W - 400),
+    y: 200 + Math.random() * (WORLD_H - 400)
+  };
+}
+
+// ---------- Chat ----------
+chatInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const text = chatInput.value.trim();
+    if (text) pushChat({ author: myName, team: myTeam, text });
+    chatInput.value = '';
+    chatInput.blur();
+    e.stopPropagation();
+  } else if (e.key === 'Escape') {
+    chatInput.blur();
   }
-  return { pellets: p, power: pw };
-}
-function findSpawn(taken) {
-  const candidates = [[1,1],[1,COLS-2],[ROWS-2,1],[ROWS-2,COLS-2],[3,3],[ROWS-4,COLS-4],[3,COLS-4],[ROWS-4,3],[5,5],[ROWS-6,COLS-6]];
-  for (const [r, c] of candidates) {
-    const key = r + "_" + c;
-    if (!taken.has(key) && !isWall(r, c)) return { r, c };
+});
+window.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !loginEl.classList.contains('hidden') && document.activeElement !== chatInput) {
+    chatInput.focus();
+    e.preventDefault();
   }
-  return { r: 1, c: 1 };
+});
+function pushChat(msg) {
+  const r = push(ref(db, 'chat'));
+  set(r, { ...msg, ts: Date.now() });
+  // Auto-delete after 60s (light cleanup; only msg author does it)
+  setTimeout(() => remove(r).catch(()=>{}), 60000);
 }
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
-}
-
-// ===== Firebase wiring =====
-function roomRef(path = "") {
-  return ref(db, `rooms/${ROOM}${path ? "/" + path : ""}`);
-}
-
-async function initFirebase() {
-  app = initializeApp(firebaseConfig);
-  db = getDatabase(app);
-
-  // Initialize pellets if room is empty
-  const initRef = roomRef("init");
-  await runTransaction(initRef, (current) => {
-    if (current === null) {
-      const fresh = freshPellets();
-      set(roomRef("pellets"), fresh.pellets);
-      set(roomRef("power"), fresh.power);
-      set(roomRef("round"), 1);
-      return Date.now();
-    }
-    return current;
-  });
-
-  // Listen for shared state
-  onValue(roomRef("players"), snap => {
-    players = snap.val() || {};
-    pruneStale();
-  });
-  onValue(roomRef("ghosts"), snap => {
-    ghosts = snap.val() || [];
-  });
-  onValue(roomRef("pellets"), snap => {
-    pellets = snap.val() || {};
-  });
-  onValue(roomRef("power"), snap => {
-    power = snap.val() || {};
-  });
-  onValue(roomRef("round"), snap => {
-    round = snap.val() || 1;
-  });
-  onValue(roomRef("ghostHost"), snap => {
-    ghostHost = snap.val() || { id: null, expiresAt: 0 };
-  });
-
-  // Initialize ghosts if empty
-  onValue(roomRef("ghosts"), async (snap) => {
-    if (!snap.exists()) {
-      await set(roomRef("ghosts"), [
-        { id: "g1", r: 9, c: 8, dx: -1, dy: 0, deadUntil: 0, color: "#ef4444" },
-        { id: "g2", r: 9, c: 10, dx: 1, dy: 0, deadUntil: 0, color: "#f97316" },
-        { id: "g3", r: 9, c: 9, dx: 0, dy: -1, deadUntil: 0, color: "#06b6d4" },
-      ]);
-    }
-  }, { onlyOnce: true });
-
-  connected = true;
-  statusText = "connected";
-}
-
-function pruneStale() {
-  const now = Date.now();
-  for (const id of Object.keys(players)) {
-    if (now - (players[id].lastSeen || 0) > PLAYER_TIMEOUT_MS && id !== (me && me.id)) {
-      remove(ref(db, `rooms/${ROOM}/players/${id}`));
-    }
+function appendChatMsg(m) {
+  const div = document.createElement('div');
+  div.className = 'chat-msg' + (m.system ? ' system' : '');
+  if (m.system) {
+    div.innerHTML = `<span class="text">${escapeHtml(m.text)}</span>`;
+  } else {
+    const color = TEAM_COLORS[m.team] || '#fff';
+    div.innerHTML = `<span class="author" style="color:${color}">${escapeHtml(m.author)}:</span><span class="text">${escapeHtml(m.text)}</span>`;
   }
+  chatLog.appendChild(div);
+  chatLog.scrollTop = chatLog.scrollHeight;
+  // Trim
+  while (chatLog.children.length > 40) chatLog.removeChild(chatLog.firstChild);
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// ---------- Killfeed ----------
+function showKill(k) {
+  const div = document.createElement('div');
+  div.className = 'kill-msg';
+  const kc = TEAM_COLORS[k.killerTeam] || '#fff';
+  const vc = TEAM_COLORS[k.victimTeam] || '#fff';
+  div.innerHTML = `<span class="killer" style="color:${kc}">${escapeHtml(k.killer)}</span><span class="arrow">»</span><span class="victim" style="color:${vc}">${escapeHtml(k.victim)}</span>`;
+  killfeed.appendChild(div);
+  setTimeout(() => div.remove(), 5000);
+  while (killfeed.children.length > 5) killfeed.removeChild(killfeed.firstChild);
 }
 
-async function syncMyPlayer() {
-  if (!me || !myState) return;
-  myState.lastSeen = Date.now();
-  await set(ref(db, `rooms/${ROOM}/players/${me.id}`), {
-    id: me.id,
-    name: me.name,
-    color: me.color,
-    r: myState.r,
-    c: myState.c,
-    dx: myState.dx,
-    dy: myState.dy,
-    score: myState.score,
-    poweredUntil: myState.poweredUntil || 0,
-    lastSeen: myState.lastSeen,
-  });
+// ---------- Game Loop ----------
+let lastTime = performance.now();
+function loop(now) {
+  const dt = Math.min(0.05, (now - lastTime) / 1000);
+  lastTime = now;
+
+  tick(dt);
+  render();
+
+  requestAnimationFrame(loop);
 }
 
-async function eatPellet(key) {
-  await remove(ref(db, `rooms/${ROOM}/pellets/${key}`));
-}
-async function eatPower(key) {
-  await remove(ref(db, `rooms/${ROOM}/power/${key}`));
-}
+function tick(dt) {
+  const t = performance.now() / 1000;
 
-async function refillIfEmpty() {
-  if (Object.keys(pellets).length === 0 && Object.keys(power).length === 0) {
-    const fresh = freshPellets();
-    await runTransaction(roomRef("round"), (cur) => (cur || 1) + 1);
-    await set(roomRef("pellets"), fresh.pellets);
-    await set(roomRef("power"), fresh.power);
-  }
-}
-
-async function tryClaimGhostHost() {
-  await runTransaction(roomRef("ghostHost"), (cur) => {
-    const now = Date.now();
-    if (!cur || !cur.id || (cur.expiresAt || 0) < now) {
-      return { id: me.id, expiresAt: now + 6000 };
-    }
-    if (cur.id === me.id) {
-      return { id: me.id, expiresAt: now + 6000 };
-    }
-    return cur;
-  });
-}
-
-async function stepGhosts() {
-  const nowMs = Date.now();
-  if (!ghostHost || ghostHost.id !== me.id || (ghostHost.expiresAt || 0) < nowMs) return;
-  if (!ghosts || ghosts.length === 0) return;
-  const updated = ghosts.map(g => ({ ...g }));
-  for (const g of updated) {
-    if (g.deadUntil > nowMs) continue;
-    if (g.deadUntil && g.deadUntil <= nowMs) {
-      g.r = 9; g.c = 9; g.deadUntil = 0;
-    }
-    let moved = null;
-    if (Math.random() > 0.2) moved = moveOne(g.r, g.c, g.dx, g.dy);
-    if (!moved) {
-      const dirs = [[1,0],[-1,0],[0,1],[0,-1]].filter(([dx,dy]) => {
-        if (dx === -g.dx && dy === -g.dy && (g.dx !== 0 || g.dy !== 0)) return false;
-        return moveOne(g.r, g.c, dx, dy);
+  // ----- My ship -----
+  if (!dead && myState) {
+    // Rotate
+    if (keys['a'] || keys['arrowleft'])  myState.angle -= 3.4 * dt;
+    if (keys['d'] || keys['arrowright']) myState.angle += 3.4 * dt;
+    // Thrust
+    if (keys['w'] || keys['arrowup']) {
+      myState.vx += Math.cos(myState.angle) * 280 * dt;
+      myState.vy += Math.sin(myState.angle) * 280 * dt;
+      // Engine particles
+      particles.push({
+        x: myState.x - Math.cos(myState.angle) * 12,
+        y: myState.y - Math.sin(myState.angle) * 12,
+        vx: -Math.cos(myState.angle) * 80 + (Math.random() - 0.5) * 60,
+        vy: -Math.sin(myState.angle) * 80 + (Math.random() - 0.5) * 60,
+        life: 0.4, max: 0.4,
+        color: TEAM_COLORS[myTeam],
+        size: 2
       });
-      const pick = dirs.length ? dirs[Math.floor(Math.random() * dirs.length)] : null;
-      if (pick) {
-        g.dx = pick[0]; g.dy = pick[1];
-        moved = moveOne(g.r, g.c, g.dx, g.dy);
-      }
     }
-    if (moved) { g.r = moved.r; g.c = moved.c; }
+    // Drag
+    myState.vx *= Math.pow(0.5, dt);
+    myState.vy *= Math.pow(0.5, dt);
+    // Cap speed
+    const sp = Math.hypot(myState.vx, myState.vy);
+    const maxSp = 320;
+    if (sp > maxSp) { myState.vx *= maxSp/sp; myState.vy *= maxSp/sp; }
+    // Move
+    myState.x += myState.vx * dt;
+    myState.y += myState.vy * dt;
+    // Wrap
+    if (myState.x < 0) myState.x += WORLD_W;
+    if (myState.x > WORLD_W) myState.x -= WORLD_W;
+    if (myState.y < 0) myState.y += WORLD_H;
+    if (myState.y > WORLD_H) myState.y -= WORLD_H;
+
+    // Fire
+    if (keys[' '] && t - lastShot > FIRE_COOLDOWN) {
+      lastShot = t;
+      fireBullet();
+    }
+
+    // Network broadcast
+    if (t - lastNetSend > NETWORK_TICK) {
+      lastNetSend = t;
+      update_db(`players/${myId}`, {
+        x: myState.x, y: myState.y, angle: myState.angle,
+        vx: myState.vx, vy: myState.vy, alive: true,
+        last: Date.now()
+      });
+    }
   }
-  await set(roomRef("ghosts"), updated);
-}
 
-async function killGhost(idx) {
-  await runTransaction(ref(db, `rooms/${ROOM}/ghosts/${idx}`), (g) => {
-    if (!g) return g;
-    g.deadUntil = Date.now() + GHOST_RESPAWN_MS;
-    return g;
-  });
-}
+  // Respawn countdown
+  if (dead) {
+    const remaining = Math.max(0, respawnAt - t);
+    countdownNum.textContent = Math.ceil(remaining) || 1;
+    if (remaining <= 0) doRespawn();
+  }
 
-// ===== Game loop =====
-function gameLoop(now) {
-  rafHandle = requestAnimationFrame(gameLoop);
-  if (!myState) { drawStatus(); return; }
+  // ----- Bullets -----
+  for (const [id, b] of bullets) {
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+    if (b.x < 0) b.x += WORLD_W;
+    if (b.x > WORLD_W) b.x -= WORLD_W;
+    if (b.y < 0) b.y += WORLD_H;
+    if (b.y > WORLD_H) b.y -= WORLD_H;
 
-  if (now - lastTick >= STEP_MS) {
-    lastTick = now;
+    // Check expiry
+    if (t - b.birth > BULLET_LIFE) { bullets.delete(id); continue; }
 
-    if (nextDir.dx !== 0 || nextDir.dy !== 0) {
-      const t = moveOne(myState.r, myState.c, nextDir.dx, nextDir.dy);
-      if (t) { myState.dx = nextDir.dx; myState.dy = nextDir.dy; }
-    }
-    if (myState.dx !== 0 || myState.dy !== 0) {
-      const m = moveOne(myState.r, myState.c, myState.dx, myState.dy);
-      if (m) { myState.r = m.r; myState.c = m.c; }
-      else { myState.dx = 0; myState.dy = 0; }
-    }
-
-    const key = myState.r + "_" + myState.c;
-    if (pellets[key]) {
-      delete pellets[key];
-      myState.score += 10;
-      eatPellet(key);
-    }
-    if (power[key]) {
-      delete power[key];
-      myState.score += 50;
-      myState.poweredUntil = Date.now() + POWER_DURATION_MS;
-      eatPower(key);
-    }
-
-    refillIfEmpty();
-    tryClaimGhostHost();
-    stepGhosts();
-
-    const nowMs = Date.now();
-    (ghosts || []).forEach((g, i) => {
-      if (g.deadUntil > nowMs) return;
-      if (g.r === myState.r && g.c === myState.c) {
-        if (myState.poweredUntil > nowMs) {
-          killGhost(i);
-          myState.score += 200;
-        } else {
-          myState.score = Math.max(0, myState.score - 100);
-          const taken = new Set(Object.values(players).filter(pl => pl.id !== me.id).map(pl => pl.r + "_" + pl.c));
-          const spawn = findSpawn(taken);
-          myState.r = spawn.r;
-          myState.c = spawn.c;
-          myState.dx = 0; myState.dy = 0;
-          nextDir = { dx: 0, dy: 0 };
-        }
+    // Collide only against MY ship; the victim reports the death.
+    if (!dead && myState && b.owner !== myId && b.team !== myTeam) {
+      const dx = b.x - myState.x;
+      const dy = b.y - myState.y;
+      if (dx*dx + dy*dy < (SHIP_R + 4) * (SHIP_R + 4)) {
+        // I'm hit
+        bullets.delete(id);
+        handleDeath(b);
       }
+    }
+  }
+
+  // Particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= Math.pow(0.3, dt);
+    p.vy *= Math.pow(0.3, dt);
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+
+  // Camera follows me (or freezes when dead)
+  if (myState) {
+    camera.x = myState.x - canvas.width / 2;
+    camera.y = myState.y - canvas.height / 2;
+  }
+}
+
+async function update_db(path, data) {
+  try { await update(ref(db, path), data); } catch(e) {}
+}
+
+function fireBullet() {
+  const r = push(ref(db, 'bullets'));
+  const id = r.key;
+  const b = {
+    x: myState.x + Math.cos(myState.angle) * 18,
+    y: myState.y + Math.sin(myState.angle) * 18,
+    vx: Math.cos(myState.angle) * BULLET_SPEED + myState.vx * 0.5,
+    vy: Math.sin(myState.angle) * BULLET_SPEED + myState.vy * 0.5,
+    team: myTeam,
+    owner: myId,
+    ts: Date.now()
+  };
+  set(r, b);
+  // Track locally too (since we don't onChildAdded our own writes if local cache races)
+  bullets.set(id, { ...b, birth: performance.now()/1000 });
+}
+
+function handleDeath(bullet) {
+  if (dead) return;
+  dead = true;
+  respawnAt = performance.now() / 1000 + RESPAWN_TIME;
+  respawnEl.classList.add('show');
+
+  // Explosion particles
+  for (let i = 0; i < 30; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const sp = 80 + Math.random() * 200;
+    particles.push({
+      x: myState.x, y: myState.y,
+      vx: Math.cos(a)*sp, vy: Math.sin(a)*sp,
+      life: 0.8, max: 0.8,
+      color: TEAM_COLORS[myTeam],
+      size: 2 + Math.random() * 2
     });
   }
 
-  if (now - lastSync >= SYNC_MS) {
-    lastSync = now;
-    syncMyPlayer();
-  }
+  // Update my deaths in DB
+  myState.deaths++;
+  myDeathsEl.textContent = myState.deaths;
+  update_db(`players/${myId}`, { alive: false, deaths: myState.deaths });
 
-  drawGame();
-  drawStatus();
-  refreshUI();
-}
-
-// ===== Rendering =====
-function drawGame() {
-  const canvas = document.getElementById("canvas");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-
-  ctx.fillStyle = "#0c1024";
-  ctx.fillRect(0, 0, W, H);
-
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < COLS; c++) {
-      if (MAZE[r][c] === "#") {
-        ctx.fillStyle = "#1e3a8a";
-        ctx.fillRect(c * TILE, r * TILE, TILE, TILE);
-        ctx.fillStyle = "#3b82f6";
-        ctx.fillRect(c * TILE + 2, r * TILE + 2, TILE - 4, TILE - 4);
-        ctx.fillStyle = "#0c1024";
-        ctx.fillRect(c * TILE + 4, r * TILE + 4, TILE - 8, TILE - 8);
-      }
-    }
-  }
-
-  ctx.fillStyle = "#fde68a";
-  for (const k of Object.keys(pellets)) {
-    const [r, c] = k.split("_").map(Number);
-    ctx.beginPath();
-    ctx.arc(c * TILE + TILE / 2, r * TILE + TILE / 2, 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  const pulse = 4 + Math.sin(Date.now() / 200) * 1.5;
-  ctx.fillStyle = "#fbbf24";
-  for (const k of Object.keys(power)) {
-    const [r, c] = k.split("_").map(Number);
-    ctx.beginPath();
-    ctx.arc(c * TILE + TILE / 2, r * TILE + TILE / 2, pulse, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  const now = Date.now();
-  const myPowered = myState && myState.poweredUntil > now;
-  for (const g of ghosts || []) {
-    const x = g.c * TILE + TILE / 2;
-    const y = g.r * TILE + TILE / 2;
-    if (g.deadUntil > now) {
-      ctx.fillStyle = "#fff";
-      ctx.beginPath();
-      ctx.arc(x - 3, y, 2, 0, Math.PI * 2);
-      ctx.arc(x + 3, y, 2, 0, Math.PI * 2);
-      ctx.fill();
-      continue;
-    }
-    ctx.fillStyle = myPowered ? "#3b82f6" : g.color;
-    ctx.beginPath();
-    ctx.arc(x, y - 1, TILE / 2 - 2, Math.PI, 0);
-    ctx.lineTo(x + TILE / 2 - 2, y + TILE / 2 - 3);
-    ctx.lineTo(x + 3, y + TILE / 2 - 5);
-    ctx.lineTo(x, y + TILE / 2 - 3);
-    ctx.lineTo(x - 3, y + TILE / 2 - 5);
-    ctx.lineTo(x - TILE / 2 + 2, y + TILE / 2 - 3);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(x - 3, y - 1, 2, 0, Math.PI * 2);
-    ctx.arc(x + 3, y - 1, 2, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  const drawPlayer = (p, isMe) => {
-    const x = p.c * TILE + TILE / 2;
-    const y = p.r * TILE + TILE / 2;
-    const powered = p.poweredUntil > now;
-    ctx.fillStyle = p.color;
-    const mouthOpen = (Math.floor(Date.now() / 120) % 2 === 0) ? 0.25 : 0.05;
-    let angle = 0;
-    if (p.dx === 1) angle = 0;
-    else if (p.dx === -1) angle = Math.PI;
-    else if (p.dy === -1) angle = -Math.PI / 2;
-    else if (p.dy === 1) angle = Math.PI / 2;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.arc(x, y, TILE / 2 - 2, angle + mouthOpen * Math.PI, angle - mouthOpen * Math.PI + Math.PI * 2);
-    ctx.closePath();
-    ctx.fill();
-    if (powered) {
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.arc(x, y, TILE / 2, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.fillStyle = isMe ? "#fff" : "rgba(255,255,255,0.7)";
-    ctx.font = "10px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(p.name.slice(0, 10), x, y - TILE / 2 - 2);
-  };
-
-  for (const p of Object.values(players)) {
-    if (p.id !== me.id) drawPlayer(p, false);
-  }
-  if (myState) drawPlayer({ ...myState, name: me.name, color: me.color, id: me.id }, true);
-}
-
-function drawStatus() {
-  const el = document.getElementById("status");
-  if (!el) return;
-  el.textContent = statusText;
-  el.className = "status " + (connected ? "connected" : statusText.startsWith("error") ? "error" : "");
-}
-
-function refreshUI() {
-  const all = Object.values(players).sort((a, b) => b.score - a.score);
-  const scoreEl = document.getElementById("score");
-  if (!scoreEl) return;
-  scoreEl.textContent = myState ? myState.score : 0;
-  document.getElementById("playerCount").textContent = all.length;
-  document.getElementById("pelletCount").textContent = Object.keys(pellets).length + Object.keys(power).length;
-  const board = document.getElementById("board");
-  board.innerHTML = all.map((p, i) => `
-    <div class="row ${p.id === me.id ? 'me' : 'other'}">
-      <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color};margin-right:6px;vertical-align:middle;"></span>${i+1}. ${escapeHtml(p.name)}${p.id === me.id ? ' (you)' : ''}</span>
-      <strong>${p.score}</strong>
-    </div>
-  `).join("");
-}
-
-// ===== Input =====
-function setDirection(dx, dy) {
-  nextDir = { dx, dy };
-  if (myState) {
-    const m = moveOne(myState.r, myState.c, dx, dy);
-    if (m) { myState.dx = dx; myState.dy = dy; }
+  // Find killer in player list
+  const killer = players.get(bullet.owner);
+  if (killer) {
+    // Increment killer's kills (transaction so concurrent kills don't clobber)
+    runTransaction(ref(db, `players/${bullet.owner}/kills`), v => (v || 0) + 1).catch(()=>{});
+    // Award team score
+    runTransaction(ref(db, `scores/${bullet.team}`), v => (v || 0) + 1).catch(()=>{});
+    // Push killfeed
+    const kr = push(ref(db, 'killfeed'));
+    set(kr, {
+      killer: killer.name, killerTeam: killer.team, killerId: bullet.owner,
+      victim: myName, victimTeam: myTeam,
+      ts: Date.now()
+    });
   }
 }
 
-// ===== Lifecycle =====
-async function joinRoom(name) {
-  const id = "p_" + Math.random().toString(36).slice(2, 10);
-  const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-  me = { id, name, color };
-
-  const taken = new Set(Object.values(players).map(p => p.r + "_" + p.c));
-  const spawn = findSpawn(taken);
-  myState = {
-    id, name, color,
-    r: spawn.r, c: spawn.c,
-    dx: 0, dy: 0,
-    score: 0,
-    poweredUntil: 0,
-    lastSeen: Date.now(),
-  };
-
-  const myRef = ref(db, `rooms/${ROOM}/players/${id}`);
-  onDisconnect(myRef).remove();
-
-  await syncMyPlayer();
-  renderUI();
-  startLoop();
-}
-
-async function leaveRoom() {
-  stopLoop();
-  if (me) {
-    await remove(ref(db, `rooms/${ROOM}/players/${me.id}`));
-  }
-  me = null; myState = null;
-  renderJoin();
-}
-
-function startLoop() {
-  if (rafHandle) cancelAnimationFrame(rafHandle);
-  lastTick = lastSync = performance.now();
-  rafHandle = requestAnimationFrame(gameLoop);
-}
-function stopLoop() {
-  if (rafHandle) cancelAnimationFrame(rafHandle);
-  rafHandle = null;
-}
-
-// ===== UI =====
-const root = document.getElementById("app");
-
-function renderConfigError() {
-  root.innerHTML = `
-    <h2>Setup needed</h2>
-    <div class="config-warning">
-      You haven't pasted your Firebase config yet. Open <code>index.html</code>,
-      find <code>firebaseConfig</code> near the top of the script, and replace
-      it with the values from your Firebase project. See <code>README.md</code>
-      for step-by-step instructions.
-    </div>
-  `;
-}
-
-function renderJoin() {
-  root.innerHTML = `
-    <div style="text-align: center; margin-bottom: 1.25rem;">
-      <h2>Pellet arena</h2>
-      <p class="muted" style="margin: 4px 0 0;">Multiplayer Pac-Man — eat pellets, dodge ghosts, top the board</p>
-    </div>
-    <input id="name" class="input" placeholder="Enter your name" maxlength="14" />
-    <button id="join" class="btn btn-primary" style="width: 100%;">Join arena</button>
-    <p class="muted" style="margin: 1rem 0 0; text-align: center;">Share this URL — anyone who opens it joins your room.</p>
-    <p id="status" class="status">connecting…</p>
-  `;
-  const input = document.getElementById("name");
-  setTimeout(() => input && input.focus(), 50);
-  const join = () => {
-    const n = input.value.trim();
-    if (!n || !connected) return;
-    joinRoom(n);
-  };
-  document.getElementById("join").onclick = join;
-  input.onkeydown = e => { if (e.key === "Enter") join(); };
-}
-
-function renderUI() {
-  root.innerHTML = `
-    <div class="header-row">
-      <h3>Pellet arena</h3>
-      <button id="leave" class="btn" style="padding: 6px 12px; font-size: 12px;">Leave</button>
-    </div>
-    <div class="stats">
-      <div class="stat"><div class="stat-num" id="score">0</div><div class="stat-label">Your score</div></div>
-      <div class="stat"><div class="stat-num" id="playerCount">1</div><div class="stat-label">Players</div></div>
-      <div class="stat"><div class="stat-num" id="pelletCount">0</div><div class="stat-label">Pellets</div></div>
-    </div>
-    <div class="canvas-wrap">
-      <canvas id="canvas" width="${W}" height="${H}"></canvas>
-    </div>
-    <div class="controls">
-      <button class="empty"></button>
-      <button data-dir="up">↑</button>
-      <button class="empty"></button>
-      <button data-dir="left">←</button>
-      <button class="empty"></button>
-      <button data-dir="right">→</button>
-      <button class="empty"></button>
-      <button data-dir="down">↓</button>
-      <button class="empty"></button>
-    </div>
-    <p class="muted" style="text-align: center; margin: 8px 0 4px;">Arrow keys / WASD or tap controls</p>
-    <p id="status" class="status">connected</p>
-    <h4>Leaderboard</h4>
-    <div id="board"></div>
-  `;
-  document.getElementById("leave").onclick = leaveRoom;
-  root.querySelectorAll("[data-dir]").forEach(btn => {
-    const d = btn.dataset.dir;
-    const handler = (e) => {
-      e.preventDefault();
-      if (d === "up") setDirection(0, -1);
-      else if (d === "down") setDirection(0, 1);
-      else if (d === "left") setDirection(-1, 0);
-      else if (d === "right") setDirection(1, 0);
-    };
-    btn.addEventListener("click", handler);
-    btn.addEventListener("touchstart", handler, { passive: false });
+function doRespawn() {
+  dead = false;
+  respawnEl.classList.remove('show');
+  const spawn = randomSpawn();
+  myState.x = spawn.x; myState.y = spawn.y;
+  myState.vx = 0; myState.vy = 0;
+  myState.angle = Math.random() * Math.PI * 2;
+  update_db(`players/${myId}`, {
+    x: myState.x, y: myState.y, vx: 0, vy: 0,
+    angle: myState.angle, alive: true
   });
-  if (!window._keyHandler) {
-    window._keyHandler = (e) => {
-      if (!myState) return;
-      const k = e.key.toLowerCase();
-      if (k === "arrowup" || k === "w") { setDirection(0, -1); e.preventDefault(); }
-      else if (k === "arrowdown" || k === "s") { setDirection(0, 1); e.preventDefault(); }
-      else if (k === "arrowleft" || k === "a") { setDirection(-1, 0); e.preventDefault(); }
-      else if (k === "arrowright" || k === "d") { setDirection(1, 0); e.preventDefault(); }
-    };
-    window.addEventListener("keydown", window._keyHandler);
+}
+
+// ---------- Render ----------
+function render() {
+  ctx.fillStyle = '#05060f';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+  ctx.translate(-camera.x, -camera.y);
+
+  // Stars (parallax-ish, just static for simplicity)
+  for (const s of stars) {
+    // Draw with simple wrap visibility
+    drawWrapped(s.x, s.y, () => {
+      ctx.fillStyle = `rgba(255,255,255,${s.p})`;
+      ctx.fillRect(s.x - s.s/2, s.y - s.s/2, s.s, s.s);
+    });
+  }
+
+  // World boundary glow
+  ctx.strokeStyle = 'rgba(109, 211, 255, 0.15)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 0, WORLD_W, WORLD_H);
+
+  // Particles
+  for (const p of particles) {
+    const alpha = p.life / p.max;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // Players
+  for (const [id, p] of players) {
+    if (!p.alive && id !== myId) continue;
+    if (id === myId && dead) continue;
+    drawShip(p, id === myId);
+  }
+
+  // Bullets
+  for (const [id, b] of bullets) {
+    ctx.fillStyle = TEAM_COLORS[b.team] || '#fff';
+    ctx.shadowColor = TEAM_COLORS[b.team];
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+
+  ctx.restore();
+
+  // Update my K/D in HUD from DB-side data
+  if (myState) {
+    const me = players.get(myId);
+    if (me) myKillsEl.textContent = me.kills || 0;
   }
 }
 
-// ===== Boot =====
-async function boot() {
-  console.log("Pellet Arena booting...");
-  if (!CONFIGURED) {
-    console.log("Firebase not configured — showing setup screen.");
-    renderConfigError();
-    return;
-  }
-  try {
-    await initFirebase();
-    renderJoin();
-  } catch (e) {
-    statusText = "error: " + e.message;
-    root.innerHTML = `<h2>Connection failed</h2><p class="muted">${escapeHtml(e.message)}</p><p class="muted">Check your Firebase config and database rules. See README.md.</p>`;
-    console.error(e);
-  }
+function drawWrapped(x, y, fn) {
+  // Draw at original; canvas wrapping isn't free, but stars are static so just call fn once.
+  fn();
 }
 
-// Run immediately and also catch any top-level errors
-boot().catch(err => {
-  console.error("Boot failed:", err);
-  document.getElementById("app").innerHTML =
-    `<h2>Something went wrong</h2><p style="color:#fca5a5;font-family:monospace;font-size:12px;">${err.message}</p><p style="color:#9ca3af;">Open browser console (F12) for details.</p>`;
+function drawShip(p, isMe) {
+  const color = TEAM_COLORS[p.team] || '#fff';
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(p.angle);
+
+  // Ship body — triangle with notch
+  ctx.shadowColor = color;
+  ctx.shadowBlur = isMe ? 16 : 10;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(16, 0);
+  ctx.lineTo(-12, 10);
+  ctx.lineTo(-7, 0);
+  ctx.lineTo(-12, -10);
+  ctx.closePath();
+  ctx.fill();
+
+  // Inner detail
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  ctx.beginPath();
+  ctx.moveTo(8, 0);
+  ctx.lineTo(-6, 5);
+  ctx.lineTo(-3, 0);
+  ctx.lineTo(-6, -5);
+  ctx.closePath();
+  ctx.fill();
+
+  // "ME" indicator: pulsing ring
+  if (isMe) {
+    const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 300);
+    ctx.strokeStyle = `rgba(255,255,255,${0.3 + pulse * 0.3})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, 22, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+
+  // Name label
+  ctx.font = '600 11px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillText(p.name, p.x, p.y - 22 + 1);
+  ctx.fillStyle = color;
+  ctx.fillText(p.name, p.x, p.y - 22);
+}
+
+// ---------- Cleanup on unload ----------
+window.addEventListener('beforeunload', () => {
+  if (myId) remove(ref(db, `players/${myId}`)).catch(()=>{});
 });
 
-// Safety net: if after 4 seconds we're still showing "Loading…", show setup screen
-setTimeout(() => {
-  const app = document.getElementById("app");
-  if (app && app.innerText.trim() === "Loading…") {
-    console.warn("Boot didn't render in time. Falling back to setup screen.");
-    renderConfigError();
-  }
-}, 4000);
 </script>
 </body>
 </html>
