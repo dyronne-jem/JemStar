@@ -225,7 +225,8 @@
     animation: soundPromptPulse 1.4s ease-in-out infinite;
   }
   #soundPrompt:hover { background: rgba(255,230,0,0.3); }
-  #soundPrompt.fade { opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+  #soundPrompt.fade { opacity: 0.4; transition: opacity 0.5s; }
+  #soundPrompt.fade:hover { opacity: 1; }
   @keyframes soundPromptPulse {
     0%, 100% { box-shadow: 0 0 8px rgba(255,230,0,0.4); }
     50% { box-shadow: 0 0 24px rgba(255,230,0,0.9); }
@@ -1416,10 +1417,10 @@ setTimeout(() => endIntro(), 220000);
 
 // Start intro music on any first user interaction (autoplay policy)
 let introMusicStarted = false;
-function startIntroMusicOnce() {
-  if (introMusicStarted) return;
+function startIntroMusicOnce(forceRestart = false) {
+  if (introMusicStarted && !forceRestart) return;
   introMusicStarted = true;
-  console.log('[FARS] Starting audio...');
+  console.log('[FARS] Starting audio... (forceRestart=' + forceRestart + ')');
   const sp = document.getElementById('soundPrompt');
   if (sp) sp.classList.add('fade');
   initAudio();
@@ -1459,15 +1460,20 @@ function startIntroMusicOnce() {
     startMusic();
   });
 }
-// Explicit button click is the most reliable trigger
+
+// The button always forces a restart — handles the case where something else triggered the unlock first
 const soundPromptEl = document.getElementById('soundPrompt');
 if (soundPromptEl) {
-  soundPromptEl.addEventListener('click', startIntroMusicOnce);
-  soundPromptEl.addEventListener('pointerdown', startIntroMusicOnce);
+  soundPromptEl.addEventListener('click', (e) => {
+    e.stopPropagation();
+    console.log('[FARS] Sound button clicked');
+    // If audio is already started but maybe wasn't unlocked, force a fresh attempt
+    startIntroMusicOnce(true);
+  });
 }
-// Also attach on multiple events as fallback
+// Document-wide listeners as fallback (these only fire ONCE)
 ['click', 'keydown', 'touchstart', 'pointerdown', 'mousedown'].forEach(ev => {
-  document.addEventListener(ev, startIntroMusicOnce, { once: true, capture: true });
+  document.addEventListener(ev, () => startIntroMusicOnce(false), { once: true, capture: true });
 });
 
 // Original, non-copyrighted heroic theme — inspired by epic space opera conventions
