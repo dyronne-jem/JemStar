@@ -542,6 +542,41 @@
   #stats .you { color: var(--ink); font-weight: 700; }
   #stats .num { font-family: 'Orbitron', monospace; font-size: 14px; }
 
+  #shieldMeter {
+    margin-top: 10px;
+    text-align: right;
+  }
+  #shieldMeter .shield-label {
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: #9fdfff;
+    margin-bottom: 4px;
+  }
+  #shieldMeter .shield-bar {
+    width: 140px;
+    height: 6px;
+    background: rgba(159, 223, 255, 0.12);
+    border: 1px solid rgba(159, 223, 255, 0.25);
+    border-radius: 1px;
+    overflow: hidden;
+    margin-left: auto;
+  }
+  #shieldMeter .shield-bar-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #6dc4ff, #9fdfff);
+    box-shadow: 0 0 8px rgba(159, 223, 255, 0.6);
+    transition: width 0.08s linear, background 0.2s;
+  }
+  #shieldMeter .shield-bar-fill.draining {
+    background: linear-gradient(90deg, #ff8866, #ffaa66);
+    box-shadow: 0 0 10px rgba(255, 140, 80, 0.7);
+  }
+  #shieldMeter .shield-bar-fill.empty {
+    background: rgba(120, 120, 120, 0.4);
+    box-shadow: none;
+  }
+
   #roster {
     position: fixed;
     top: 170px; right: 16px;
@@ -901,6 +936,10 @@
     <div class="you">YOU</div>
     <div>K <span class="num" id="myKills">0</span> &nbsp; D <span class="num" id="myDeaths">0</span></div>
     <div>Online <span class="num" id="onlineCount">0</span></div>
+    <div id="shieldMeter">
+      <div class="shield-label">SHIELD <span style="font-size:9px;color:var(--ink-faint);letter-spacing:0.15em;">(HOLD E)</span></div>
+      <div class="shield-bar"><div class="shield-bar-fill" id="shieldBarFill"></div></div>
+    </div>
     <div style="margin-top:8px;"><button id="muteBtn" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);color:var(--ink-dim);font-family:inherit;font-size:10px;letter-spacing:0.2em;padding:4px 10px;cursor:pointer;border-radius:2px;">🔊 SOUND ON</button></div>
   </div>
 
@@ -977,33 +1016,37 @@ const CFO_PULSE_COOLDOWN = 1.6;          // pulse fires every 1.6s
 const CFO_PULSE_DURATION = 0.6;          // visual + damage window
 
 // Per-team ship stats & weapon configs
+// shieldMax: total seconds of shield available — inverse of offensive power
 const TEAM_STATS = {
-  Finance:    { turn: 5.0, accel: 380, maxSpeed: 480, drag: 1.0, weapon: 'bullet',   cooldown: 0.18 },
-  Accounting: { turn: 2.4, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'torpedo',  cooldown: 1.5, maxActive: 3 },
-  Risk:       { turn: 3.8, accel: 340, maxSpeed: 360, drag: 0.5, weapon: 'mine',     cooldown: 0.2, maxActive: 20 },
-  Strategy:   { turn: 3.0, accel: 240, maxSpeed: 650, drag: 0.5, weapon: 'cone',     cooldown: 0.9 },
-  CFO:        { turn: 3.4, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'pulse',    cooldown: CFO_PULSE_COOLDOWN },
+  Finance:    { turn: 5.0, accel: 380, maxSpeed: 480, drag: 1.0, weapon: 'bullet',   cooldown: 0.18, shieldMax: 3.3 },
+  Accounting: { turn: 2.4, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'torpedo',  cooldown: 1.5, maxActive: 3, shieldMax: 3.0 },
+  Risk:       { turn: 3.8, accel: 340, maxSpeed: 360, drag: 0.5, weapon: 'mine',     cooldown: 0.2, maxActive: 20, shieldMax: 2.8 },
+  Strategy:   { turn: 3.0, accel: 240, maxSpeed: 650, drag: 0.5, weapon: 'cone',     cooldown: 0.9, shieldMax: 2.3 },
+  CFO:        { turn: 3.4, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'pulse',    cooldown: CFO_PULSE_COOLDOWN, shieldMax: 1.5 },
   // --- Risk subfactions ---
-  Compliance: { turn: 3.0, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'net',      cooldown: 1.4, maxActive: 4 },
-  Fraud:      { turn: 3.6, accel: 310, maxSpeed: 330, drag: 0.5, weapon: 'spiral',   cooldown: 0.35 },
+  Compliance: { turn: 3.0, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'net',      cooldown: 1.4, maxActive: 4, shieldMax: 3.0 },
+  Fraud:      { turn: 3.6, accel: 310, maxSpeed: 330, drag: 0.5, weapon: 'spiral',   cooldown: 0.35, shieldMax: 2.5 },
   // --- Finance subfactions ---
-  Budget:     { turn: 4.2, accel: 360, maxSpeed: 460, drag: 1.0, weapon: 'trail',    cooldown: 0.05 },
-  Payroll:    { turn: 4.8, accel: 360, maxSpeed: 460, drag: 1.0, weapon: 'miniX',    cooldown: 0.25 },
+  Budget:     { turn: 4.2, accel: 360, maxSpeed: 460, drag: 1.0, weapon: 'trail',    cooldown: 0.05, shieldMax: 3.2 },
+  Payroll:    { turn: 4.8, accel: 360, maxSpeed: 460, drag: 1.0, weapon: 'miniX',    cooldown: 0.25, shieldMax: 3.5 },
   // --- Accounting subfactions ---
-  AP:         { turn: 4.5, accel: 200, maxSpeed: 220, drag: 0.5, weapon: 'autolaser', cooldown: 0.12 },
-  Recon:      { turn: 2.6, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'tractor',  cooldown: 0.0 },
+  AP:         { turn: 4.5, accel: 200, maxSpeed: 220, drag: 0.5, weapon: 'autolaser', cooldown: 0.12, shieldMax: 3.5 },
+  Recon:      { turn: 2.6, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'tractor',  cooldown: 0.0, shieldMax: 2.0 },
   // --- Strategy subfactions ---
-  PMO:        { turn: 3.4, accel: 260, maxSpeed: 320, drag: 0.5, weapon: 'ribbon',   cooldown: 0.18 },
-  MG:         { turn: 3.4, accel: 320, maxSpeed: 380, drag: 0.5, weapon: 'trapezoid', cooldown: 0.35 },
+  PMO:        { turn: 3.4, accel: 260, maxSpeed: 320, drag: 0.5, weapon: 'ribbon',   cooldown: 0.18, shieldMax: 2.2 },
+  MG:         { turn: 3.4, accel: 320, maxSpeed: 380, drag: 0.5, weapon: 'trapezoid', cooldown: 0.35, shieldMax: 1.8 },
   // --- AI bot factions (TIE-fighter style with acronym ship designs) ---
-  CRO:  { turn: 3.0, accel: 250, maxSpeed: 280, drag: 0.5, weapon: 'bullet', cooldown: 0.5 },
-  CCLO: { turn: 3.5, accel: 270, maxSpeed: 300, drag: 0.5, weapon: 'bullet', cooldown: 0.45 },
-  CDEO: { turn: 4.0, accel: 290, maxSpeed: 320, drag: 0.5, weapon: 'bullet', cooldown: 0.4 },
-  CPO:  { turn: 4.5, accel: 310, maxSpeed: 340, drag: 0.5, weapon: 'bullet', cooldown: 0.35 },
-  CTO:  { turn: 5.0, accel: 330, maxSpeed: 360, drag: 0.5, weapon: 'bullet', cooldown: 0.3 },
-  CI:   { turn: 5.5, accel: 350, maxSpeed: 380, drag: 0.5, weapon: 'bullet', cooldown: 0.25 },
-  CEO:  { turn: 6.0, accel: 380, maxSpeed: 420, drag: 0.5, weapon: 'bullet', cooldown: 0.2 }
+  CRO:  { turn: 3.0, accel: 250, maxSpeed: 280, drag: 0.5, weapon: 'bullet', cooldown: 0.5, shieldMax: 0 },
+  CCLO: { turn: 3.5, accel: 270, maxSpeed: 300, drag: 0.5, weapon: 'bullet', cooldown: 0.45, shieldMax: 0 },
+  CDEO: { turn: 4.0, accel: 290, maxSpeed: 320, drag: 0.5, weapon: 'bullet', cooldown: 0.4, shieldMax: 0 },
+  CPO:  { turn: 4.5, accel: 310, maxSpeed: 340, drag: 0.5, weapon: 'bullet', cooldown: 0.35, shieldMax: 0 },
+  CTO:  { turn: 5.0, accel: 330, maxSpeed: 360, drag: 0.5, weapon: 'bullet', cooldown: 0.3, shieldMax: 0 },
+  CI:   { turn: 5.5, accel: 350, maxSpeed: 380, drag: 0.5, weapon: 'bullet', cooldown: 0.25, shieldMax: 0 },
+  CEO:  { turn: 6.0, accel: 380, maxSpeed: 420, drag: 0.5, weapon: 'bullet', cooldown: 0.2, shieldMax: 0 }
 };
+
+// Shield regeneration rate (per second of NOT holding shield)
+const SHIELD_REGEN_PER_SEC = 0.35;
 
 // Maps subfaction -> parent team (for color + score attribution)
 const PARENT_TEAM = {
@@ -1234,6 +1277,7 @@ const countdownNum = document.getElementById('countdownNum');
 const myKillsEl = document.getElementById('myKills');
 const myDeathsEl = document.getElementById('myDeaths');
 const onlineCountEl = document.getElementById('onlineCount');
+const shieldBarFill = document.getElementById('shieldBarFill');
 const rosterListEl = document.getElementById('rosterList');
 const resetConfirmEl = document.getElementById('resetConfirm');
 const resetYesBtn = document.getElementById('resetYes');
@@ -2163,6 +2207,8 @@ async function startGame() {
     vx: 0, vy: 0,
     name: myName, team: myTeam,
     alive: true, kills: 0, deaths: 0,
+    shield: (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].shieldMax) || 0,
+    shielding: false,
     last: Date.now()
   };
 
@@ -2877,6 +2923,20 @@ function tick(dt) {
       // 'ram' has no button action; collision handled in tick loop
     }
 
+    // ---- Shield (hold E) ----
+    const shieldMax = (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].shieldMax) || 0;
+    const wantsShield = !!keys['e'];
+    if (shieldMax > 0 && wantsShield && myState.shield > 0) {
+      myState.shielding = true;
+      myState.shield = Math.max(0, myState.shield - dt);
+    } else {
+      myState.shielding = false;
+      // Regenerate when not shielding
+      if (myState.shield < shieldMax) {
+        myState.shield = Math.min(shieldMax, myState.shield + SHIELD_REGEN_PER_SEC * dt);
+      }
+    }
+
     // Auto-emitting weapons (independent of space key)
     if (myTeam === 'Budget') {
       const speed = Math.hypot(myState.vx, myState.vy);
@@ -2891,6 +2951,7 @@ function tick(dt) {
       lastNetSend = t;
       const extra = {};
       if (myTeam === 'Recon') extra.tractoring = !!keys[' '];
+      extra.shielding = !!myState.shielding;
       update_db(`players/${myId}`, {
         x: myState.x, y: myState.y, angle: myState.angle,
         vx: myState.vx, vy: myState.vy, alive: true,
@@ -3510,6 +3571,24 @@ function fireTrapezoid() {
 
 function handleDeath(bullet) {
   if (dead) return;
+  // Shield absorbs the hit
+  if (myState && myState.shielding && myState.shield > 0) {
+    sfx('hit');
+    // Spark particles around the ship to show the shield blocking
+    for (let i = 0; i < 12; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 60 + Math.random() * 80;
+      particles.push({
+        x: myState.x + Math.cos(a) * 22,
+        y: myState.y + Math.sin(a) * 22,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        life: 0.4, max: 0.4,
+        color: '#9fdfff',
+        size: 2
+      });
+    }
+    return;
+  }
   dead = true;
   respawnAt = performance.now() / 1000 + RESPAWN_TIME;
   respawnEl.classList.add('show');
@@ -3558,9 +3637,11 @@ function doRespawn() {
   myState.x = spawn.x; myState.y = spawn.y;
   myState.vx = 0; myState.vy = 0;
   myState.angle = Math.random() * Math.PI * 2;
+  myState.shield = (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].shieldMax) || 0;
+  myState.shielding = false;
   update_db(`players/${myId}`, {
     x: myState.x, y: myState.y, vx: 0, vy: 0,
-    angle: myState.angle, alive: true
+    angle: myState.angle, alive: true, shielding: false
   });
 }
 
@@ -3609,8 +3690,13 @@ async function performSwap() {
     onDisconnect(claimRef).remove();
   }
   myTeam = newTeam;
+  // Reset shield to new team's max
+  if (myState) {
+    myState.shield = (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].shieldMax) || 0;
+    myState.shielding = false;
+  }
   // Update player record
-  await update_db(`players/${myId}`, { team: myTeam, alive: true });
+  await update_db(`players/${myId}`, { team: myTeam, alive: true, shielding: false });
   return true;
 }
 
@@ -3663,6 +3749,27 @@ function render() {
     if (!p.alive && id !== myId) continue;
     if (id === myId && dead) continue;
     drawShip(p, id === myId);
+    // Shield bubble for any shielded ship (mine uses local state for zero lag)
+    const isMe = id === myId;
+    const shielded = isMe ? !!(myState && myState.shielding) : !!p.shielding;
+    if (shielded) {
+      const t = performance.now() / 1000;
+      const shieldR = 26 + Math.sin(t * 6) * 1.5;
+      // Inner ring
+      ctx.strokeStyle = `rgba(159, 223, 255, 0.85)`;
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = '#9fdfff';
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, shieldR, 0, Math.PI * 2);
+      ctx.stroke();
+      // Soft fill
+      ctx.fillStyle = `rgba(159, 223, 255, ${0.08 + 0.04 * Math.sin(t * 4)})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, shieldR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
   }
 
   // Bullets
@@ -4000,6 +4107,19 @@ function render() {
   if (myState) {
     const me = players.get(myId);
     if (me) myKillsEl.textContent = me.kills || 0;
+    // Shield meter
+    const shieldMax = (TEAM_STATS[myTeam] && TEAM_STATS[myTeam].shieldMax) || 0;
+    if (shieldBarFill) {
+      if (shieldMax > 0) {
+        const pct = (myState.shield / shieldMax) * 100;
+        shieldBarFill.style.width = pct + '%';
+        shieldBarFill.classList.toggle('draining', !!myState.shielding);
+        shieldBarFill.classList.toggle('empty', myState.shield <= 0.05);
+      } else {
+        shieldBarFill.style.width = '0%';
+        shieldBarFill.classList.add('empty');
+      }
+    }
   }
 }
 
