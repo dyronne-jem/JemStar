@@ -966,7 +966,7 @@ const TEAM_STATS = {
   Recon:      { turn: 2.6, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'tractor',  cooldown: 0.0 },
   // --- Strategy subfactions ---
   PMO:        { turn: 3.4, accel: 260, maxSpeed: 320, drag: 0.5, weapon: 'ribbon',   cooldown: 0.18 },
-  MG:         { turn: 3.4, accel: 320, maxSpeed: 380, drag: 0.5, weapon: 'ram',      cooldown: 999 },
+  MG:         { turn: 3.4, accel: 320, maxSpeed: 380, drag: 0.5, weapon: 'trapezoid', cooldown: 0.35 },
   // --- AI bot factions (TIE-fighter style with acronym ship designs) ---
   CRO:  { turn: 3.0, accel: 250, maxSpeed: 280, drag: 0.5, weapon: 'bullet', cooldown: 0.5 },
   CCLO: { turn: 3.5, accel: 270, maxSpeed: 300, drag: 0.5, weapon: 'bullet', cooldown: 0.45 },
@@ -1050,6 +1050,13 @@ const RECON_KILL_R = 24;                 // touching Recon = death
 const RIBBON_LIFE = 0.4;
 const RIBBON_LENGTH = 630;
 const RIBBON_HIT_R = 10;
+
+// MG trapezoid blocks — push forward, expand width over time
+const TRAP_LIFE = 1.4;
+const TRAP_SPEED = 380;
+const TRAP_START_HALF_W = 14;
+const TRAP_END_HALF_W = 80;
+const TRAP_HEIGHT = 22;
 
 const TEAM_COLORS = {
   Finance:    "#00e5a8",
@@ -1239,10 +1246,13 @@ window.addEventListener('keydown', e => {
     resetConfirmEl.classList.add('show');
   }
   // AI bot spawn — Shift+1 through Shift+7
-  if (e.shiftKey && /^[1-7]$/.test(e.key)) {
+  // Note: with Shift held, e.key gives '!','@','#' etc. — use e.code which is layout-independent
+  if (e.shiftKey && (/^Digit[1-7]$/.test(e.code) || /^Numpad[1-7]$/.test(e.code))) {
     if (!myId) return;
     e.preventDefault();
-    spawnAIBot(parseInt(e.key, 10));
+    const level = parseInt(e.code.replace('Digit', '').replace('Numpad', ''), 10);
+    console.log('[FARS] Spawning bot level', level);
+    spawnAIBot(level);
   }
 });
 resetNoBtn.addEventListener('click', () => {
@@ -1999,10 +2009,12 @@ const trails = new Map();    // Budget (local-only rendering, but hit detection 
 const minixs = new Map();    // Payroll
 const lasers = new Map();    // AP
 const ribbons = new Map();   // PMO
+const trapezoids = new Map(); // MG
 const stars = [];
 const particles = [];        // local-only explosion FX
 let lastShot = 0;
 let lastPulse = 0;
+let lastSnapTurn = 0;
 let activePulse = null; // {x, y, startTime, owner} - my own active pulse for visual + hit detection
 let dead = false;
 let respawnAt = 0;
@@ -2249,6 +2261,19 @@ async function startGame() {
     if (rb.owner === myId) {
       setTimeout(() => remove(ref(db, `ribbons/${id}`)).catch(()=>{}), RIBBON_LIFE * 1000);
     }
+  });
+
+  // Listen to MG trapezoids
+  onChildAdded(ref(db, 'trapezoids'), snap => {
+    const tp = snap.val();
+    const id = snap.key;
+    if (!tp) return;
+    trapezoids.set(id, { ...tp, birth: performance.now() / 1000 });
+    setTimeout(() => trapezoids.delete(id), TRAP_LIFE * 1000 + 200);
+    if (tp.owner === myId) {
+      setTimeout(() => remove(ref(db, `trapezoids/${id}`)).catch(()=>{}), TRAP_LIFE * 1000);
+    }
+    sfxNearby('cone', tp.x, tp.y);
   });
 
   // Listen to scores
@@ -2772,9 +2797,9 @@ function tick(dt) {
       } else if (weapon === 'spiral') {
         if (t - lastShot > cd) { lastShot = t; fireSpirals(); }
       } else if (weapon === 'trail') {
-        // Space bar snaps ship 90° right instantly
-        if (t - lastShot > 0.25) {  // debounce so holding space doesn't spin them
-          lastShot = t;
+        // Space bar snaps ship 90° right instantly — independent of trail timer
+        if (t - lastSnapTurn > 0.12) {  // small debounce so holding doesn't spin wildly
+          lastSnapTurn = t;
           myState.angle += Math.PI / 2;
         }
       } else if (weapon === 'miniX') {
@@ -2785,6 +2810,8 @@ function tick(dt) {
         // Tractor is continuous — handled in tick loop separately
       } else if (weapon === 'ribbon') {
         if (t - lastShot > cd) { lastShot = t; fireRibbons(); }
+      } else if (weapon === 'trapezoid') {
+        if (t - lastShot > cd) { lastShot = t; fireTrapezoid(); }
       }
       // 'ram' has no button action; collision handled in tick loop
     }
@@ -3081,6 +3108,40 @@ function tick(dt) {
     }
   }
 
+  // ----- Trapezoids (MG) -----
+  for (const [id, tp] of trapezoids) {
+    const age = t - tp.birth;
+    if (age > TRAP_LIFE) { trapezoids.delete(id); continue; }
+    // Push forward
+    tp.x += tp.vx * dt;
+    tp.y += tp.vy * dt;
+    // Wrap
+    if (tp.x < 0) tp.x += WORLD_W;
+    if (tp.x > WORLD_W) tp.x -= WORLD_W;
+    if (tp.y < 0) tp.y += WORLD_H;
+    if (tp.y > WORLD_H) tp.y -= WORLD_H;
+    // Hit detection — trapezoid expands width as it ages.
+    // Convert player position into trapezoid-local space (along angle = forward axis)
+    if (!dead && myState && tp.owner !== myId && !sameSide(tp.team, myTeam) && !tp._hitMe) {
+      const dx = myState.x - tp.x;
+      const dy = myState.y - tp.y;
+      // Local coords: forward (along angle) and perpendicular (sideways)
+      const cos = Math.cos(tp.angle), sin = Math.sin(tp.angle);
+      const localF = dx * cos + dy * sin;       // forward distance from center
+      const localP = -dx * sin + dy * cos;      // perpendicular distance
+      const halfH = TRAP_HEIGHT / 2;
+      // Width grows with age
+      const progress = age / TRAP_LIFE;
+      const halfW = TRAP_START_HALF_W + (TRAP_END_HALF_W - TRAP_START_HALF_W) * progress;
+      // Trapezoid: long axis = perpendicular (halfW), short axis = forward (halfH)
+      // i.e. a wide flat slab oriented perpendicular to flight direction
+      if (Math.abs(localF) <= halfH + SHIP_R && Math.abs(localP) <= halfW + SHIP_R) {
+        tp._hitMe = true;
+        handleDeath(tp);
+      }
+    }
+  }
+
   // ----- Recon tractor beam + kill-on-touch (Accounting subfaction) -----
   // Tractor only active when the Recon pilot is holding space.
   // Kill-on-touch is ALWAYS active (touching a Recon ship is fatal regardless of beam state).
@@ -3368,6 +3429,22 @@ function fireRibbons() {
     set(r, rb);
     ribbons.set(id, { ...rb, birth: performance.now()/1000 });
   }
+}
+
+function fireTrapezoid() {
+  // MG launches a trapezoid block forward that expands as it travels
+  const r = push(ref(db, 'trapezoids'));
+  const id = r.key;
+  const tp = {
+    x: myState.x + Math.cos(myState.angle) * 16,
+    y: myState.y + Math.sin(myState.angle) * 16,
+    vx: Math.cos(myState.angle) * TRAP_SPEED,
+    vy: Math.sin(myState.angle) * TRAP_SPEED,
+    angle: myState.angle,
+    team: myTeam, owner: myId, ts: Date.now()
+  };
+  set(r, tp);
+  trapezoids.set(id, { ...tp, birth: performance.now()/1000 });
 }
 
 function handleDeath(bullet) {
@@ -3755,6 +3832,59 @@ function render() {
     ctx.fill();
     ctx.restore();
     ctx.shadowBlur = 0;
+  }
+
+  // Trapezoids (MG) — widening forward blocks
+  for (const [id, tp] of trapezoids) {
+    const age = tNow2 - tp.birth;
+    const progress = Math.min(1, age / TRAP_LIFE);
+    const alpha = Math.max(0, 1 - progress * 0.7);
+    const halfW = TRAP_START_HALF_W + (TRAP_END_HALF_W - TRAP_START_HALF_W) * progress;
+    const halfH = TRAP_HEIGHT / 2;
+    ctx.save();
+    ctx.translate(tp.x, tp.y);
+    ctx.rotate(tp.angle);
+    // Trapezoid shape — back narrower, front wider (with the *current* halfW being the front)
+    const backHalf = TRAP_START_HALF_W + (halfW - TRAP_START_HALF_W) * 0.6;
+    ctx.shadowColor = TEAM_COLORS.Strategy;
+    ctx.shadowBlur = 18;
+    // Filled trapezoid body
+    ctx.fillStyle = `rgba(109, 211, 255, ${alpha * 0.55})`;
+    ctx.beginPath();
+    ctx.moveTo(-halfH, -backHalf);
+    ctx.lineTo(halfH, -halfW);
+    ctx.lineTo(halfH, halfW);
+    ctx.lineTo(-halfH, backHalf);
+    ctx.closePath();
+    ctx.fill();
+    // Outer edge bright
+    ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(halfH, -halfW);
+    ctx.lineTo(halfH, halfW);
+    ctx.stroke();
+    // Side edges
+    ctx.strokeStyle = `rgba(109, 211, 255, ${alpha * 0.9})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-halfH, -backHalf);
+    ctx.lineTo(halfH, -halfW);
+    ctx.moveTo(-halfH, backHalf);
+    ctx.lineTo(halfH, halfW);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    // Energy crackle in the front edge
+    if (Math.random() < 0.5) {
+      ctx.strokeStyle = `rgba(255, 255, 255, ${alpha * 0.7})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const ny = (Math.random() - 0.5) * halfW * 1.5;
+      ctx.moveTo(halfH, ny);
+      ctx.lineTo(halfH + 3 + Math.random() * 4, ny + (Math.random() - 0.5) * 8);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   // Recon tractor beam — only draw when tractoring is active
