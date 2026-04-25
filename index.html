@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Department Wars: 4-Team Space Battle</title>
+<title>FARS WARS: 4-Team Space Battle</title>
 <style>
   :root {
     --finance: #00e5a8;
     --accounting: #ffb627;
     --risk: #ff4d6d;
     --strategy: #6dd3ff;
+    --cfo: #c879ff;
     --bg-0: #05060f;
     --bg-1: #0a0d1f;
     --ink: #e8ecff;
@@ -125,6 +126,53 @@
     background: rgba(255,255,255,0.04);
     box-shadow: inset 0 0 0 1px var(--team-color);
   }
+  .cfo-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 16px;
+    background: linear-gradient(90deg, rgba(200,121,255,0.08), rgba(200,121,255,0.18), rgba(200,121,255,0.08));
+    border: 1px solid rgba(200,121,255,0.4);
+    color: var(--ink);
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .cfo-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(200,121,255,0.2), transparent 60%);
+    animation: cfoPulse 2.4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes cfoPulse { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+  .cfo-label { font-weight: 900; color: var(--cfo); text-shadow: 0 0 12px rgba(200,121,255,0.6); }
+  .cfo-status {
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--ink-faint);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .cfo-btn:hover:not(:disabled) { border-color: var(--cfo); }
+  .cfo-btn.selected {
+    border-color: var(--cfo);
+    box-shadow: inset 0 0 0 1px var(--cfo), 0 0 20px rgba(200,121,255,0.3);
+  }
+  .cfo-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: rgba(255,255,255,0.1);
+  }
+  .cfo-btn:disabled .cfo-label { color: var(--ink-faint); text-shadow: none; }
+  .cfo-btn:disabled::before { animation: none; opacity: 0; }
   #joinBtn {
     width: 100%;
     margin-top: 24px;
@@ -323,7 +371,7 @@
 <!-- Login Screen -->
 <div id="login">
   <div class="login-card">
-    <div class="title">Department Wars</div>
+    <div class="title">FARS WARS</div>
     <div class="subtitle">// 4-Team Orbital Combat</div>
 
     <label class="field-label">Call Sign</label>
@@ -336,6 +384,11 @@
       <button class="team-btn" data-team="Risk" style="--team-color: var(--risk)">Risk</button>
       <button class="team-btn" data-team="Strategy" style="--team-color: var(--strategy)">Strategy</button>
     </div>
+
+    <button id="cfoBtn" class="cfo-btn" data-team="CFO">
+      <span class="cfo-label">★ CFO ★</span>
+      <span class="cfo-status" id="cfoStatus">Available</span>
+    </button>
 
     <button id="joinBtn" disabled>Launch</button>
 
@@ -367,6 +420,10 @@
     <div class="team-row" data-team="Strategy">
       <div class="name"><span class="dot" style="color: var(--strategy); background: var(--strategy)"></span>Strategy</div>
       <div class="score" style="color: var(--strategy)">0</div>
+    </div>
+    <div class="team-row" data-team="CFO">
+      <div class="name"><span class="dot" style="color: var(--cfo); background: var(--cfo)"></span>CFO</div>
+      <div class="score" style="color: var(--cfo)">0</div>
     </div>
   </div>
 
@@ -425,11 +482,15 @@ const BULLET_LIFE = 1.4;
 const FIRE_COOLDOWN = 0.22;
 const RESPAWN_TIME = 3;
 const NETWORK_TICK = 1 / 15; // 15 Hz position broadcast
+const CFO_PULSE_RADIUS = SHIP_R * 15;   // 210 px
+const CFO_PULSE_COOLDOWN = 1.6;          // pulse fires every 1.6s
+const CFO_PULSE_DURATION = 0.6;          // visual + damage window
 const TEAM_COLORS = {
   Finance:    "#00e5a8",
   Accounting: "#ffb627",
   Risk:       "#ff4d6d",
-  Strategy:   "#6dd3ff"
+  Strategy:   "#6dd3ff",
+  CFO:        "#c879ff"
 };
 const TEAMS = Object.keys(TEAM_COLORS);
 
@@ -438,6 +499,8 @@ const loginEl = document.getElementById('login');
 const nameInput = document.getElementById('nameInput');
 const joinBtn = document.getElementById('joinBtn');
 const teamBtns = document.querySelectorAll('.team-btn');
+const cfoBtn = document.getElementById('cfoBtn');
+const cfoStatusEl = document.getElementById('cfoStatus');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const chatLog = document.getElementById('chatLog');
@@ -458,10 +521,46 @@ let myTeam = null;
 teamBtns.forEach(btn => {
   btn.addEventListener('click', () => {
     teamBtns.forEach(b => b.classList.remove('selected'));
+    cfoBtn.classList.remove('selected');
     btn.classList.add('selected');
     selectedTeam = btn.dataset.team;
     validateLogin();
   });
+});
+cfoBtn.addEventListener('click', () => {
+  if (cfoBtn.disabled) return;
+  teamBtns.forEach(b => b.classList.remove('selected'));
+  cfoBtn.classList.add('selected');
+  selectedTeam = 'CFO';
+  validateLogin();
+});
+
+// Live-watch CFO availability before login. (After login the in-game listener takes over UI updates.)
+onValue(ref(db, 'players'), snap => {
+  const data = snap.val() || {};
+  let cfoTaken = false;
+  let cfoName = null;
+  for (const id in data) {
+    if (data[id] && data[id].team === 'CFO') {
+      cfoTaken = true;
+      cfoName = data[id].name;
+      break;
+    }
+  }
+  if (!myId) {
+    if (cfoTaken) {
+      cfoBtn.disabled = true;
+      cfoStatusEl.textContent = `Held by ${cfoName}`;
+      if (selectedTeam === 'CFO') {
+        cfoBtn.classList.remove('selected');
+        selectedTeam = null;
+        validateLogin();
+      }
+    } else {
+      cfoBtn.disabled = false;
+      cfoStatusEl.textContent = 'Available';
+    }
+  }
 });
 nameInput.addEventListener('input', validateLogin);
 function validateLogin() {
@@ -473,9 +572,12 @@ nameInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !joinBtn.d
 // ---------- Game State ----------
 const players = new Map();   // id -> {x,y,angle,vx,vy,name,team,alive,kills,deaths}
 const bullets = new Map();   // id -> {x,y,vx,vy,team,owner,birth}
+const pulses = new Map();    // id -> {x,y,owner,birth,team} - CFO pulse weapons
 const stars = [];
 const particles = [];        // local-only explosion FX
 let lastShot = 0;
+let lastPulse = 0;
+let activePulse = null; // {x, y, startTime, owner} - my own active pulse for visual + hit detection
 let dead = false;
 let respawnAt = 0;
 let lastNetSend = 0;
@@ -519,10 +621,34 @@ window.addEventListener('resize', resize);
 async function startGame() {
   myName = nameInput.value.trim().slice(0, 16);
   myTeam = selectedTeam;
-  loginEl.classList.add('hidden');
 
-  // Generate unique player id
-  myId = 'p_' + Math.random().toString(36).slice(2, 10);
+  // If user picked CFO, attempt atomic claim first
+  if (myTeam === 'CFO') {
+    const claimRef = ref(db, 'cfoSlot');
+    const tempId = 'p_' + Math.random().toString(36).slice(2, 10);
+    const result = await runTransaction(claimRef, current => {
+      if (current === null || !current.id) {
+        return { id: tempId, name: myName, ts: Date.now() };
+      }
+      return; // abort: already claimed
+    });
+    if (!result.committed || !result.snapshot.val() || result.snapshot.val().id !== tempId) {
+      // Lost the race
+      const holder = result.snapshot.val();
+      alert(`CFO already claimed by ${holder ? holder.name : 'another player'}. Pick a department.`);
+      cfoBtn.classList.remove('selected');
+      selectedTeam = null;
+      validateLogin();
+      return;
+    }
+    myId = tempId;
+    // Release CFO slot on disconnect
+    onDisconnect(claimRef).remove();
+  } else {
+    myId = 'p_' + Math.random().toString(36).slice(2, 10);
+  }
+
+  loginEl.classList.add('hidden');
 
   // Pick spawn position
   const spawn = randomSpawn();
@@ -565,6 +691,18 @@ async function startGame() {
     // Owner cleans up the DB record after life
     if (b.owner === myId) {
       setTimeout(() => remove(ref(db, `bullets/${id}`)).catch(()=>{}), BULLET_LIFE * 1000);
+    }
+  });
+
+  // Listen to CFO pulses
+  onChildAdded(ref(db, 'pulses'), snap => {
+    const p = snap.val();
+    const id = snap.key;
+    if (!p) return;
+    pulses.set(id, { ...p, birth: performance.now() / 1000 });
+    setTimeout(() => pulses.delete(id), CFO_PULSE_DURATION * 1000 + 200);
+    if (p.owner === myId) {
+      setTimeout(() => remove(ref(db, `pulses/${id}`)).catch(()=>{}), CFO_PULSE_DURATION * 1000);
     }
   });
 
@@ -713,9 +851,18 @@ function tick(dt) {
     if (myState.y > WORLD_H) myState.y -= WORLD_H;
 
     // Fire
-    if (keys[' '] && t - lastShot > FIRE_COOLDOWN) {
-      lastShot = t;
-      fireBullet();
+    if (keys[' ']) {
+      if (myTeam === 'CFO') {
+        if (t - lastPulse > CFO_PULSE_COOLDOWN) {
+          lastPulse = t;
+          fireCFOPulse();
+        }
+      } else {
+        if (t - lastShot > FIRE_COOLDOWN) {
+          lastShot = t;
+          fireBullet();
+        }
+      }
     }
 
     // Network broadcast
@@ -760,6 +907,25 @@ function tick(dt) {
     }
   }
 
+  // ----- Pulses (CFO weapon) -----
+  for (const [id, p] of pulses) {
+    const age = t - p.birth;
+    if (age > CFO_PULSE_DURATION) { pulses.delete(id); continue; }
+
+    // The pulse expands from 0 to CFO_PULSE_RADIUS over its duration.
+    // Anyone caught within the expanding ring (not yet hit by it) dies.
+    if (!dead && myState && p.owner !== myId) {
+      const dx = myState.x - p.x;
+      const dy = myState.y - p.y;
+      const dist = Math.hypot(dx, dy);
+      const currentRadius = (age / CFO_PULSE_DURATION) * CFO_PULSE_RADIUS;
+      if (dist <= currentRadius && !p._hitMe) {
+        p._hitMe = true;
+        handleDeath({ owner: p.owner, team: p.team });
+      }
+    }
+  }
+
   // Particles
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
@@ -797,6 +963,31 @@ function fireBullet() {
   set(r, b);
   // Track locally too (since we don't onChildAdded our own writes if local cache races)
   bullets.set(id, { ...b, birth: performance.now()/1000 });
+}
+
+function fireCFOPulse() {
+  const r = push(ref(db, 'pulses'));
+  const id = r.key;
+  const p = {
+    x: myState.x,
+    y: myState.y,
+    owner: myId,
+    team: 'CFO',
+    ts: Date.now()
+  };
+  set(r, p);
+  pulses.set(id, { ...p, birth: performance.now()/1000 });
+  // Local effect particles
+  for (let i = 0; i < 24; i++) {
+    const a = (i / 24) * Math.PI * 2;
+    particles.push({
+      x: myState.x, y: myState.y,
+      vx: Math.cos(a) * 180, vy: Math.sin(a) * 180,
+      life: 0.5, max: 0.5,
+      color: TEAM_COLORS.CFO,
+      size: 2
+    });
+  }
 }
 
 function handleDeath(bullet) {
@@ -904,6 +1095,29 @@ function render() {
     ctx.shadowBlur = 0;
   }
 
+  // CFO Pulses — expanding shockwave rings
+  const tNow = performance.now() / 1000;
+  for (const [id, p] of pulses) {
+    const age = tNow - p.birth;
+    const progress = Math.min(1, age / CFO_PULSE_DURATION);
+    const radius = progress * CFO_PULSE_RADIUS;
+    const alpha = 1 - progress;
+    ctx.strokeStyle = `rgba(200, 121, 255, ${alpha})`;
+    ctx.lineWidth = 4;
+    ctx.shadowColor = TEAM_COLORS.CFO;
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+    ctx.stroke();
+    // Inner softer ring
+    ctx.strokeStyle = `rgba(200, 121, 255, ${alpha * 0.4})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, radius * 0.7, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
   ctx.restore();
 
   // Update my K/D in HUD from DB-side data
@@ -922,30 +1136,64 @@ function drawShip(p, isMe) {
   const color = TEAM_COLORS[p.team] || '#fff';
   ctx.save();
   ctx.translate(p.x, p.y);
-  ctx.rotate(p.angle);
 
-  // Ship body — triangle with notch
-  ctx.shadowColor = color;
-  ctx.shadowBlur = isMe ? 16 : 10;
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.moveTo(16, 0);
-  ctx.lineTo(-12, 10);
-  ctx.lineTo(-7, 0);
-  ctx.lineTo(-12, -10);
-  ctx.closePath();
-  ctx.fill();
+  if (p.team === 'CFO') {
+    // Circle ship — special CFO look
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 22 : 16;
+    // Outer ring
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, 16, 0, Math.PI * 2);
+    ctx.stroke();
+    // Inner filled circle
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(0, 0, 9, 0, Math.PI * 2);
+    ctx.fill();
+    // Center dark eye
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 4, 0, Math.PI * 2);
+    ctx.fill();
+    // Slow rotating tick marks (showcases it's a special ship)
+    const rot = performance.now() / 1200;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 4; i++) {
+      const a = rot + (i / 4) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a) * 18, Math.sin(a) * 18);
+      ctx.lineTo(Math.cos(a) * 22, Math.sin(a) * 22);
+      ctx.stroke();
+    }
+  } else {
+    ctx.rotate(p.angle);
+    // Ship body — triangle with notch
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 16 : 10;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(16, 0);
+    ctx.lineTo(-12, 10);
+    ctx.lineTo(-7, 0);
+    ctx.lineTo(-12, -10);
+    ctx.closePath();
+    ctx.fill();
 
-  // Inner detail
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  ctx.beginPath();
-  ctx.moveTo(8, 0);
-  ctx.lineTo(-6, 5);
-  ctx.lineTo(-3, 0);
-  ctx.lineTo(-6, -5);
-  ctx.closePath();
-  ctx.fill();
+    // Inner detail
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.beginPath();
+    ctx.moveTo(8, 0);
+    ctx.lineTo(-6, 5);
+    ctx.lineTo(-3, 0);
+    ctx.lineTo(-6, -5);
+    ctx.closePath();
+    ctx.fill();
+  }
 
   // "ME" indicator: pulsing ring
   if (isMe) {
@@ -953,7 +1201,7 @@ function drawShip(p, isMe) {
     ctx.strokeStyle = `rgba(255,255,255,${0.3 + pulse * 0.3})`;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.arc(0, 0, 22, 0, Math.PI * 2);
+    ctx.arc(0, 0, 26, 0, Math.PI * 2);
     ctx.stroke();
   }
 
@@ -963,9 +1211,9 @@ function drawShip(p, isMe) {
   ctx.font = '600 11px JetBrains Mono, monospace';
   ctx.textAlign = 'center';
   ctx.fillStyle = 'rgba(0,0,0,0.6)';
-  ctx.fillText(p.name, p.x, p.y - 22 + 1);
+  ctx.fillText(p.name, p.x, p.y - 26 + 1);
   ctx.fillStyle = color;
-  ctx.fillText(p.name, p.x, p.y - 22);
+  ctx.fillText(p.name, p.x, p.y - 26);
 }
 
 // ---------- Cleanup on unload ----------
