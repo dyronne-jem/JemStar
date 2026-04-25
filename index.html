@@ -33,8 +33,6 @@
     background: #000;
     overflow: hidden;
     z-index: 200;
-    perspective: 260px;
-    perspective-origin: 50% 100%;
   }
   #intro.hidden { display: none; }
   #introStars {
@@ -105,23 +103,39 @@
     100% { opacity: 0; transform: translate(-50%, -50%) scale(0.05); }
   }
 
+  /* === Star Wars-style crawl ===
+     Three-layer structure:
+     #crawlContainer  — fixed viewport, applies perspective
+     #crawlPerspective — fixed tilted plane (rotateX), the "floor" of perspective
+     #crawlContent    — the actual text, scrolls upward (translateY animated)
+  */
   #crawlContainer {
     position: absolute;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    transform-style: preserve-3d;
+    perspective: 350px;
+    perspective-origin: 50% 100%;
     opacity: 0;
     animation: crawlShow 1s ease-in 14s forwards;
+    z-index: 2;
   }
   @keyframes crawlShow { to { opacity: 1; } }
+
+  #crawlPerspective {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%) rotateX(25deg);
+    transform-origin: 50% 100%;
+    width: min(720px, 85vw);
+    height: 100%;
+    overflow: hidden;
+  }
 
   #crawlContent {
     position: absolute;
     top: 100%;
-    left: 50%;
-    width: min(720px, 85vw);
-    transform: translateX(-50%) rotateX(30deg);
-    transform-origin: 50% 100%;
+    left: 0;
+    width: 100%;
     color: #ffe600;
     font-family: 'Orbitron', sans-serif;
     font-weight: 700;
@@ -129,6 +143,7 @@
     line-height: 1.6;
     text-align: justify;
     animation: crawl 110s linear 14s forwards;
+    text-shadow: 0 0 6px rgba(255,230,0,0.4);
   }
   #crawlContent p { margin-bottom: 1.5em; }
   .crawl-episode {
@@ -151,18 +166,23 @@
     letter-spacing: 0.1em;
   }
   @keyframes crawl {
-    0% { top: 100%; }
-    100% { top: -300%; }
+    0%   { transform: translateY(0); }
+    100% { transform: translateY(-1500%); }
   }
-  /* Fade top of crawl into black (the "vanishing point") */
+  /* Top fade — masks where crawl recedes into "space" */
   #intro::after {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
-    height: 55%;
-    background: linear-gradient(to bottom, #000 0%, #000 30%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.5) 80%, transparent 100%);
+    height: 50%;
+    background: linear-gradient(to bottom,
+      #000 0%,
+      #000 25%,
+      rgba(0,0,0,0.95) 50%,
+      rgba(0,0,0,0.6) 75%,
+      transparent 100%);
     pointer-events: none;
-    z-index: 3;
+    z-index: 4;
     opacity: 0;
     animation: crawlShow 1s ease-in 14s forwards;
   }
@@ -761,37 +781,39 @@
   <div id="introLogo">FARS WARS</div>
   <div id="introSubtitle">A long time ago in a finance department far, far away....</div>
   <div id="crawlContainer">
-    <div id="crawlContent">
-      <p class="crawl-episode">Episode XIII</p>
-      <p class="crawl-title">A NEW CLAUDE</p>
+    <div id="crawlPerspective">
+      <div id="crawlContent">
+        <p class="crawl-episode">Episode XIII</p>
+        <p class="crawl-title">A NEW CLAUDE</p>
 
-      <p>After the arrival of the Claude Father, the FARS Department was splintered into warring factions — each convinced their spreadsheet was the true source of truth.</p>
+        <p>After the arrival of the Claude Father, the FARS Department was splintered into warring factions — each convinced their spreadsheet was the true source of truth.</p>
 
-      <p>Former colleagues turned brutal enemies to secure the all-mighty resource known as Compute, now rationed in tokens and paid for in expense reports requiring three levels of approval.</p>
+        <p>Former colleagues turned brutal enemies to secure the all-mighty resource known as Compute, now rationed in tokens and paid for in expense reports requiring three levels of approval.</p>
 
-      <p>The proud warriors of FINANCE bolted afterburners onto their ships, sacrificing brakes for velocity, trusting that momentum — like a poorly-closed quarter — would carry them through.</p>
+        <p>The proud warriors of FINANCE bolted afterburners onto their ships, sacrificing brakes for velocity, trusting that momentum — like a poorly-closed quarter — would carry them through.</p>
 
-      <p>The ACCOUNTING clan, patient and methodical, built vessels in the image of the old Generally Accepted Starships. Their torpedoes reconcile to the penny before striking, though some have waited since Q3.</p>
+        <p>The ACCOUNTING clan, patient and methodical, built vessels in the image of the old Generally Accepted Starships. Their torpedoes reconcile to the penny before striking, though some have waited since Q3.</p>
 
-      <p>RISK MANAGEMENT, weary of being ignored in meetings, scattered minefields across every trade lane. Their heat map is now the galaxy itself, and everything is red.</p>
+        <p>RISK MANAGEMENT, weary of being ignored in meetings, scattered minefields across every trade lane. Their heat map is now the galaxy itself, and everything is red.</p>
 
-      <p>Meanwhile, the cold strategists of STRATEGY fire cones of synergy so devastating that the recoil launches them backward into the very pivot tables they were fleeing.</p>
+        <p>Meanwhile, the cold strategists of STRATEGY fire cones of synergy so devastating that the recoil launches them backward into the very pivot tables they were fleeing.</p>
 
-      <p>Whispers tell of deeper horrors. COMPLIANCE, auditing the very fabric of space-time, has flagged three galaxies as non-compliant and placed the Milky Way in remediation.</p>
+        <p>Whispers tell of deeper horrors. COMPLIANCE, auditing the very fabric of space-time, has flagged three galaxies as non-compliant and placed the Milky Way in remediation.</p>
 
-      <p>FRAUD, lurking in the shadows of the org chart, has allegedly expensed a second Death Star as "team-building." An internal investigation is pending the completion of another investigation.</p>
+        <p>FRAUD, lurking in the shadows of the org chart, has allegedly expensed a second Death Star as "team-building." An internal investigation is pending the completion of another investigation.</p>
 
-      <p>PROJECT MANAGEMENT, wielding their legendary Gantt charts, has declared the war on schedule, under budget, and 40% complete — numbers which are, as always, directionally accurate.</p>
+        <p>PROJECT MANAGEMENT, wielding their legendary Gantt charts, has declared the war on schedule, under budget, and 40% complete — numbers which are, as always, directionally accurate.</p>
 
-      <p>PAYROLL, silent and vengeful, has withheld direct deposit from every starfighter pilot. The rebellion cannot be funded. It cannot even be reimbursed.</p>
+        <p>PAYROLL, silent and vengeful, has withheld direct deposit from every starfighter pilot. The rebellion cannot be funded. It cannot even be reimbursed.</p>
 
-      <p>Legacy systems whisper of a forgotten hero — the mythical INTERN — who once printed the entire general ledger and is still looking for the output tray.</p>
+        <p>Legacy systems whisper of a forgotten hero — the mythical INTERN — who once printed the entire general ledger and is still looking for the output tray.</p>
 
-      <p>Kickoff meetings are scheduled. Stakeholders are aligned. Action items are unassigned. The war has been added to the parking lot and will be revisited next sprint.</p>
+        <p>Kickoff meetings are scheduled. Stakeholders are aligned. Action items are unassigned. The war has been added to the parking lot and will be revisited next sprint.</p>
 
-      <p>Which side shall secure enough Compute before the mysterious ship CFO arrives, demanding to know why EBITDA has been "adjusted" for the fourteenth consecutive quarter...</p>
+        <p>Which side shall secure enough Compute before the mysterious ship CFO arrives, demanding to know why EBITDA has been "adjusted" for the fourteenth consecutive quarter...</p>
 
-      <p class="crawl-final">May the Forecast be with you.</p>
+        <p class="crawl-final">May the Forecast be with you.</p>
+      </div>
     </div>
   </div>
   <button id="skipIntro">SKIP ▸</button>
@@ -866,6 +888,10 @@
     <div class="team-row" data-team="CFO">
       <div class="name"><span class="dot" style="color: var(--cfo); background: var(--cfo)"></span>CFO</div>
       <div class="score" style="color: var(--cfo)">0</div>
+    </div>
+    <div class="team-row" data-team="AI">
+      <div class="name"><span class="dot" style="color: #ff2020; background: #ff2020"></span>AI Bots</div>
+      <div class="score" style="color: #ff2020">0</div>
     </div>
   </div>
 
@@ -984,13 +1010,16 @@ const PARENT_TEAM = {
   Budget: 'Finance', Payroll: 'Finance',
   AP: 'Accounting', Recon: 'Accounting',
   PMO: 'Strategy', MG: 'Strategy',
-  // Bots: each is its own faction; their kills credit themselves
-  CRO: 'CRO', CCLO: 'CCLO', CDEO: 'CDEO', CPO: 'CPO', CTO: 'CTO', CI: 'CI', CEO: 'CEO'
+  // All AI bots share the AI faction — they team up against players
+  // and their kills/deaths credit a single shared "AI" score
+  CRO: 'AI', CCLO: 'AI', CDEO: 'AI', CPO: 'AI', CTO: 'AI', CI: 'AI', CEO: 'AI'
 };
 
 // Resolve the color for any team OR subfaction
+// Prefers the subfaction's own color if defined (so each bot keeps its individual tint),
+// otherwise uses the parent team color.
 function teamColor(team) {
-  return TEAM_COLORS[PARENT_TEAM[team] || team] || '#fff';
+  return TEAM_COLORS[team] || TEAM_COLORS[PARENT_TEAM[team] || team] || '#fff';
 }
 
 // Two ships on the same side? (parent team match)
@@ -1043,7 +1072,7 @@ const AUTOLASER_LIFE = 0.12;
 // Recon tractor
 const TRACTOR_RANGE = 450;
 const TRACTOR_HALF_ANGLE = Math.PI / 3;  // 60° half-angle, 120° cone
-const TRACTOR_FORCE = 280;               // px/s² pulled toward source
+const TRACTOR_FORCE = 1400;              // px/s² pulled toward source
 const RECON_KILL_R = 24;                 // touching Recon = death
 
 // PMO ribbons
@@ -1064,7 +1093,9 @@ const TEAM_COLORS = {
   Risk:       "#ff4d6d",
   Strategy:   "#6dd3ff",
   CFO:        "#c879ff",
-  // Bots — escalating menace from gray → orange → red
+  // Shared AI faction color
+  AI:         "#ff2020",
+  // Per-bot tints (used for ship rendering only)
   CRO:  "#a0a0a8",
   CCLO: "#b0a0a0",
   CDEO: "#c0a890",
@@ -1084,7 +1115,7 @@ function initAudio() {
   try {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.18; // master volume — subtle
+    masterGain.gain.value = 0.5; // master volume — louder so music is clearly audible
     masterGain.connect(audioCtx.destination);
   } catch(e) { audioCtx = null; }
 }
@@ -1245,14 +1276,29 @@ window.addEventListener('keydown', e => {
     e.preventDefault();
     resetConfirmEl.classList.add('show');
   }
-  // AI bot spawn — Shift+1 through Shift+7
+  // AI bot spawn/despawn — Shift+1 through Shift+7 toggles bots of that level
   // Note: with Shift held, e.key gives '!','@','#' etc. — use e.code which is layout-independent
   if (e.shiftKey && (/^Digit[1-7]$/.test(e.code) || /^Numpad[1-7]$/.test(e.code))) {
     if (!myId) return;
     e.preventDefault();
     const level = parseInt(e.code.replace('Digit', '').replace('Numpad', ''), 10);
-    console.log('[FARS] Spawning bot level', level);
-    spawnAIBot(level);
+    // If any bot of this level exists (alive or dead), despawn ALL at that level
+    const existing = aiBots.filter(b => b.level === level);
+    if (existing.length > 0) {
+      console.log('[FARS] Despawning level', level, 'bots:', existing.length);
+      for (const bot of existing) {
+        remove(ref(db, `players/${bot.id}`)).catch(()=>{});
+      }
+      const name = AI_BOT_NAMES[level];
+      // Remove from local list
+      for (let i = aiBots.length - 1; i >= 0; i--) {
+        if (aiBots[i].level === level) aiBots.splice(i, 1);
+      }
+      pushChat({ system: true, text: `${name} has been recalled` });
+    } else {
+      console.log('[FARS] Spawning bot level', level);
+      spawnAIBot(level);
+    }
   }
 });
 resetNoBtn.addEventListener('click', () => {
@@ -1262,7 +1308,7 @@ resetYesBtn.addEventListener('click', async () => {
   resetConfirmEl.classList.remove('show');
   // Reset team scores
   try {
-    await set(ref(db, 'scores'), { Finance: 0, Accounting: 0, Risk: 0, Strategy: 0, CFO: 0 });
+    await set(ref(db, 'scores'), { Finance: 0, Accounting: 0, Risk: 0, Strategy: 0, CFO: 0, AI: 0 });
   } catch(e) {}
   // Reset everyone's kills & deaths
   try {
@@ -1327,21 +1373,43 @@ let introMusicStarted = false;
 function startIntroMusicOnce() {
   if (introMusicStarted) return;
   introMusicStarted = true;
+  console.log('[FARS] Starting audio...');
   const sp = document.getElementById('soundPrompt');
   if (sp) sp.classList.add('fade');
   initAudio();
-  if (!audioCtx) return;
-  // Always try to resume - safer than checking state
+  if (!audioCtx) {
+    console.warn('[FARS] AudioContext failed to init');
+    return;
+  }
+  console.log('[FARS] AudioContext state:', audioCtx.state);
+
+  const startMusic = () => {
+    if (muted) { console.log('[FARS] muted, skipping music'); return; }
+    if (introStopped) { console.log('[FARS] intro already stopped, skipping music'); return; }
+    console.log('[FARS] Playing intro theme');
+    try {
+      // Quick confirmation beep so user knows audio is alive
+      const beep = audioCtx.createOscillator();
+      const beepGain = audioCtx.createGain();
+      beep.type = 'sine';
+      beep.frequency.value = 660;
+      beepGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      beepGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+      beep.connect(beepGain); beepGain.connect(masterGain);
+      beep.start(); beep.stop(audioCtx.currentTime + 0.18);
+
+      playIntroTheme();
+    } catch(e) {
+      console.warn('[FARS] music err', e);
+    }
+  };
+
   audioCtx.resume().then(() => {
-    if (!muted && !introStopped) {
-      try { playIntroTheme(); } catch(e) { console.warn('music err', e); }
-    }
+    console.log('[FARS] AudioContext resumed, state:', audioCtx.state);
+    startMusic();
   }).catch(err => {
-    console.warn('audio resume failed', err);
-    // Try to play anyway
-    if (!muted && !introStopped) {
-      try { playIntroTheme(); } catch(e) {}
-    }
+    console.warn('[FARS] resume failed', err);
+    startMusic();
   });
 }
 // Explicit button click is the most reliable trigger
@@ -2502,28 +2570,24 @@ function updateBots(t, dt) {
   for (let bi = aiBots.length - 1; bi >= 0; bi--) {
     const bot = aiBots[bi];
     if (!bot.alive) {
-      // Respawn after delay
-      if (t - bot.deadAt > RESPAWN_TIME) {
-        const spawn = randomSpawn();
-        bot.x = spawn.x; bot.y = spawn.y;
-        bot.vx = 0; bot.vy = 0;
-        bot.angle = Math.random() * Math.PI * 2;
-        bot.alive = true;
-      } else {
-        continue;
+      // Bots stay dead permanently. Remove from active list after a brief delay
+      // (delay lets the kill scoring/feed propagate cleanly).
+      if (t - (bot.deadAt || 0) > 1.5) {
+        aiBots.splice(bi, 1);
       }
+      continue;
     }
     const s = botStats(bot.level);
 
     // Decision: pick a target
     if (t - bot.lastDecision > s.reactionTime) {
       bot.lastDecision = t;
-      // Find nearest enemy player (exclude self, dead, or other bots-from-same-side)
+      // Find nearest enemy. Bots team up — skip other bots (anyone whose parent team is 'AI').
       let bestId = null, bestDist = Infinity;
       for (const [pid, pl] of players) {
         if (pid === bot.id) continue;
         if (!pl.alive) continue;
-        // Bots target everyone (no "team" loyalty - they're villains)
+        if (PARENT_TEAM[pl.team] === 'AI') continue;  // ignore allied bots
         const d = Math.hypot(pl.x - bot.x, pl.y - bot.y);
         if (d < bestDist) { bestDist = d; bestId = pid; }
       }
@@ -2626,7 +2690,7 @@ function updateBots(t, dt) {
           });
         }
         // Push bot death to firebase
-        update_db(`players/${bot.id}`, { alive: false, deaths: bot.deaths });
+        remove(ref(db, `players/${bot.id}`)).catch(()=>{});
         break;
       }
     }
@@ -2652,7 +2716,7 @@ function updateBots(t, dt) {
               ts: Date.now()
             });
           }
-          update_db(`players/${bot.id}`, { alive: false, deaths: bot.deaths });
+          remove(ref(db, `players/${bot.id}`)).catch(()=>{});
           break;
         }
       }
