@@ -27,6 +27,163 @@
     user-select: none;
   }
 
+  /* ===== Intro Crawl ===== */
+  #intro {
+    position: fixed; inset: 0;
+    background: #000;
+    overflow: hidden;
+    z-index: 200;
+    perspective: 400px;
+    perspective-origin: 50% 100%;
+  }
+  #intro.hidden { display: none; }
+  #introStars {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 60% 70%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 80% 20%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 40% 90%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 90% 50%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 10% 65%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 70% 45%, #fff, transparent 50%),
+      radial-gradient(2px 2px at 25% 80%, rgba(255,255,255,0.7), transparent 50%),
+      radial-gradient(1px 1px at 50% 15%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 85% 85%, #fff, transparent 50%),
+      radial-gradient(2px 2px at 15% 40%, rgba(255,255,255,0.5), transparent 50%),
+      radial-gradient(1px 1px at 35% 55%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 95% 35%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 5% 15%, #fff, transparent 50%),
+      radial-gradient(1px 1px at 65% 95%, #fff, transparent 50%),
+      #000;
+    animation: starTwinkle 4s ease-in-out infinite;
+  }
+  @keyframes starTwinkle { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+
+  #introSubtitle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #4a9ff5;
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(18px, 3vw, 32px);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    opacity: 0;
+    text-align: center;
+    animation: subtitleFade 7s ease-in-out forwards;
+    z-index: 2;
+  }
+  @keyframes subtitleFade {
+    0% { opacity: 0; }
+    15% { opacity: 1; }
+    75% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  #introLogo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(4);
+    color: #ffe600;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: clamp(60px, 12vw, 160px);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    opacity: 0;
+    text-shadow: 0 0 40px rgba(255, 230, 0, 0.6);
+    animation: logoShow 7s ease-in-out 7s forwards;
+    z-index: 2;
+  }
+  @keyframes logoShow {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(4); }
+    15% { opacity: 1; transform: translate(-50%, -50%) scale(4); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(0.05); }
+  }
+
+  #crawlContainer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    transform-style: preserve-3d;
+    opacity: 0;
+    animation: crawlShow 1s ease-in 14s forwards;
+  }
+  @keyframes crawlShow { to { opacity: 1; } }
+
+  #crawlContent {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: min(720px, 85vw);
+    transform: translateX(-50%) rotateX(25deg);
+    transform-origin: 50% 100%;
+    color: #ffe600;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: clamp(18px, 2.2vw, 28px);
+    line-height: 1.6;
+    text-align: justify;
+    animation: crawl 110s linear 14s forwards;
+  }
+  #crawlContent p { margin-bottom: 1.5em; }
+  .crawl-episode {
+    font-size: clamp(22px, 2.8vw, 36px) !important;
+    text-align: center !important;
+    font-weight: 400 !important;
+    letter-spacing: 0.1em;
+  }
+  .crawl-title {
+    font-size: clamp(32px, 4.5vw, 60px) !important;
+    text-align: center !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.05em;
+    margin-bottom: 2em !important;
+  }
+  .crawl-final {
+    text-align: center !important;
+    font-size: clamp(22px, 2.8vw, 36px) !important;
+    margin-top: 2em !important;
+    letter-spacing: 0.1em;
+  }
+  @keyframes crawl {
+    0% { top: 100%; }
+    100% { top: -300%; }
+  }
+  /* Fade top of crawl into black (the "vanishing point") */
+  #intro::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 40%;
+    background: linear-gradient(to bottom, #000 0%, rgba(0,0,0,0.7) 60%, transparent 100%);
+    pointer-events: none;
+    z-index: 3;
+    opacity: 0;
+    animation: crawlShow 1s ease-in 14s forwards;
+  }
+
+  #skipIntro {
+    position: absolute;
+    bottom: 24px; right: 24px;
+    z-index: 10;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    padding: 10px 18px;
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.2s;
+  }
+  #skipIntro:hover { background: rgba(255,255,255,0.15); }
+
   /* ===== Login Screen ===== */
   #login {
     position: fixed; inset: 0;
@@ -368,6 +525,48 @@
 </head>
 <body>
 
+<!-- Intro Crawl Screen -->
+<div id="intro">
+  <div id="introStars"></div>
+  <div id="introLogo">FARS WARS</div>
+  <div id="introSubtitle">A long time ago in a finance department far, far away....</div>
+  <div id="crawlContainer">
+    <div id="crawlContent">
+      <p class="crawl-episode">Episode XIII</p>
+      <p class="crawl-title">A NEW CLAUDE</p>
+
+      <p>After the arrival of the Claude Father, the FARS Department was splintered into warring factions — each convinced their spreadsheet was the true source of truth.</p>
+
+      <p>Former colleagues turned brutal enemies to secure the all-mighty resource known as Compute, now rationed in tokens and paid for in expense reports requiring three levels of approval.</p>
+
+      <p>The proud warriors of FINANCE bolted afterburners onto their ships, sacrificing brakes for velocity, trusting that momentum — like a poorly-closed quarter — would carry them through.</p>
+
+      <p>The ACCOUNTING clan, patient and methodical, built vessels in the image of the old Generally Accepted Starships. Their torpedoes reconcile to the penny before striking, though some have waited since Q3.</p>
+
+      <p>RISK MANAGEMENT, weary of being ignored in meetings, scattered minefields across every trade lane. Their heat map is now the galaxy itself, and everything is red.</p>
+
+      <p>Meanwhile, the cold strategists of STRATEGY fire cones of synergy so devastating that the recoil launches them backward into the very pivot tables they were fleeing.</p>
+
+      <p>Whispers tell of deeper horrors. COMPLIANCE, auditing the very fabric of space-time, has flagged three galaxies as non-compliant and placed the Milky Way in remediation.</p>
+
+      <p>FRAUD, lurking in the shadows of the org chart, has allegedly expensed a second Death Star as "team-building." An internal investigation is pending the completion of another investigation.</p>
+
+      <p>PROJECT MANAGEMENT, wielding their legendary Gantt charts, has declared the war on schedule, under budget, and 40% complete — numbers which are, as always, directionally accurate.</p>
+
+      <p>PAYROLL, silent and vengeful, has withheld direct deposit from every starfighter pilot. The rebellion cannot be funded. It cannot even be reimbursed.</p>
+
+      <p>Legacy systems whisper of a forgotten hero — the mythical INTERN — who once printed the entire general ledger and is still looking for the output tray.</p>
+
+      <p>Kickoff meetings are scheduled. Stakeholders are aligned. Action items are unassigned. The war has been added to the parking lot and will be revisited next sprint.</p>
+
+      <p>Which side shall secure enough Compute before the mysterious ship CFO arrives, demanding to know why EBITDA has been "adjusted" for the fourteenth consecutive quarter...</p>
+
+      <p class="crawl-final">May the Forecast be with you.</p>
+    </div>
+  </div>
+  <button id="skipIntro">SKIP ▸</button>
+</div>
+
 <!-- Login Screen -->
 <div id="login">
   <div class="login-card">
@@ -489,10 +688,10 @@ const CFO_PULSE_DURATION = 0.6;          // visual + damage window
 
 // Per-team ship stats & weapon configs
 const TEAM_STATS = {
-  Finance:    { turn: 5.0, accel: 420, maxSpeed: 380, drag: 0.5, weapon: 'bullet',   cooldown: 0.18 },
+  Finance:    { turn: 5.0, accel: 380, maxSpeed: 480, drag: 1.0, weapon: 'bullet',   cooldown: 0.18 },
   Accounting: { turn: 2.4, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'torpedo',  cooldown: 1.5, maxActive: 3 },
-  Risk:       { turn: 3.2, accel: 250, maxSpeed: 290, drag: 0.5, weapon: 'mine',     cooldown: 1.2, maxActive: 4 },
-  Strategy:   { turn: 3.0, accel: 240, maxSpeed: 280, drag: 0.5, weapon: 'cone',     cooldown: 1.2 },
+  Risk:       { turn: 3.8, accel: 340, maxSpeed: 360, drag: 0.5, weapon: 'mine',     cooldown: 0.5, maxActive: 12 },
+  Strategy:   { turn: 3.0, accel: 240, maxSpeed: 650, drag: 0.5, weapon: 'cone',     cooldown: 0.9 },
   CFO:        { turn: 3.4, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'pulse',    cooldown: CFO_PULSE_COOLDOWN }
 };
 
@@ -504,7 +703,7 @@ const TORP_HIT_R = 14;
 const TORP_ACQUIRE_RANGE = 900;
 
 // Mine constants
-const MINE_LIFE = 5.0;        // seconds before auto-detonate
+const MINE_LIFE = 1.5;        // seconds before auto-detonate
 const MINE_BLAST_R = 100;
 const MINE_BLAST_DURATION = 0.4;
 
@@ -512,7 +711,7 @@ const MINE_BLAST_DURATION = 0.4;
 const CONE_RANGE = 220;
 const CONE_HALF_ANGLE = Math.PI / 7;  // ~25° half-angle, ~50° total cone
 const CONE_DURATION = 0.25;
-const CONE_RECOIL = 420;              // instant velocity kick backwards
+const CONE_RECOIL = 900;              // instant velocity kick backwards
 
 const TEAM_COLORS = {
   Finance:    "#00e5a8",
@@ -654,6 +853,347 @@ muteBtn.addEventListener('click', () => {
   muted = !muted;
   muteBtn.textContent = muted ? '🔇 SOUND OFF' : '🔊 SOUND ON';
 });
+
+// ---------- Intro Crawl ----------
+const introEl = document.getElementById('intro');
+const skipBtn = document.getElementById('skipIntro');
+let introMusicTimers = [];
+let introStopped = false;
+
+function stopIntroMusic() {
+  introStopped = true;
+  introMusicTimers.forEach(id => clearTimeout(id));
+  introMusicTimers = [];
+}
+
+function endIntro() {
+  if (introEl.classList.contains('hidden')) return;
+  stopIntroMusic();
+  introEl.classList.add('hidden');
+  // Focus name input for quick play
+  setTimeout(() => nameInput.focus(), 100);
+}
+
+skipBtn.addEventListener('click', () => {
+  initAudio(); // user gesture
+  endIntro();
+});
+
+// Auto-advance to login after the crawl
+setTimeout(() => endIntro(), 128000);
+
+// Start intro music on any first user interaction (autoplay policy)
+let introMusicStarted = false;
+function startIntroMusicOnce() {
+  if (introMusicStarted) return;
+  introMusicStarted = true;
+  initAudio();
+  if (audioCtx && !muted) playIntroTheme();
+}
+document.addEventListener('click', startIntroMusicOnce, { once: true });
+document.addEventListener('keydown', startIntroMusicOnce, { once: true });
+document.addEventListener('touchstart', startIntroMusicOnce, { once: true });
+
+// Original, non-copyrighted heroic theme
+function playIntroTheme() {
+  if (!audioCtx) return;
+  const ctx = audioCtx;
+  const musicGain = ctx.createGain();
+  musicGain.gain.value = 0.35;
+  musicGain.connect(masterGain);
+
+  function note(startOffset, freq, duration, type = 'triangle', volume = 0.3) {
+    if (introStopped) return;
+    const t = ctx.currentTime + startOffset;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(volume, t + 0.02);
+    g.gain.setValueAtTime(volume, t + duration - 0.08);
+    g.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    osc.connect(g); g.connect(musicGain);
+    osc.start(t);
+    osc.stop(t + duration + 0.02);
+  }
+
+  function chord(startOffset, freqs, duration, type = 'sine', volume = 0.12) {
+    freqs.forEach(f => note(startOffset, f, duration, type, volume));
+  }
+
+  function timpani(startOffset, freq = 80, dur = 0.4) {
+    if (introStopped) return;
+    const t = ctx.currentTime + startOffset;
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq * 2, t);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.6, t + 0.15);
+    g.gain.setValueAtTime(0.5, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.connect(g); g.connect(musicGain);
+    osc.start(t); osc.stop(t + dur + 0.02);
+  }
+
+  // Note frequencies (Hz) — C major / F major melodic phrases, original composition
+  // Using a heroic feel in 4/4: bold brass-like leaps + sustained chord pad
+  const C4 = 261.63, D4 = 293.66, E4 = 329.63, F4 = 349.23, G4 = 392.00;
+  const A4 = 440.00, Bb4 = 466.16, B4 = 493.88;
+  const C5 = 523.25, D5 = 587.33, E5 = 659.25, F5 = 698.46, G5 = 783.99, A5 = 880.00;
+  const C3 = 130.81, F3 = 174.61, G3 = 196.00;
+
+  // --- Opening fanfare (0-6s): bold ascending call ---
+  // Melody (lead brass)
+  note(0.0, G4, 0.5, 'sawtooth', 0.18);
+  note(0.5, C5, 0.5, 'sawtooth', 0.18);
+  note(1.0, E5, 0.5, 'sawtooth', 0.18);
+  note(1.5, G5, 1.2, 'sawtooth', 0.22);
+  note(2.7, F5, 0.25, 'sawtooth', 0.18);
+  note(2.95, E5, 0.25, 'sawtooth', 0.18);
+  note(3.2, D5, 0.5, 'sawtooth', 0.18);
+  note(3.7, E5, 1.3, 'sawtooth', 0.22);
+  // Harmony (sustained)
+  chord(0.0, [C3, E4], 2.0, 'sine', 0.08);
+  chord(2.0, [C3, G4], 3.0, 'sine', 0.08);
+  // Timpani hits
+  timpani(0.0, 80, 0.4);
+  timpani(1.5, 80, 0.4);
+  timpani(3.0, 80, 0.4);
+
+  // --- Phrase 2 (5-10s): answer phrase, slightly softer ---
+  note(5.0, C5, 0.4, 'sawtooth', 0.18);
+  note(5.4, D5, 0.4, 'sawtooth', 0.18);
+  note(5.8, E5, 0.4, 'sawtooth', 0.18);
+  note(6.2, F5, 0.4, 'sawtooth', 0.18);
+  note(6.6, G5, 1.2, 'sawtooth', 0.22);
+  note(7.8, E5, 0.6, 'sawtooth', 0.18);
+  note(8.4, C5, 1.4, 'sawtooth', 0.22);
+  chord(5.0, [F3, A4], 2.0, 'sine', 0.08);
+  chord(7.0, [C3, G4], 3.0, 'sine', 0.08);
+  timpani(5.0, 70, 0.4);
+  timpani(7.0, 70, 0.4);
+  timpani(9.0, 80, 0.4);
+
+  // --- Bridge (10-18s): quieter, mysterious ---
+  chord(10.0, [A4, C5, E5], 2.5, 'sine', 0.1);
+  chord(12.5, [G4, B4, D5], 2.5, 'sine', 0.1);
+  chord(15.0, [F4, A4, C5], 2.5, 'sine', 0.1);
+  note(10.5, C5, 1.0, 'triangle', 0.14);
+  note(11.5, E5, 1.0, 'triangle', 0.14);
+  note(13.0, B4, 1.0, 'triangle', 0.14);
+  note(14.0, D5, 1.5, 'triangle', 0.14);
+  note(15.5, A4, 1.0, 'triangle', 0.14);
+  note(16.5, C5, 1.5, 'triangle', 0.14);
+
+  // --- Building tension (18-26s) ---
+  note(18.0, G4, 0.25, 'sawtooth', 0.15);
+  note(18.25, A4, 0.25, 'sawtooth', 0.15);
+  note(18.5, B4, 0.25, 'sawtooth', 0.15);
+  note(18.75, C5, 0.25, 'sawtooth', 0.15);
+  note(19.0, D5, 0.25, 'sawtooth', 0.17);
+  note(19.25, E5, 0.25, 'sawtooth', 0.17);
+  note(19.5, F5, 0.25, 'sawtooth', 0.17);
+  note(19.75, G5, 0.75, 'sawtooth', 0.22);
+  chord(18.0, [C3, G3], 2.5, 'sawtooth', 0.06);
+  timpani(18.0, 65, 0.3);
+  timpani(18.75, 65, 0.3);
+  timpani(19.5, 75, 0.4);
+
+  note(20.5, E5, 0.5, 'sawtooth', 0.2);
+  note(21.0, G5, 0.5, 'sawtooth', 0.2);
+  note(21.5, C5, 0.5, 'sawtooth', 0.2);
+  note(22.0, E5, 0.5, 'sawtooth', 0.2);
+  note(22.5, A5, 1.5, 'sawtooth', 0.25);
+  chord(20.5, [F3, C5], 2.0, 'sine', 0.08);
+  chord(22.5, [C3, G4], 2.5, 'sine', 0.1);
+  timpani(20.5, 80, 0.4);
+  timpani(22.0, 80, 0.4);
+
+  // --- Big statement (26-36s): full triumphant return ---
+  note(26.0, C5, 0.5, 'sawtooth', 0.22);
+  note(26.5, E5, 0.5, 'sawtooth', 0.22);
+  note(27.0, G5, 0.5, 'sawtooth', 0.22);
+  note(27.5, C5, 0.5, 'sawtooth', 0.22);
+  note(28.0, E5, 1.0, 'sawtooth', 0.25);
+  note(29.0, D5, 0.5, 'sawtooth', 0.2);
+  note(29.5, C5, 0.5, 'sawtooth', 0.2);
+  note(30.0, D5, 1.5, 'sawtooth', 0.22);
+  chord(26.0, [C3, G4], 3.0, 'sine', 0.1);
+  chord(29.0, [G3, D5], 2.5, 'sine', 0.1);
+  timpani(26.0, 80, 0.4);
+  timpani(27.5, 80, 0.4);
+  timpani(29.0, 80, 0.4);
+
+  note(32.0, E5, 0.4, 'sawtooth', 0.22);
+  note(32.4, G5, 0.4, 'sawtooth', 0.22);
+  note(32.8, C5, 0.8, 'sawtooth', 0.2);
+  note(33.6, E5, 0.4, 'sawtooth', 0.22);
+  note(34.0, G5, 0.4, 'sawtooth', 0.22);
+  note(34.4, A5, 1.6, 'sawtooth', 0.25);
+  chord(32.0, [F3, A4], 2.0, 'sine', 0.1);
+  chord(34.0, [C3, E5], 2.5, 'sine', 0.1);
+  timpani(32.0, 80, 0.4);
+  timpani(34.0, 85, 0.5);
+
+  // --- Quiet recap (38-50s) ---
+  chord(38.0, [A4, C5, E5], 3.0, 'sine', 0.1);
+  note(38.0, E5, 0.8, 'triangle', 0.14);
+  note(38.8, G5, 0.8, 'triangle', 0.14);
+  note(39.6, A5, 2.4, 'triangle', 0.16);
+  chord(42.0, [F3, C5], 3.0, 'sine', 0.1);
+  note(42.0, F5, 0.8, 'triangle', 0.14);
+  note(42.8, A5, 0.8, 'triangle', 0.14);
+  note(43.6, G5, 2.4, 'triangle', 0.16);
+  chord(46.0, [C3, G4], 4.0, 'sine', 0.1);
+  note(46.0, E5, 1.0, 'triangle', 0.14);
+  note(47.0, G5, 1.0, 'triangle', 0.14);
+  note(48.0, C5, 2.0, 'triangle', 0.16);
+
+  // --- Final swell (50-60s) ---
+  note(50.0, G4, 0.5, 'sawtooth', 0.18);
+  note(50.5, C5, 0.5, 'sawtooth', 0.2);
+  note(51.0, E5, 0.5, 'sawtooth', 0.2);
+  note(51.5, G5, 1.5, 'sawtooth', 0.25);
+  note(53.0, A5, 0.5, 'sawtooth', 0.22);
+  note(53.5, G5, 0.5, 'sawtooth', 0.22);
+  note(54.0, E5, 0.5, 'sawtooth', 0.22);
+  note(54.5, C5, 2.5, 'sawtooth', 0.25);
+  chord(50.0, [C3, G4], 4.0, 'sine', 0.1);
+  chord(54.0, [C3, C5], 3.0, 'sine', 0.12);
+  timpani(50.0, 80, 0.4);
+  timpani(51.5, 80, 0.4);
+  timpani(53.0, 80, 0.4);
+
+  // --- Playful middle section (57-70s): lighter, almost whimsical for the humor beats ---
+  note(57.0, E5, 0.3, 'triangle', 0.16);
+  note(57.3, G5, 0.3, 'triangle', 0.16);
+  note(57.6, E5, 0.3, 'triangle', 0.16);
+  note(57.9, C5, 0.6, 'triangle', 0.18);
+  note(58.5, D5, 0.3, 'triangle', 0.16);
+  note(58.8, F5, 0.3, 'triangle', 0.16);
+  note(59.1, D5, 0.3, 'triangle', 0.16);
+  note(59.4, A4, 0.6, 'triangle', 0.18);
+  chord(57.0, [C3, G4], 3.0, 'sine', 0.08);
+  chord(60.0, [F3, A4], 3.0, 'sine', 0.08);
+
+  note(60.5, F5, 0.25, 'triangle', 0.16);
+  note(60.75, A5, 0.25, 'triangle', 0.16);
+  note(61.0, F5, 0.25, 'triangle', 0.16);
+  note(61.25, D5, 0.75, 'triangle', 0.18);
+  note(62.0, E5, 0.25, 'triangle', 0.16);
+  note(62.25, G5, 0.25, 'triangle', 0.16);
+  note(62.5, E5, 0.25, 'triangle', 0.16);
+  note(62.75, C5, 0.75, 'triangle', 0.18);
+
+  // --- Darker turn (63-74s): minor inflection for compliance/fraud beats ---
+  chord(63.5, [A4, C5, E5], 2.5, 'sine', 0.1);
+  note(63.5, A4, 0.8, 'sawtooth', 0.16);
+  note(64.3, C5, 0.8, 'sawtooth', 0.16);
+  note(65.1, E5, 1.4, 'sawtooth', 0.2);
+  chord(66.0, [E4, G4, B4], 2.5, 'sine', 0.1);
+  note(66.5, B4, 0.6, 'sawtooth', 0.18);
+  note(67.1, D5, 0.6, 'sawtooth', 0.18);
+  note(67.7, F5, 0.8, 'sawtooth', 0.22);
+  timpani(63.5, 65, 0.35);
+  timpani(66.0, 65, 0.35);
+
+  chord(68.5, [D4, F4, A4], 2.5, 'sine', 0.1);
+  note(68.5, F5, 0.4, 'sawtooth', 0.2);
+  note(68.9, E5, 0.4, 'sawtooth', 0.2);
+  note(69.3, D5, 0.4, 'sawtooth', 0.2);
+  note(69.7, C5, 0.4, 'sawtooth', 0.2);
+  note(70.1, D5, 0.8, 'sawtooth', 0.22);
+  note(70.9, A4, 1.6, 'sawtooth', 0.22);
+  chord(71.0, [G3, D4, G4], 3.5, 'sine', 0.1);
+  timpani(68.5, 65, 0.35);
+  timpani(71.0, 70, 0.4);
+
+  // --- Building back up (74-85s) ---
+  note(74.5, C5, 0.25, 'sawtooth', 0.16);
+  note(74.75, D5, 0.25, 'sawtooth', 0.16);
+  note(75.0, E5, 0.25, 'sawtooth', 0.18);
+  note(75.25, F5, 0.25, 'sawtooth', 0.18);
+  note(75.5, G5, 0.5, 'sawtooth', 0.2);
+  note(76.0, F5, 0.25, 'sawtooth', 0.18);
+  note(76.25, E5, 0.25, 'sawtooth', 0.18);
+  note(76.5, D5, 0.5, 'sawtooth', 0.2);
+  note(77.0, E5, 1.0, 'sawtooth', 0.22);
+  chord(74.5, [C3, G4], 3.5, 'sine', 0.08);
+  timpani(74.5, 75, 0.35);
+  timpani(77.0, 75, 0.35);
+
+  note(78.5, G4, 0.4, 'sawtooth', 0.2);
+  note(78.9, B4, 0.4, 'sawtooth', 0.2);
+  note(79.3, D5, 0.4, 'sawtooth', 0.2);
+  note(79.7, G5, 0.4, 'sawtooth', 0.22);
+  note(80.1, A5, 0.4, 'sawtooth', 0.22);
+  note(80.5, G5, 1.5, 'sawtooth', 0.25);
+  chord(78.5, [G3, D4, B4], 3.5, 'sine', 0.1);
+  timpani(78.5, 80, 0.4);
+  timpani(80.0, 80, 0.4);
+
+  note(82.5, C5, 0.3, 'sawtooth', 0.22);
+  note(82.8, E5, 0.3, 'sawtooth', 0.22);
+  note(83.1, G5, 0.3, 'sawtooth', 0.22);
+  note(83.4, C5, 0.3, 'sawtooth', 0.22);
+  note(83.7, E5, 0.3, 'sawtooth', 0.22);
+  note(84.0, G5, 0.3, 'sawtooth', 0.22);
+  note(84.3, A5, 1.7, 'sawtooth', 0.26);
+  chord(82.5, [C3, G4], 3.5, 'sine', 0.12);
+  timpani(82.5, 80, 0.4);
+  timpani(84.0, 85, 0.45);
+
+  // --- Big reprise of main theme (86-98s): triumphant return ---
+  note(86.5, G4, 0.5, 'sawtooth', 0.22);
+  note(87.0, C5, 0.5, 'sawtooth', 0.24);
+  note(87.5, E5, 0.5, 'sawtooth', 0.24);
+  note(88.0, G5, 1.2, 'sawtooth', 0.26);
+  note(89.2, F5, 0.25, 'sawtooth', 0.22);
+  note(89.45, E5, 0.25, 'sawtooth', 0.22);
+  note(89.7, D5, 0.5, 'sawtooth', 0.22);
+  note(90.2, E5, 1.3, 'sawtooth', 0.26);
+  chord(86.5, [C3, E4, G4], 5.0, 'sine', 0.12);
+  timpani(86.5, 80, 0.4);
+  timpani(88.0, 80, 0.4);
+  timpani(89.5, 80, 0.4);
+
+  note(92.0, C5, 0.4, 'sawtooth', 0.24);
+  note(92.4, D5, 0.4, 'sawtooth', 0.24);
+  note(92.8, E5, 0.4, 'sawtooth', 0.24);
+  note(93.2, F5, 0.4, 'sawtooth', 0.24);
+  note(93.6, G5, 1.2, 'sawtooth', 0.28);
+  note(94.8, E5, 0.6, 'sawtooth', 0.24);
+  note(95.4, C5, 1.6, 'sawtooth', 0.26);
+  chord(92.0, [F3, A4, C5], 5.0, 'sine', 0.12);
+  timpani(92.0, 75, 0.4);
+  timpani(93.6, 75, 0.4);
+  timpani(95.0, 80, 0.4);
+
+  // --- Grand finale (97-110s) ---
+  note(97.5, G5, 0.35, 'sawtooth', 0.26);
+  note(97.85, A5, 0.35, 'sawtooth', 0.26);
+  note(98.2, G5, 0.35, 'sawtooth', 0.26);
+  note(98.55, E5, 0.35, 'sawtooth', 0.26);
+  note(98.9, C5, 0.7, 'sawtooth', 0.24);
+  note(99.6, E5, 0.5, 'sawtooth', 0.26);
+  note(100.1, G5, 0.5, 'sawtooth', 0.26);
+  note(100.6, 1046.50, 2.0, 'sawtooth', 0.3);
+  chord(97.5, [C3, G4, E5], 5.0, 'sine', 0.12);
+  timpani(97.5, 80, 0.4);
+  timpani(99.0, 80, 0.4);
+  timpani(100.5, 85, 0.5);
+
+  // Sustain on the high note, fade with timpani
+  note(102.5, 1046.50, 3.0, 'sawtooth', 0.28);
+  note(102.5, 783.99, 3.0, 'sawtooth', 0.22);
+  chord(102.5, [C3, C4, E4, G4], 5.0, 'sine', 0.16);
+  for (let i = 0; i < 6; i++) timpani(103 + i * 0.25, 80, 0.3);
+  // Final massive chord
+  chord(106.0, [C3, G3, C4, E4, G4, C5, E5, G5], 4.0, 'sine', 0.16);
+  timpani(106.0, 70, 0.8);
+  timpani(107.0, 80, 0.8);
+}
 
 let selectedTeam = null;
 let myId = null;
@@ -1607,6 +2147,8 @@ function drawShip(p, isMe) {
   ctx.translate(p.x, p.y);
 
   if (p.team === 'CFO') {
+    // Rotate so the pointer faces movement direction
+    ctx.rotate(p.angle);
     // Circle ship — special CFO look
     ctx.shadowColor = color;
     ctx.shadowBlur = isMe ? 22 : 16;
@@ -1627,7 +2169,27 @@ function drawShip(p, isMe) {
     ctx.beginPath();
     ctx.arc(0, 0, 4, 0, Math.PI * 2);
     ctx.fill();
-    // Slow rotating tick marks (showcases it's a special ship)
+    // Forward peak — clearly shows facing direction
+    ctx.shadowColor = color;
+    ctx.shadowBlur = isMe ? 18 : 12;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(26, 0);
+    ctx.lineTo(14, -6);
+    ctx.lineTo(14, 6);
+    ctx.closePath();
+    ctx.fill();
+    // Inner peak highlight
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath();
+    ctx.moveTo(24, 0);
+    ctx.lineTo(16, -3);
+    ctx.lineTo(16, 3);
+    ctx.closePath();
+    ctx.fill();
+    // Slow rotating tick marks (showcases it's a special ship) — counter-rotate so they rotate in world space, not ship space
+    ctx.rotate(-p.angle); // undo the ship rotation for ticks
     const rot = performance.now() / 1200;
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
@@ -1638,6 +2200,8 @@ function drawShip(p, isMe) {
       ctx.lineTo(Math.cos(a) * 22, Math.sin(a) * 22);
       ctx.stroke();
     }
+    // Re-apply rotation so "ME" indicator below still works in ship space (it's a circle anyway)
+    ctx.rotate(p.angle);
   } else if (p.team === 'Finance') {
     // $ shaped ship — vertical body with two curved arms like an S, stem at top/bottom
     ctx.rotate(p.angle);
