@@ -610,6 +610,24 @@
     opacity: 0.5;
   }
 
+  #minimapWrap {
+    margin-top: 12px;
+    text-align: right;
+  }
+  #minimapWrap .mini-label {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: #9ad8ff;
+    margin-bottom: 4px;
+  }
+  #minimap {
+    background: rgba(8, 12, 24, 0.85);
+    border: 1px solid rgba(154, 216, 255, 0.3);
+    border-radius: 2px;
+    box-shadow: 0 0 12px rgba(154, 216, 255, 0.15);
+    display: block;
+  }
+
   #roster {
     position: fixed;
     top: 170px; right: 16px;
@@ -1352,6 +1370,10 @@
       <div class="hp-label">HULL <span id="hpText" style="font-family:'Orbitron',monospace;font-size:11px;color:#ffe066;">3/3</span></div>
       <div class="hp-pips" id="hpPips"></div>
     </div>
+    <div id="minimapWrap">
+      <div class="mini-label">RADAR</div>
+      <canvas id="minimap" width="180" height="120"></canvas>
+    </div>
     <div style="margin-top:8px;"><button id="muteBtn" style="background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);color:var(--ink-dim);font-family:inherit;font-size:10px;letter-spacing:0.2em;padding:4px 10px;cursor:pointer;border-radius:2px;">🔊 SOUND ON</button></div>
   </div>
 
@@ -1470,7 +1492,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // ---------- Game Constants ----------
-const WORLD_W = 2400, WORLD_H = 1600;
+const WORLD_W = 3600, WORLD_H = 2400;
 const SHIP_R = 14;
 const BULLET_SPEED = 520;
 const BULLET_LIFE = 1.4;
@@ -1756,6 +1778,9 @@ const onlineCountEl = document.getElementById('onlineCount');
 const shieldBarFill = document.getElementById('shieldBarFill');
 const hpPipsEl = document.getElementById('hpPips');
 const hpTextEl = document.getElementById('hpText');
+// Minimap
+const minimapCanvas = document.getElementById('minimap');
+const minimapCtx = minimapCanvas ? minimapCanvas.getContext('2d') : null;
 // Boss HP bar
 const bossHpContainer = document.getElementById('bossHpContainer');
 const bossHpFill = document.getElementById('bossHpFill');
@@ -3557,7 +3582,7 @@ function updateBots(t, dt) {
 
         // Fire if pointing roughly the right direction
         const angDiff = Math.abs(normalizeAngle(desiredAngle - bot.angle));
-        if (angDiff < 0.35 && t - bot.lastShot > s.fireCooldown && dist < 700) {
+        if (angDiff < 0.35 && t - bot.lastShot > s.fireCooldown && dist < 1000) {
           bot.lastShot = t;
           if (bot.isBoss) {
             fireBossWeapon(bot);
@@ -5402,6 +5427,63 @@ function render() {
     bossHpMax.textContent = max;
   } else if (bossHpContainer) {
     bossHpContainer.classList.remove('show');
+  }
+
+  // ---- Minimap ----
+  if (minimapCtx) {
+    const mw = minimapCanvas.width, mh = minimapCanvas.height;
+    const sx = mw / WORLD_W, sy = mh / WORLD_H;
+    minimapCtx.clearRect(0, 0, mw, mh);
+    // Subtle grid
+    minimapCtx.strokeStyle = 'rgba(154, 216, 255, 0.08)';
+    minimapCtx.lineWidth = 1;
+    for (let i = 1; i < 4; i++) {
+      const gx = (mw / 4) * i;
+      minimapCtx.beginPath();
+      minimapCtx.moveTo(gx, 0); minimapCtx.lineTo(gx, mh); minimapCtx.stroke();
+    }
+    for (let i = 1; i < 3; i++) {
+      const gy = (mh / 3) * i;
+      minimapCtx.beginPath();
+      minimapCtx.moveTo(0, gy); minimapCtx.lineTo(mw, gy); minimapCtx.stroke();
+    }
+    // Boss first (so it's underneath if anything overlaps)
+    if (bossPlayer) {
+      const bx = bossPlayer.x * sx, by = bossPlayer.y * sy;
+      const tNow = performance.now() / 1000;
+      const pulseR = 5 + Math.sin(tNow * 4) * 1.5;
+      minimapCtx.fillStyle = 'rgba(255, 208, 64, 0.25)';
+      minimapCtx.beginPath();
+      minimapCtx.arc(bx, by, pulseR + 3, 0, Math.PI * 2);
+      minimapCtx.fill();
+      minimapCtx.fillStyle = '#ffd040';
+      minimapCtx.beginPath();
+      minimapCtx.arc(bx, by, pulseR, 0, Math.PI * 2);
+      minimapCtx.fill();
+    }
+    // All other players
+    for (const [pid, pl] of players) {
+      if (!pl.alive) continue;
+      if (pl.team === 'KCU') continue; // already drawn
+      const px = pl.x * sx, py = pl.y * sy;
+      const isMe = pid === myId;
+      minimapCtx.fillStyle = teamColor(pl.team);
+      minimapCtx.beginPath();
+      minimapCtx.arc(px, py, isMe ? 3 : 2, 0, Math.PI * 2);
+      minimapCtx.fill();
+      if (isMe) {
+        // Pulsing ring around player
+        const tNow = performance.now() / 1000;
+        const r = 5 + Math.sin(tNow * 5) * 1;
+        minimapCtx.strokeStyle = teamColor(pl.team);
+        minimapCtx.lineWidth = 1.2;
+        minimapCtx.globalAlpha = 0.7;
+        minimapCtx.beginPath();
+        minimapCtx.arc(px, py, r, 0, Math.PI * 2);
+        minimapCtx.stroke();
+        minimapCtx.globalAlpha = 1.0;
+      }
+    }
   }
 }
 
