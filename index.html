@@ -27,6 +27,90 @@
     user-select: none;
   }
 
+  /* ===== Farewell + Welcome Screen ===== */
+  #farewell {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, #0c1126 0%, #050610 70%, #000 100%);
+    z-index: 250;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #farewell.hidden { display: none; }
+  #farewellCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #farewellText {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    pointer-events: none;
+    padding: 0 20px;
+  }
+  #farewellText .fw-prefix {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 14px;
+    opacity: 0;
+    animation: fwFadeIn 0.8s ease-out 0.3s forwards;
+  }
+  #farewellText .fw-headline {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: clamp(28px, 5vw, 60px);
+    letter-spacing: 0.05em;
+    color: #ffffff;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    text-shadow: 0 0 24px rgba(255,255,255,0.2);
+    min-height: 1.2em;
+  }
+  #farewellText .fw-names {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: clamp(22px, 3.4vw, 38px);
+    letter-spacing: 0.04em;
+    line-height: 1.3;
+    margin-bottom: 14px;
+    min-height: 1.2em;
+  }
+  #farewellText .fw-names .fw-name {
+    text-shadow: 0 0 18px currentColor;
+  }
+  #farewellText .fw-sub {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.6);
+    min-height: 1.2em;
+  }
+  @keyframes fwFadeIn { to { opacity: 1; } }
+  #farewellSkip {
+    position: absolute;
+    bottom: 28px; right: 28px;
+    z-index: 3;
+    padding: 9px 22px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.7);
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  #farewellSkip:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
   /* ===== Intro Crawl ===== */
   #intro {
     position: fixed; inset: 0;
@@ -1281,6 +1365,18 @@
 <body>
 
 <!-- Intro Crawl Screen -->
+<!-- Farewell + Welcome screen (shown once before the intro crawl) -->
+<div id="farewell">
+  <canvas id="farewellCanvas"></canvas>
+  <div id="farewellText">
+    <div class="fw-prefix" id="fwPrefix">// Before we begin //</div>
+    <div class="fw-headline" id="fwHeadline">&nbsp;</div>
+    <div class="fw-names" id="fwNames">&nbsp;</div>
+    <div class="fw-sub" id="fwSub">&nbsp;</div>
+  </div>
+  <button id="farewellSkip">SKIP →</button>
+</div>
+
 <div id="intro">
   <div id="introStars"></div>
   <div id="introLogo">FARS WARS</div>
@@ -2520,6 +2616,389 @@ skipBtn.addEventListener('click', () => {
 
 // Auto-advance to login after the crawl
 setTimeout(() => endIntro(), 220000);
+
+// ===========================================================================
+// FAREWELL + WELCOME SCREEN
+// Plays before the intro crawl. Two ships fly off (Emily & Kristin), one
+// flies in (Rob). Names colored by team (Accounting / Risk / Finance).
+// Skipped after first view via localStorage; can be cleared with ?fw=1 in URL.
+// ===========================================================================
+(function setupFarewell() {
+  const farewellEl = document.getElementById('farewell');
+  const fwCanvas = document.getElementById('farewellCanvas');
+  const fwHeadline = document.getElementById('fwHeadline');
+  const fwNames = document.getElementById('fwNames');
+  const fwSub = document.getElementById('fwSub');
+  const fwSkip = document.getElementById('farewellSkip');
+  if (!farewellEl || !fwCanvas) return;
+
+  // Allow forcing the screen to show via ?fw=1 in the URL (for testing/replay)
+  const force = /[?&]fw=1\b/.test(location.search);
+  let alreadySeen = false;
+  try { alreadySeen = localStorage.getItem('fars_farewellSeen') === '1'; } catch(e) {}
+  if (alreadySeen && !force) {
+    farewellEl.classList.add('hidden');
+    return;
+  }
+
+  // Mark seen immediately so reload doesn't replay during the same session
+  try { localStorage.setItem('fars_farewellSeen', '1'); } catch(e) {}
+
+  const fwCtx = fwCanvas.getContext('2d');
+  function resizeFw() {
+    fwCanvas.width = window.innerWidth;
+    fwCanvas.height = window.innerHeight;
+  }
+  resizeFw();
+  window.addEventListener('resize', resizeFw);
+
+  // Team colors (matched to in-game palette)
+  const ACCT = '#ffb627'; // Emily
+  const RISK = '#ff4d6d'; // Kristin
+  const FIN  = '#00e5a8'; // Rob
+
+  // Static starfield for the farewell screen background
+  const fwStars = [];
+  for (let i = 0; i < 220; i++) {
+    fwStars.push({
+      x: Math.random() * fwCanvas.width,
+      y: Math.random() * fwCanvas.height,
+      s: Math.random() < 0.85 ? 1 : 2,
+      tw: Math.random() * Math.PI * 2
+    });
+  }
+
+  // ---- Ship designers (each is a unique distinctive shape) ----
+  // Emily — sleek triple-fin cruiser, accounting orange
+  function drawEmilyShip(cx, cy, scale, angle, thrustGlow) {
+    fwCtx.save();
+    fwCtx.translate(cx, cy);
+    fwCtx.rotate(angle);
+    fwCtx.scale(scale, scale);
+    // Engine trail glow
+    if (thrustGlow > 0) {
+      const grd = fwCtx.createRadialGradient(-22, 0, 0, -22, 0, 60);
+      grd.addColorStop(0, `rgba(255, 182, 39, ${0.6 * thrustGlow})`);
+      grd.addColorStop(0.5, `rgba(255, 100, 0, ${0.25 * thrustGlow})`);
+      grd.addColorStop(1, 'rgba(255,100,0,0)');
+      fwCtx.fillStyle = grd;
+      fwCtx.beginPath();
+      fwCtx.arc(-22, 0, 60, 0, Math.PI * 2);
+      fwCtx.fill();
+    }
+    fwCtx.shadowColor = ACCT;
+    fwCtx.shadowBlur = 18;
+    fwCtx.fillStyle = ACCT;
+    fwCtx.strokeStyle = '#fff7e0';
+    fwCtx.lineWidth = 1.5;
+    // Main hull — long swept arrow
+    fwCtx.beginPath();
+    fwCtx.moveTo(28, 0);
+    fwCtx.lineTo(8, -7);
+    fwCtx.lineTo(-18, -7);
+    fwCtx.lineTo(-22, 0);
+    fwCtx.lineTo(-18, 7);
+    fwCtx.lineTo(8, 7);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Top fin
+    fwCtx.beginPath();
+    fwCtx.moveTo(0, -6);
+    fwCtx.lineTo(-6, -16);
+    fwCtx.lineTo(-14, -16);
+    fwCtx.lineTo(-14, -6);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Bottom fin (mirror)
+    fwCtx.beginPath();
+    fwCtx.moveTo(0, 6);
+    fwCtx.lineTo(-6, 16);
+    fwCtx.lineTo(-14, 16);
+    fwCtx.lineTo(-14, 6);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Cockpit window
+    fwCtx.shadowBlur = 0;
+    fwCtx.fillStyle = '#fff7e0';
+    fwCtx.beginPath();
+    fwCtx.moveTo(18, 0);
+    fwCtx.lineTo(8, -3);
+    fwCtx.lineTo(8, 3);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.restore();
+  }
+
+  // Kristin — angular dart with crossing wings, risk red
+  function drawKristinShip(cx, cy, scale, angle, thrustGlow) {
+    fwCtx.save();
+    fwCtx.translate(cx, cy);
+    fwCtx.rotate(angle);
+    fwCtx.scale(scale, scale);
+    if (thrustGlow > 0) {
+      const grd = fwCtx.createRadialGradient(-20, 0, 0, -20, 0, 55);
+      grd.addColorStop(0, `rgba(255, 77, 109, ${0.6 * thrustGlow})`);
+      grd.addColorStop(0.5, `rgba(255, 30, 80, ${0.25 * thrustGlow})`);
+      grd.addColorStop(1, 'rgba(255,30,80,0)');
+      fwCtx.fillStyle = grd;
+      fwCtx.beginPath();
+      fwCtx.arc(-20, 0, 55, 0, Math.PI * 2);
+      fwCtx.fill();
+    }
+    fwCtx.shadowColor = RISK;
+    fwCtx.shadowBlur = 18;
+    fwCtx.fillStyle = RISK;
+    fwCtx.strokeStyle = '#ffd6e0';
+    fwCtx.lineWidth = 1.5;
+    // X-wing style crossed wings (back pair)
+    fwCtx.beginPath();
+    fwCtx.moveTo(-6, -4);
+    fwCtx.lineTo(-22, -16);
+    fwCtx.lineTo(-26, -14);
+    fwCtx.lineTo(-10, -2);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    fwCtx.beginPath();
+    fwCtx.moveTo(-6, 4);
+    fwCtx.lineTo(-22, 16);
+    fwCtx.lineTo(-26, 14);
+    fwCtx.lineTo(-10, 2);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Sharp dart hull
+    fwCtx.beginPath();
+    fwCtx.moveTo(26, 0);
+    fwCtx.lineTo(4, -5);
+    fwCtx.lineTo(-12, -5);
+    fwCtx.lineTo(-18, 0);
+    fwCtx.lineTo(-12, 5);
+    fwCtx.lineTo(4, 5);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Cockpit
+    fwCtx.shadowBlur = 0;
+    fwCtx.fillStyle = '#ffd6e0';
+    fwCtx.beginPath();
+    fwCtx.arc(8, 0, 3, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.restore();
+  }
+
+  // Rob — heroic fast scout with flared wings, finance teal
+  function drawRobShip(cx, cy, scale, angle, thrustGlow) {
+    fwCtx.save();
+    fwCtx.translate(cx, cy);
+    fwCtx.rotate(angle);
+    fwCtx.scale(scale, scale);
+    if (thrustGlow > 0) {
+      const grd = fwCtx.createRadialGradient(-22, 0, 0, -22, 0, 70);
+      grd.addColorStop(0, `rgba(0, 229, 168, ${0.7 * thrustGlow})`);
+      grd.addColorStop(0.5, `rgba(0, 180, 255, ${0.25 * thrustGlow})`);
+      grd.addColorStop(1, 'rgba(0,180,255,0)');
+      fwCtx.fillStyle = grd;
+      fwCtx.beginPath();
+      fwCtx.arc(-22, 0, 70, 0, Math.PI * 2);
+      fwCtx.fill();
+    }
+    fwCtx.shadowColor = FIN;
+    fwCtx.shadowBlur = 22;
+    fwCtx.fillStyle = FIN;
+    fwCtx.strokeStyle = '#d6fff0';
+    fwCtx.lineWidth = 1.5;
+    // Flared wings (delta sweep)
+    fwCtx.beginPath();
+    fwCtx.moveTo(-2, -4);
+    fwCtx.lineTo(-22, -22);
+    fwCtx.lineTo(-30, -18);
+    fwCtx.lineTo(-22, -2);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    fwCtx.beginPath();
+    fwCtx.moveTo(-2, 4);
+    fwCtx.lineTo(-22, 22);
+    fwCtx.lineTo(-30, 18);
+    fwCtx.lineTo(-22, 2);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Long elegant hull
+    fwCtx.beginPath();
+    fwCtx.moveTo(32, 0);
+    fwCtx.lineTo(10, -6);
+    fwCtx.lineTo(-22, -6);
+    fwCtx.lineTo(-26, 0);
+    fwCtx.lineTo(-22, 6);
+    fwCtx.lineTo(10, 6);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Cockpit canopy
+    fwCtx.shadowBlur = 0;
+    fwCtx.fillStyle = '#d6fff0';
+    fwCtx.beginPath();
+    fwCtx.moveTo(22, 0);
+    fwCtx.lineTo(10, -4);
+    fwCtx.lineTo(8, 0);
+    fwCtx.lineTo(10, 4);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.restore();
+  }
+
+  // ---- Ship state ----
+  // Departures start near the center, fly off-screen left.
+  // Arrival starts off-screen right, decelerates to center-stage.
+  let emily = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
+  let kristin = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
+  let rob = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
+
+  const startTime = performance.now() / 1000;
+  let rafId = null;
+
+  function setText(headline, namesHTML, sub) {
+    fwHeadline.textContent = headline;
+    fwNames.innerHTML = namesHTML;
+    fwSub.textContent = sub;
+  }
+
+  function loop() {
+    const t = performance.now() / 1000 - startTime;
+    const W = fwCanvas.width, H = fwCanvas.height;
+    fwCtx.clearRect(0, 0, W, H);
+
+    // Starfield with subtle twinkle
+    for (const s of fwStars) {
+      const tw = 0.5 + 0.5 * Math.sin(t * 1.5 + s.tw);
+      fwCtx.fillStyle = `rgba(255,255,255,${0.4 + 0.5 * tw})`;
+      fwCtx.fillRect(s.x, s.y, s.s, s.s);
+    }
+
+    // ---- Phase scheduling ----
+    // 0.0 - 1.5s: Empty stage, prefix fades in
+    // 1.5 - 3.0s: "Farewell to" headline appears, ships visible at center
+    // 3.0 - 6.5s: Names fade in (Emily, Kristin), engines spool up
+    // 6.5 - 9.0s: Ships thrust off to the left, "We'll miss you both" sub
+    // 9.0 - 10.5s: Brief pause, screen clears
+    // 10.5 - 13.0s: "Welcome aboard" headline, Rob ship enters from right
+    // 13.0 - 15.5s: Rob arrives center, name appears, "Glad to have you" sub
+    // 15.5+ : fade out, transition to intro
+
+    if (t < 1.5) {
+      setText('', '', '');
+    } else if (t < 3.0) {
+      setText('Farewell to two pilots', '', '');
+      // Position ships at slight offset positions, idle (gentle bob)
+      const bob = Math.sin(t * 1.5) * 3;
+      emily.x = W * 0.42; emily.y = H * 0.55 + bob; emily.visible = true; emily.thrust = 0;
+      kristin.x = W * 0.58; kristin.y = H * 0.55 - bob; kristin.visible = true; kristin.thrust = 0;
+    } else if (t < 6.5) {
+      setText('Farewell to two pilots',
+        '<span class="fw-name" style="color:' + ACCT + '">Emily</span>'
+        + ' <span style="color:rgba(255,255,255,0.5)">&amp;</span> '
+        + '<span class="fw-name" style="color:' + RISK + '">Kristin</span>',
+        'Thank you for everything');
+      const bob = Math.sin(t * 1.5) * 3;
+      emily.x = W * 0.42; emily.y = H * 0.55 + bob; emily.thrust = 0;
+      kristin.x = W * 0.58; kristin.y = H * 0.55 - bob; kristin.thrust = 0;
+      // Engines start spooling
+      if (t > 5.5) {
+        const k = (t - 5.5) / 1.0;
+        emily.thrust = k;
+        kristin.thrust = k;
+      }
+    } else if (t < 9.0) {
+      setText('Farewell to two pilots',
+        '<span class="fw-name" style="color:' + ACCT + '">Emily</span>'
+        + ' <span style="color:rgba(255,255,255,0.5)">&amp;</span> '
+        + '<span class="fw-name" style="color:' + RISK + '">Kristin</span>',
+        "We'll miss you both");
+      // Accelerate left, slightly diverging
+      const k = (t - 6.5) / 2.5;
+      const accel = 1400 * k;
+      emily.vx = -accel * 1.0;
+      emily.vy = -60 * k;
+      kristin.vx = -accel * 1.05;
+      kristin.vy = 60 * k;
+      const dt = 1/60;
+      emily.x += emily.vx * dt;
+      emily.y += emily.vy * dt;
+      kristin.x += kristin.vx * dt;
+      kristin.y += kristin.vy * dt;
+      emily.thrust = 1.0;
+      kristin.thrust = 1.0;
+      // Hide once off-screen
+      if (emily.x < -80) emily.visible = false;
+      if (kristin.x < -80) kristin.visible = false;
+    } else if (t < 10.5) {
+      // Pause - empty stage
+      setText('', '', '');
+      emily.visible = false;
+      kristin.visible = false;
+    } else if (t < 13.0) {
+      setText('And welcoming a new pilot', '', '');
+      // Rob enters from right, decelerating
+      if (!rob.visible) {
+        rob.x = W + 80;
+        rob.y = H * 0.55;
+        rob.vx = -900;
+        rob.vy = 0;
+        rob.thrust = 1.0;
+        rob.visible = true;
+      }
+      const dt = 1/60;
+      rob.x += rob.vx * dt;
+      // Decelerate as approaching center
+      const targetX = W * 0.5;
+      if (rob.x < W * 0.7) {
+        rob.vx *= 0.96;
+      }
+      // Settle near center with gentle sine
+      if (rob.x < targetX + 20) {
+        rob.x = targetX + Math.sin(t * 2) * 4;
+        rob.vx = 0;
+        rob.thrust = 0.2;
+      }
+      rob.y = H * 0.55 + Math.sin(t * 1.8) * 3;
+    } else if (t < 15.5) {
+      setText('And welcoming a new pilot',
+        '<span class="fw-name" style="color:' + FIN + '">Rob</span>',
+        "Glad to have you on the team");
+      rob.x = W * 0.5 + Math.sin(t * 2) * 4;
+      rob.y = H * 0.55 + Math.sin(t * 1.8) * 3;
+      rob.thrust = 0.15;
+    } else if (t < 16.5) {
+      // Fade out
+      const k = (t - 15.5) / 1.0;
+      farewellEl.style.opacity = String(1 - k);
+    } else {
+      farewellEl.classList.add('hidden');
+      farewellEl.style.opacity = '';
+      cancelAnimationFrame(rafId);
+      return;
+    }
+
+    // Render ships
+    if (emily.visible) drawEmilyShip(emily.x, emily.y, 1.4, Math.PI, emily.thrust);
+    if (kristin.visible) drawKristinShip(kristin.x, kristin.y, 1.4, Math.PI, kristin.thrust);
+    if (rob.visible) drawRobShip(rob.x, rob.y, 1.5, Math.PI, rob.thrust);
+
+    rafId = requestAnimationFrame(loop);
+  }
+  rafId = requestAnimationFrame(loop);
+
+  // Skip button
+  fwSkip.addEventListener('click', () => {
+    farewellEl.classList.add('hidden');
+    cancelAnimationFrame(rafId);
+  });
+})();
 
 // Start intro music on any first user interaction (autoplay policy)
 let introMusicStarted = false;
@@ -5943,8 +6422,7 @@ function drawShip(p, isMe) {
   ctx.translate(p.x, p.y);
 
   if (p.team === 'Pacifist') {
-    // Pacifist - onion-dome / minaret silhouette in neon pink. Original architectural-inspired shape.
-    // Built bottom-up from a base, narrow tower, bulbous dome, and a slim spire on top.
+    // Pacifist - twin onion-dome ship in neon pink. Two towers side-by-side, the right one shorter.
     const pink = '#ff3fb5';
     const pinkSoft = 'rgba(255, 63, 181, 0.35)';
     ctx.rotate(p.angle + Math.PI / 2); // align tip toward facing direction
@@ -5953,50 +6431,86 @@ function drawShip(p, isMe) {
     // Outer aura
     ctx.fillStyle = pinkSoft;
     ctx.beginPath();
-    ctx.arc(0, 0, 22, 0, Math.PI * 2);
+    ctx.arc(0, 2, 26, 0, Math.PI * 2);
     ctx.fill();
-    // Base platform (at y=12, widest part)
+    // Wide shared base platform supporting both towers
     ctx.fillStyle = pink;
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(-12, 12);
-    ctx.lineTo(12, 12);
-    ctx.lineTo(10, 8);
-    ctx.lineTo(-10, 8);
+    ctx.moveTo(-18, 14);
+    ctx.lineTo(18, 14);
+    ctx.lineTo(15, 10);
+    ctx.lineTo(-15, 10);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    // Tower body (rectangle narrowing slightly upward)
+
+    // ===== LEFT TOWER (taller, primary) =====
+    // Tower body
     ctx.beginPath();
-    ctx.moveTo(-7, 8);
-    ctx.lineTo(7, 8);
-    ctx.lineTo(6, -4);
-    ctx.lineTo(-6, -4);
+    ctx.moveTo(-12, 10);
+    ctx.lineTo(-2, 10);
+    ctx.lineTo(-3, -4);
+    ctx.lineTo(-11, -4);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    // Onion dome (bulbous, pinched at base)
+    // Onion dome
     ctx.beginPath();
-    ctx.moveTo(-6, -4);
-    ctx.bezierCurveTo(-11, -6, -10, -14, -3, -14);
-    ctx.bezierCurveTo(-2, -16, 2, -16, 3, -14);
-    ctx.bezierCurveTo(10, -14, 11, -6, 6, -4);
-    ctx.closePath();
+    ctx.moveTo(-11, -4);
+    ctx.bezierCurveTo(-16, -6, -15, -14, -8, -14);
+    ctx.bezierCurveTo(-7, -16, -3, -16, -2, -14);
+    ctx.bezierCurveTo(5, -14, 6, -6, -3, -4);
     ctx.fill();
     ctx.stroke();
-    // Spire on top
+    // Spire
     ctx.beginPath();
-    ctx.moveTo(-1, -16);
-    ctx.lineTo(1, -16);
-    ctx.lineTo(0, -24);
+    ctx.moveTo(-7.5, -16);
+    ctx.lineTo(-5.5, -16);
+    ctx.lineTo(-6.5, -24);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
-    // Tiny window detail
+    // Window
     ctx.fillStyle = '#ffffff';
     ctx.shadowBlur = 0;
-    ctx.fillRect(-1.5, 1, 3, 4);
+    ctx.fillRect(-8, 2, 3, 4);
+    ctx.shadowColor = pink;
+    ctx.shadowBlur = isMe ? 24 : 18;
+
+    // ===== RIGHT TOWER (shorter, companion) =====
+    ctx.fillStyle = pink;
+    // Tower body (shorter)
+    ctx.beginPath();
+    ctx.moveTo(3, 10);
+    ctx.lineTo(11, 10);
+    ctx.lineTo(10, 0);
+    ctx.lineTo(4, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Smaller onion dome
+    ctx.beginPath();
+    ctx.moveTo(4, 0);
+    ctx.bezierCurveTo(0, -2, 1, -9, 6, -9);
+    ctx.bezierCurveTo(7, -10, 8, -10, 8, -9);
+    ctx.bezierCurveTo(13, -9, 14, -2, 10, 0);
+    ctx.fill();
+    ctx.stroke();
+    // Shorter spire
+    ctx.beginPath();
+    ctx.moveTo(6.4, -10);
+    ctx.lineTo(7.6, -10);
+    ctx.lineTo(7, -16);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Small window
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur = 0;
+    ctx.fillRect(5.5, 4, 2.5, 3);
+
     ctx.restore();
     // Floating peace symbol indicator above
     ctx.font = '700 11px Orbitron, monospace';
