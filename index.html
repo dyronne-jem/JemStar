@@ -1528,7 +1528,7 @@ const TEAM_STATS = {
   Budget:     { turn: 4.2, accel: 360, maxSpeed: 460, drag: 1.0, weapon: 'trail',    cooldown: 0.05, shieldMax: 3.2, hpMax: 1 },
   Payroll:    { turn: 4.8, accel: 360, maxSpeed: 460, drag: 1.0, weapon: 'miniX',    cooldown: 0.25, shieldMax: 3.5, hpMax: 1 },
   // --- Accounting subfactions ---
-  AP:         { turn: 4.5, accel: 200, maxSpeed: 220, drag: 0.5, weapon: 'autolaser', cooldown: 0.12, shieldMax: 3.5, hpMax: 3 },
+  AP:         { turn: 4.5, accel: 280, maxSpeed: 308, drag: 0.5, weapon: 'autolaser', cooldown: 0.12, shieldMax: 3.5, hpMax: 3 },
   Recon:      { turn: 2.6, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'tractor',  cooldown: 0.0, shieldMax: 2.0, hpMax: 4 },
   // --- Strategy subfactions ---
   PMO:        { turn: 3.4, accel: 260, maxSpeed: 320, drag: 0.5, weapon: 'ribbon',   cooldown: 0.18, shieldMax: 2.2, hpMax: 3 },
@@ -1598,7 +1598,7 @@ const TORP_ACQUIRE_RANGE = 900;
 
 // Mine constants
 const MINE_LIFE = 1.5;        // seconds before auto-detonate
-const MINE_BLAST_R = 100;
+const MINE_BLAST_R = 140;
 const MINE_BLAST_DURATION = 0.4;
 
 // Cone (Strategy) constants
@@ -1628,7 +1628,7 @@ const MINIX_SPEED = 200;
 const MINIX_HIT_R = 16;
 
 // AP autolaser
-const AUTOLASER_RANGE = 286;
+const AUTOLASER_RANGE = 329;
 const AUTOLASER_LIFE = 0.12;
 
 // Recon tractor
@@ -4282,6 +4282,30 @@ function tick(dt) {
   // ----- Mines (Risk) -----
   for (const [id, m] of mines) {
     const age = t - m.birth;
+    // Contact trigger: any non-owner enemy touching the mine detonates it early and takes damage
+    if (!m.exploded && !dead && myState && m.owner !== myId && !sameSide(m.team, myTeam)) {
+      const cdx = myState.x - m.x;
+      const cdy = myState.y - m.y;
+      if (cdx*cdx + cdy*cdy < (SHIP_R + 8) * (SHIP_R + 8)) {
+        m.exploded = true;
+        m.explodeAt = t;
+        m._hitMe = true;
+        sfxNearby('mine_boom', m.x, m.y);
+        // Visual burst
+        for (let i = 0; i < 20; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const sp = 100 + Math.random() * 200;
+          particles.push({
+            x: m.x, y: m.y,
+            vx: Math.cos(a)*sp, vy: Math.sin(a)*sp,
+            life: 0.6, max: 0.6,
+            color: TEAM_COLORS.Risk,
+            size: 2 + Math.random() * 2
+          });
+        }
+        handleDeath({ owner: m.owner, team: m.team });
+      }
+    }
     if (!m.exploded && age >= MINE_LIFE) {
       m.exploded = true;
       m.explodeAt = t;
