@@ -33,10 +33,6 @@
     inset: 0;
     background: radial-gradient(ellipse at center, #0c1126 0%, #050610 70%, #000 100%);
     z-index: 250;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     overflow: hidden;
   }
   #farewell.hidden { display: none; }
@@ -48,11 +44,16 @@
     display: block;
   }
   #farewellText {
-    position: relative;
+    position: absolute;
+    top: 12vh;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 2;
     text-align: center;
     pointer-events: none;
     padding: 0 20px;
+    width: 90%;
+    max-width: 900px;
   }
   #farewellText .fw-prefix {
     font-family: 'Orbitron', monospace;
@@ -2632,17 +2633,23 @@ setTimeout(() => endIntro(), 220000);
   const fwSkip = document.getElementById('farewellSkip');
   if (!farewellEl || !fwCanvas) return;
 
+  // Clean up legacy localStorage flag from earlier version that gated forever
+  try { localStorage.removeItem('fars_farewellSeen'); } catch(e) {}
+
   // Allow forcing the screen to show via ?fw=1 in the URL (for testing/replay)
+  // Skip via ?fw=0 for sessions where you don't want it
   const force = /[?&]fw=1\b/.test(location.search);
+  const skipParam = /[?&]fw=0\b/.test(location.search);
   let alreadySeen = false;
-  try { alreadySeen = localStorage.getItem('fars_farewellSeen') === '1'; } catch(e) {}
-  if (alreadySeen && !force) {
+  try { alreadySeen = sessionStorage.getItem('fars_farewellSeen') === '1'; } catch(e) {}
+  if ((alreadySeen || skipParam) && !force) {
     farewellEl.classList.add('hidden');
     return;
   }
 
-  // Mark seen immediately so reload doesn't replay during the same session
-  try { localStorage.setItem('fars_farewellSeen', '1'); } catch(e) {}
+  // We mark "seen" only when the animation completes (not at start),
+  // so a reload mid-screen still replays. Using sessionStorage means
+  // it resets when the browser tab is closed.
 
   const fwCtx = fwCanvas.getContext('2d');
   function resizeFw() {
@@ -2669,7 +2676,9 @@ setTimeout(() => endIntro(), 220000);
   }
 
   // ---- Ship designers (each is a unique distinctive shape) ----
-  // Emily — sleek triple-fin cruiser, accounting orange
+  // Emily — pug in a neon convertible spaceship, accounting orange.
+  // Open-top hull with windscreen, low-profile body, side fins, and a small pug
+  // sitting in the driver seat. Ears flap based on thrust.
   function drawEmilyShip(cx, cy, scale, angle, thrustGlow) {
     fwCtx.save();
     fwCtx.translate(cx, cy);
@@ -2677,58 +2686,142 @@ setTimeout(() => endIntro(), 220000);
     fwCtx.scale(scale, scale);
     // Engine trail glow
     if (thrustGlow > 0) {
-      const grd = fwCtx.createRadialGradient(-22, 0, 0, -22, 0, 60);
-      grd.addColorStop(0, `rgba(255, 182, 39, ${0.6 * thrustGlow})`);
-      grd.addColorStop(0.5, `rgba(255, 100, 0, ${0.25 * thrustGlow})`);
+      const grd = fwCtx.createRadialGradient(-26, 0, 0, -26, 0, 70);
+      grd.addColorStop(0, `rgba(255, 182, 39, ${0.65 * thrustGlow})`);
+      grd.addColorStop(0.5, `rgba(255, 100, 0, ${0.28 * thrustGlow})`);
       grd.addColorStop(1, 'rgba(255,100,0,0)');
       fwCtx.fillStyle = grd;
       fwCtx.beginPath();
-      fwCtx.arc(-22, 0, 60, 0, Math.PI * 2);
+      fwCtx.arc(-26, 0, 70, 0, Math.PI * 2);
       fwCtx.fill();
     }
+
+    // === CONVERTIBLE HULL (low-profile body) ===
     fwCtx.shadowColor = ACCT;
-    fwCtx.shadowBlur = 18;
+    fwCtx.shadowBlur = 16;
     fwCtx.fillStyle = ACCT;
     fwCtx.strokeStyle = '#fff7e0';
     fwCtx.lineWidth = 1.5;
-    // Main hull — long swept arrow
+    // Long flat hull (sleek convertible silhouette)
     fwCtx.beginPath();
-    fwCtx.moveTo(28, 0);
-    fwCtx.lineTo(8, -7);
-    fwCtx.lineTo(-18, -7);
-    fwCtx.lineTo(-22, 0);
-    fwCtx.lineTo(-18, 7);
-    fwCtx.lineTo(8, 7);
+    fwCtx.moveTo(30, 0);            // pointed nose
+    fwCtx.lineTo(22, -7);
+    fwCtx.lineTo(-2, -10);           // hood scoop area
+    fwCtx.lineTo(-22, -8);
+    fwCtx.lineTo(-26, -2);
+    fwCtx.lineTo(-26, 2);
+    fwCtx.lineTo(-22, 8);
+    fwCtx.lineTo(-2, 10);
+    fwCtx.lineTo(22, 7);
     fwCtx.closePath();
     fwCtx.fill();
     fwCtx.stroke();
-    // Top fin
+
+    // Side fins (small spoiler-like)
     fwCtx.beginPath();
-    fwCtx.moveTo(0, -6);
-    fwCtx.lineTo(-6, -16);
-    fwCtx.lineTo(-14, -16);
-    fwCtx.lineTo(-14, -6);
+    fwCtx.moveTo(-18, -8);
+    fwCtx.lineTo(-22, -14);
+    fwCtx.lineTo(-26, -14);
+    fwCtx.lineTo(-22, -8);
     fwCtx.closePath();
     fwCtx.fill();
     fwCtx.stroke();
-    // Bottom fin (mirror)
     fwCtx.beginPath();
-    fwCtx.moveTo(0, 6);
-    fwCtx.lineTo(-6, 16);
-    fwCtx.lineTo(-14, 16);
-    fwCtx.lineTo(-14, 6);
+    fwCtx.moveTo(-18, 8);
+    fwCtx.lineTo(-22, 14);
+    fwCtx.lineTo(-26, 14);
+    fwCtx.lineTo(-22, 8);
     fwCtx.closePath();
     fwCtx.fill();
     fwCtx.stroke();
-    // Cockpit window
+
+    // Open cockpit well — darker recess where pug sits
     fwCtx.shadowBlur = 0;
-    fwCtx.fillStyle = '#fff7e0';
+    fwCtx.fillStyle = '#2a1d08';
     fwCtx.beginPath();
-    fwCtx.moveTo(18, 0);
-    fwCtx.lineTo(8, -3);
-    fwCtx.lineTo(8, 3);
-    fwCtx.closePath();
+    fwCtx.ellipse(0, 0, 14, 6, 0, 0, Math.PI * 2);
     fwCtx.fill();
+    fwCtx.strokeStyle = '#ff8800';
+    fwCtx.lineWidth = 1;
+    fwCtx.stroke();
+
+    // Curved windscreen (small, in front of pug)
+    fwCtx.strokeStyle = 'rgba(200, 240, 255, 0.7)';
+    fwCtx.lineWidth = 1.5;
+    fwCtx.beginPath();
+    fwCtx.moveTo(8, -7);
+    fwCtx.quadraticCurveTo(12, 0, 8, 7);
+    fwCtx.stroke();
+
+    // === PUG (sitting in cockpit, facing forward) ===
+    // Coordinate space: pug sits centered around (0, 0), facing +x (forward of ship)
+    // Body (tan/fawn)
+    const pugBody = '#d9b78a';
+    const pugFace = '#3a2a1c';   // dark face mask
+    const pugLight = '#f5dcb5';
+    fwCtx.fillStyle = pugBody;
+    fwCtx.strokeStyle = '#5c4423';
+    fwCtx.lineWidth = 0.6;
+    // Body (round, sitting up, slightly behind cockpit center)
+    fwCtx.beginPath();
+    fwCtx.ellipse(-3, 0, 6, 5, 0, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Head (round, forward)
+    fwCtx.beginPath();
+    fwCtx.ellipse(4, 0, 5, 4.5, 0, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Floppy ears — flap angle based on thrust
+    const earFlap = -0.4 - thrustGlow * 0.6;  // ears flap back when thrusting
+    fwCtx.fillStyle = pugFace;
+    // Left ear (top in screen, since ship is rotated)
+    fwCtx.save();
+    fwCtx.translate(4, -3.5);
+    fwCtx.rotate(earFlap);
+    fwCtx.beginPath();
+    fwCtx.ellipse(0, -1.5, 1.5, 2.5, 0, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.stroke();
+    fwCtx.restore();
+    // Right ear (bottom)
+    fwCtx.save();
+    fwCtx.translate(4, 3.5);
+    fwCtx.rotate(-earFlap);
+    fwCtx.beginPath();
+    fwCtx.ellipse(0, 1.5, 1.5, 2.5, 0, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.stroke();
+    fwCtx.restore();
+    // Dark face mask (pug-defining feature)
+    fwCtx.fillStyle = pugFace;
+    fwCtx.beginPath();
+    fwCtx.ellipse(6, 0, 2.5, 3, 0, 0, Math.PI * 2);
+    fwCtx.fill();
+    // Small snout/nose (tiny dark dot at front)
+    fwCtx.fillStyle = '#1a1208';
+    fwCtx.beginPath();
+    fwCtx.arc(8.2, 0, 0.7, 0, Math.PI * 2);
+    fwCtx.fill();
+    // Eyes (big round, characteristic pug eyes)
+    fwCtx.fillStyle = '#fff';
+    fwCtx.beginPath();
+    fwCtx.arc(5, -2, 0.9, 0, Math.PI * 2);
+    fwCtx.arc(5, 2, 0.9, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.fillStyle = '#1a1208';
+    fwCtx.beginPath();
+    fwCtx.arc(5.2, -2, 0.5, 0, Math.PI * 2);
+    fwCtx.arc(5.2, 2, 0.5, 0, Math.PI * 2);
+    fwCtx.fill();
+    // Curly tail at back of body
+    fwCtx.strokeStyle = '#5c4423';
+    fwCtx.lineWidth = 1;
+    fwCtx.fillStyle = pugBody;
+    fwCtx.beginPath();
+    fwCtx.arc(-9.5, -1, 1.5, Math.PI * 0.3, Math.PI * 1.8);
+    fwCtx.stroke();
+
     fwCtx.restore();
   }
 
@@ -2896,8 +2989,8 @@ setTimeout(() => endIntro(), 220000);
       setText('Farewell to two pilots', '', '');
       // Position ships at slight offset positions, idle (gentle bob)
       const bob = Math.sin(t * 1.5) * 3;
-      emily.x = W * 0.42; emily.y = H * 0.55 + bob; emily.visible = true; emily.thrust = 0;
-      kristin.x = W * 0.58; kristin.y = H * 0.55 - bob; kristin.visible = true; kristin.thrust = 0;
+      emily.x = W * 0.42; emily.y = H * 0.65 + bob; emily.visible = true; emily.thrust = 0;
+      kristin.x = W * 0.58; kristin.y = H * 0.65 - bob; kristin.visible = true; kristin.thrust = 0;
     } else if (t < 6.5) {
       setText('Farewell to two pilots',
         '<span class="fw-name" style="color:' + ACCT + '">Emily</span>'
@@ -2905,8 +2998,8 @@ setTimeout(() => endIntro(), 220000);
         + '<span class="fw-name" style="color:' + RISK + '">Kristin</span>',
         'Thank you for everything');
       const bob = Math.sin(t * 1.5) * 3;
-      emily.x = W * 0.42; emily.y = H * 0.55 + bob; emily.thrust = 0;
-      kristin.x = W * 0.58; kristin.y = H * 0.55 - bob; kristin.thrust = 0;
+      emily.x = W * 0.42; emily.y = H * 0.65 + bob; emily.thrust = 0;
+      kristin.x = W * 0.58; kristin.y = H * 0.65 - bob; kristin.thrust = 0;
       // Engines start spooling
       if (t > 5.5) {
         const k = (t - 5.5) / 1.0;
@@ -2946,7 +3039,7 @@ setTimeout(() => endIntro(), 220000);
       // Rob enters from right, decelerating
       if (!rob.visible) {
         rob.x = W + 80;
-        rob.y = H * 0.55;
+        rob.y = H * 0.65;
         rob.vx = -900;
         rob.vy = 0;
         rob.thrust = 1.0;
@@ -2965,13 +3058,13 @@ setTimeout(() => endIntro(), 220000);
         rob.vx = 0;
         rob.thrust = 0.2;
       }
-      rob.y = H * 0.55 + Math.sin(t * 1.8) * 3;
+      rob.y = H * 0.65 + Math.sin(t * 1.8) * 3;
     } else if (t < 15.5) {
       setText('And welcoming a new pilot',
         '<span class="fw-name" style="color:' + FIN + '">Rob</span>',
         "Glad to have you on the team");
       rob.x = W * 0.5 + Math.sin(t * 2) * 4;
-      rob.y = H * 0.55 + Math.sin(t * 1.8) * 3;
+      rob.y = H * 0.65 + Math.sin(t * 1.8) * 3;
       rob.thrust = 0.15;
     } else if (t < 16.5) {
       // Fade out
@@ -2980,12 +3073,13 @@ setTimeout(() => endIntro(), 220000);
     } else {
       farewellEl.classList.add('hidden');
       farewellEl.style.opacity = '';
+      try { sessionStorage.setItem('fars_farewellSeen', '1'); } catch(e) {}
       cancelAnimationFrame(rafId);
       return;
     }
 
     // Render ships
-    if (emily.visible) drawEmilyShip(emily.x, emily.y, 1.4, Math.PI, emily.thrust);
+    if (emily.visible) drawEmilyShip(emily.x, emily.y, 2.0, Math.PI, emily.thrust);
     if (kristin.visible) drawKristinShip(kristin.x, kristin.y, 1.4, Math.PI, kristin.thrust);
     if (rob.visible) drawRobShip(rob.x, rob.y, 1.5, Math.PI, rob.thrust);
 
