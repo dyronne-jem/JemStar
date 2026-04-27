@@ -630,9 +630,9 @@
 
   #roster {
     position: fixed;
-    top: 170px; right: 16px;
+    top: 360px; right: 16px;
     width: 200px;
-    max-height: calc(100vh - 220px);
+    max-height: calc(100vh - 380px);
     overflow-y: auto;
     background: rgba(5,6,15,0.75);
     backdrop-filter: blur(12px);
@@ -1781,6 +1781,22 @@ const hpTextEl = document.getElementById('hpText');
 // Minimap
 const minimapCanvas = document.getElementById('minimap');
 const minimapCtx = minimapCanvas ? minimapCanvas.getContext('2d') : null;
+
+// Auto-position roster below stats panel — measure on resize and after stats height changes
+function positionRoster() {
+  const stats = document.getElementById('stats');
+  const roster = document.getElementById('roster');
+  if (!stats || !roster) return;
+  const rect = stats.getBoundingClientRect();
+  const top = Math.ceil(rect.bottom + 12);
+  roster.style.top = top + 'px';
+  roster.style.maxHeight = `calc(100vh - ${top + 20}px)`;
+}
+window.addEventListener('resize', positionRoster);
+// Re-measure periodically in case stats height changes (HP pips, etc.)
+setInterval(positionRoster, 500);
+// Initial layout (after DOM paints)
+setTimeout(positionRoster, 50);
 // Boss HP bar
 const bossHpContainer = document.getElementById('bossHpContainer');
 const bossHpFill = document.getElementById('bossHpFill');
