@@ -650,23 +650,31 @@
   }
   #roster::-webkit-scrollbar { width: 4px; }
   #roster::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+  #rosterList {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 6px;
+    row-gap: 1px;
+  }
   .roster-entry {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 4px 0;
-    font-size: 12px;
-    letter-spacing: 0.05em;
+    gap: 5px;
+    padding: 3px 0;
+    font-size: 11px;
+    letter-spacing: 0.03em;
     font-weight: 600;
+    min-width: 0;
   }
   .roster-entry .r-dot {
-    width: 7px; height: 7px;
+    width: 6px; height: 6px;
     border-radius: 50%;
     flex-shrink: 0;
-    box-shadow: 0 0 6px currentColor;
+    box-shadow: 0 0 5px currentColor;
   }
   .roster-entry .r-name {
     flex: 1;
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -678,6 +686,7 @@
   }
   .roster-entry.dead { opacity: 0.45; }
   .roster-entry.cfo-entry {
+    grid-column: 1 / -1;
     background: rgba(200, 121, 255, 0.08);
     padding: 4px 6px;
     margin: 2px -6px;
@@ -1561,6 +1570,18 @@ const PARENT_TEAM = {
 // otherwise uses the parent team color.
 function teamColor(team) {
   return TEAM_COLORS[team] || TEAM_COLORS[PARENT_TEAM[team] || team] || '#fff';
+}
+
+// Convert a #rrggbb hex to rgba() string with given alpha
+function hexToRgba(hex, alpha) {
+  if (!hex || hex[0] !== '#') return `rgba(255,255,255,${alpha})`;
+  const h = hex.length === 4
+    ? hex.slice(1).split('').map(c => c + c).join('')
+    : hex.slice(1);
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 // Two ships on the same side? (parent team match)
@@ -4982,6 +5003,49 @@ function render() {
       ctx.fillStyle = `rgba(255,255,255,${s.p})`;
       ctx.fillRect(s.x - s.s/2, s.y - s.s/2, s.s, s.s);
     });
+  }
+
+  // Team-color centerpiece — four large translucent circles overlapping in the middle
+  // Sits behind action but above stars; uses 'lighter' blend so overlaps create deeper colors
+  {
+    const cx = WORLD_W / 2, cy = WORLD_H / 2;
+    const R = Math.min(WORLD_W, WORLD_H) * 0.32;     // each circle radius
+    const off = R * 0.55;                             // how far from center each is offset
+    const tNow = performance.now() / 1000;
+    const breathe = 1 + Math.sin(tNow * 0.25) * 0.02;
+    const circles = [
+      { team: 'Finance',    dx: -off, dy: -off * 0.85 },
+      { team: 'Accounting', dx:  off, dy: -off * 0.85 },
+      { team: 'Risk',       dx: -off, dy:  off * 0.85 },
+      { team: 'Strategy',   dx:  off, dy:  off * 0.85 }
+    ];
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (const c of circles) {
+      const x = cx + c.dx, y = cy + c.dy;
+      const r = R * breathe;
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+      const col = teamColor(c.team);
+      // Soft radial — bright(ish) at center, fading to nothing at edge
+      grad.addColorStop(0,    hexToRgba(col, 0.18));
+      grad.addColorStop(0.55, hexToRgba(col, 0.10));
+      grad.addColorStop(1,    hexToRgba(col, 0));
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+    // Black-hole core: dark soft circle at the dead center where all four overlap
+    const coreR = R * 0.45;
+    const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreR);
+    coreGrad.addColorStop(0,    'rgba(0, 0, 0, 0.55)');
+    coreGrad.addColorStop(0.6,  'rgba(0, 0, 0, 0.25)');
+    coreGrad.addColorStop(1,    'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = coreGrad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
+    ctx.fill();
   }
 
   // World boundary glow
