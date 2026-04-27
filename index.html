@@ -27,6 +27,91 @@
     user-select: none;
   }
 
+  /* ===== Farewell + Welcome Screen ===== */
+  #farewell {
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, #0c1126 0%, #050610 70%, #000 100%);
+    z-index: 250;
+    overflow: hidden;
+  }
+  #farewell.hidden { display: none; }
+  #farewellCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #farewellText {
+    position: absolute;
+    top: 12vh;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    text-align: center;
+    pointer-events: none;
+    padding: 0 20px;
+    width: 90%;
+    max-width: 900px;
+  }
+  #farewellText .fw-prefix {
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 14px;
+    opacity: 0;
+    animation: fwFadeIn 0.8s ease-out 0.3s forwards;
+  }
+  #farewellText .fw-headline {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: clamp(28px, 5vw, 60px);
+    letter-spacing: 0.05em;
+    color: #ffffff;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    text-shadow: 0 0 24px rgba(255,255,255,0.2);
+    min-height: 1.2em;
+  }
+  #farewellText .fw-names {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: clamp(22px, 3.4vw, 38px);
+    letter-spacing: 0.04em;
+    line-height: 1.3;
+    margin-bottom: 14px;
+    min-height: 1.2em;
+  }
+  #farewellText .fw-names .fw-name {
+    text-shadow: 0 0 18px currentColor;
+  }
+  #farewellText .fw-sub {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    color: rgba(255,255,255,0.6);
+    min-height: 1.2em;
+  }
+  @keyframes fwFadeIn { to { opacity: 1; } }
+  #farewellSkip {
+    position: absolute;
+    bottom: 28px; right: 28px;
+    z-index: 3;
+    padding: 9px 22px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.7);
+    font-family: 'Orbitron', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  #farewellSkip:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
   /* ===== Intro Crawl ===== */
   #intro {
     position: fixed; inset: 0;
@@ -144,7 +229,7 @@
     font-size: clamp(20px, 2.6vw, 32px);
     line-height: 1.7;
     text-align: justify;
-    animation: crawl 200s linear 14s forwards;
+    animation: crawl 130s linear 14s forwards;
     text-shadow: 0 0 8px rgba(255,230,0,0.45);
   }
   #crawlContent p { margin-bottom: 1.6em; }
@@ -440,6 +525,54 @@
     border-color: rgba(255,255,255,0.1);
   }
   .cfo-btn:disabled .cfo-label { color: var(--ink-faint); text-shadow: none; }
+
+  /* Special row holds CFO + Pacifist side by side */
+  .special-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .special-row .cfo-btn { margin-top: 0; }
+
+  .pacifist-btn {
+    padding: 16px;
+    background: linear-gradient(90deg, rgba(255,63,181,0.08), rgba(255,63,181,0.18), rgba(255,63,181,0.08));
+    border: 1px solid rgba(255,63,181,0.4);
+    color: var(--ink);
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .pacifist-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255,63,181,0.22), transparent 60%);
+    animation: pacifistPulse 3.2s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes pacifistPulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+  .pacifist-label { font-weight: 900; color: #ff3fb5; text-shadow: 0 0 12px rgba(255,63,181,0.6); }
+  .pacifist-status {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--ink-faint);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .pacifist-btn:hover:not(:disabled) { border-color: #ff3fb5; }
+  .pacifist-btn.selected {
+    border-color: #ff3fb5;
+    box-shadow: inset 0 0 0 1px #ff3fb5, 0 0 20px rgba(255,63,181,0.3);
+  }
   .cfo-btn:disabled::before { animation: none; opacity: 0; }
   #joinBtn {
     width: 100%;
@@ -1233,6 +1366,18 @@
 <body>
 
 <!-- Intro Crawl Screen -->
+<!-- Farewell + Welcome screen (shown once before the intro crawl) -->
+<div id="farewell">
+  <canvas id="farewellCanvas"></canvas>
+  <div id="farewellText">
+    <div class="fw-prefix" id="fwPrefix">// Before we begin //</div>
+    <div class="fw-headline" id="fwHeadline">&nbsp;</div>
+    <div class="fw-names" id="fwNames">&nbsp;</div>
+    <div class="fw-sub" id="fwSub">&nbsp;</div>
+  </div>
+  <button id="farewellSkip">SKIP →</button>
+</div>
+
 <div id="intro">
   <div id="introStars"></div>
   <div id="introLogo">FARS WARS</div>
@@ -1254,16 +1399,6 @@
         <p>RISK MANAGEMENT, weary of being ignored in meetings, scattered minefields across every trade lane. Their heat map is now the galaxy itself, and everything is red.</p>
 
         <p>Meanwhile, the cold strategists of STRATEGY fire cones of synergy so devastating that the recoil launches them backward into the very pivot tables they were fleeing.</p>
-
-        <p>Whispers tell of deeper horrors. COMPLIANCE, auditing the very fabric of space-time, has flagged three galaxies as non-compliant and placed the Milky Way in remediation.</p>
-
-        <p>FRAUD, lurking in the shadows of the org chart, has allegedly expensed a second Death Star as "team-building." An internal investigation is pending the completion of another investigation.</p>
-
-        <p>PROJECT MANAGEMENT, wielding their legendary Gantt charts, has declared the war on schedule, under budget, and 40% complete — numbers which are, as always, directionally accurate.</p>
-
-        <p>PAYROLL, silent and vengeful, has withheld direct deposit from every starfighter pilot. The rebellion cannot be funded. It cannot even be reimbursed.</p>
-
-        <p>Legacy systems whisper of a forgotten hero — the mythical INTERN — who once printed the entire general ledger and is still looking for the output tray.</p>
 
         <p>Kickoff meetings are scheduled. Stakeholders are aligned. Action items are unassigned. The war has been added to the parking lot and will be revisited next sprint.</p>
 
@@ -1321,16 +1456,22 @@
       <button class="team-btn sub-btn" data-team="MG"         style="--team-color: var(--strategy)">MG <em>(Strategy)</em></button>
     </div>
 
-    <button id="cfoBtn" class="cfo-btn" data-team="CFO">
-      <span class="cfo-label">★ CFO ★</span>
-      <span class="cfo-status" id="cfoStatus">Available</span>
-    </button>
+    <div class="special-row">
+      <button id="cfoBtn" class="cfo-btn" data-team="CFO">
+        <span class="cfo-label">★ CFO ★</span>
+        <span class="cfo-status" id="cfoStatus">Available</span>
+      </button>
+      <button id="pacifistBtn" class="pacifist-btn" data-team="Pacifist">
+        <span class="pacifist-label">☮ PACIFIST ☮</span>
+        <span class="pacifist-status">Invincible · No weapons</span>
+      </button>
+    </div>
 
     <button id="joinBtn" disabled>Launch</button>
 
     <div class="controls-hint">
       <kbd>W</kbd>/<kbd>↑</kbd> thrust &nbsp; <kbd>A</kbd><kbd>D</kbd>/<kbd>←</kbd><kbd>→</kbd> rotate &nbsp; <kbd>Space</kbd> fire<br>
-      <kbd>Enter</kbd> chat &nbsp; Friendly fire is OFF — only enemies count.
+      <kbd>E</kbd> shield &nbsp; <kbd>F4</kbd> self-destruct &nbsp; <kbd>Enter</kbd> chat &nbsp; Friendly fire is OFF.
     </div>
   </div>
 </div>
@@ -1516,11 +1657,13 @@ const CFO_PULSE_DURATION = 0.6;          // visual + damage window
 // shieldMax: total seconds of shield available — inverse of offensive power
 // hpMax: hit points before destruction (most ships 3, tanks higher, glass cannons 1)
 const TEAM_STATS = {
-  Finance:    { turn: 5.0, accel: 380, maxSpeed: 480, drag: 1.0, weapon: 'bullet',   cooldown: 0.18, shieldMax: 3.3, hpMax: 1 },
+  Finance:    { turn: 5.0, accel: 380, maxSpeed: 480, drag: 1.0, weapon: 'bullet',   cooldown: 0.06, shieldMax: 3.3, hpMax: 1 },
   Accounting: { turn: 2.4, accel: 220, maxSpeed: 260, drag: 0.5, weapon: 'torpedo',  cooldown: 1.5, maxActive: 3, shieldMax: 3.0, hpMax: 3 },
   Risk:       { turn: 3.8, accel: 340, maxSpeed: 360, drag: 0.5, weapon: 'mine',     cooldown: 0.2, maxActive: 20, shieldMax: 2.8, hpMax: 3 },
   Strategy:   { turn: 3.0, accel: 240, maxSpeed: 650, drag: 0.5, weapon: 'cone',     cooldown: 0.9, shieldMax: 2.3, hpMax: 3 },
   CFO:        { turn: 3.4, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'pulse',    cooldown: CFO_PULSE_COOLDOWN, shieldMax: 1.5, hpMax: 5 },
+  // Pacifist - fast, no momentum, invincible. No weapon. Spectator mode with style.
+  Pacifist:   { turn: 7.0, accel: 9999, maxSpeed: 520, drag: 0.0001, weapon: 'none', cooldown: 999, shieldMax: 0, hpMax: 1, invincible: true, instantStop: true },
   // --- Risk subfactions ---
   Compliance: { turn: 3.0, accel: 280, maxSpeed: 320, drag: 0.5, weapon: 'net',      cooldown: 1.4, maxActive: 4, shieldMax: 3.0, hpMax: 3 },
   Fraud:      { turn: 3.6, accel: 310, maxSpeed: 330, drag: 0.5, weapon: 'spiral',   cooldown: 0.35, shieldMax: 2.5, hpMax: 3 },
@@ -1556,6 +1699,7 @@ const BOSS_DEATH_RESPAWN = 999999;       // never respawns automatically
 // Maps subfaction -> parent team (for color + score attribution)
 const PARENT_TEAM = {
   Finance: 'Finance', Accounting: 'Accounting', Risk: 'Risk', Strategy: 'Strategy', CFO: 'CFO',
+  Pacifist: 'Pacifist',
   Compliance: 'Risk', Fraud: 'Risk',
   Budget: 'Finance', Payroll: 'Finance',
   AP: 'Accounting', Recon: 'Accounting',
@@ -1656,6 +1800,7 @@ const TEAM_COLORS = {
   Risk:       "#ff4d6d",
   Strategy:   "#6dd3ff",
   CFO:        "#c879ff",
+  Pacifist:   "#ff3fb5",
   // Shared AI faction color
   AI:         "#ff2020",
   // Per-bot tints (used for ship rendering only)
@@ -2168,7 +2313,37 @@ window.addEventListener('keydown', e => {
     e.preventDefault();
     purgeConfirmEl.classList.add('show');
   }
+  // F4 self-destruct — let player blow themselves up so they can swap ships
+  if (e.code === 'F4') {
+    if (!myId || dead || !myState) return;
+    e.preventDefault();
+    selfDestruct();
+  }
 });
+
+// Trigger the player's own death without an external attacker - used for F4 self-destruct.
+// Bypasses the Pacifist invincibility check on purpose so players can switch ships.
+function selfDestruct() {
+  if (dead || !myState) return;
+  dead = true;
+  respawnAt = performance.now() / 1000 + RESPAWN_TIME;
+  respawnEl.classList.add('show');
+  sfx('death');
+  spawnDeathExplosion(myState.x, myState.y, teamColor(myTeam));
+  myState.deaths++;
+  myDeathsEl.textContent = myState.deaths;
+  update_db(`players/${myId}`, { alive: false, deaths: myState.deaths, hp: 0 });
+  // No killer credit on self-destruct, but log it in the killfeed for fun
+  const kr = push(ref(db, 'killfeed'));
+  set(kr, {
+    killer: '—', killerTeam: myTeam, killerId: null,
+    victim: myName, victimTeam: myTeam,
+    selfDestruct: true,
+    victimIcebreakerPrompt: myState.icebreakerPrompt || '',
+    victimIcebreakerAnswer: myState.icebreakerAnswer || '',
+    ts: Date.now()
+  });
+}
 resetNoBtn.addEventListener('click', () => {
   resetConfirmEl.classList.remove('show');
 });
@@ -2430,8 +2605,480 @@ skipBtn.addEventListener('click', () => {
   endIntro();
 });
 
-// Auto-advance to login after the crawl
-setTimeout(() => endIntro(), 220000);
+// Auto-advance to login after the crawl (14s start delay + 130s scroll + 4s grace)
+setTimeout(() => endIntro(), 148000);
+
+// ===========================================================================
+// FAREWELL + WELCOME SCREEN
+// Plays before the intro crawl. Two ships fly off (Emily & Kristin), one
+// flies in (Rob). Names colored by team (Accounting / Risk / Finance).
+// Skipped after first view via localStorage; can be cleared with ?fw=1 in URL.
+// ===========================================================================
+(function setupFarewell() {
+  const farewellEl = document.getElementById('farewell');
+  const fwCanvas = document.getElementById('farewellCanvas');
+  const fwHeadline = document.getElementById('fwHeadline');
+  const fwNames = document.getElementById('fwNames');
+  const fwSub = document.getElementById('fwSub');
+  const fwSkip = document.getElementById('farewellSkip');
+  if (!farewellEl || !fwCanvas) return;
+
+  // Aggressive cleanup of any legacy state that might block the screen
+  try { localStorage.removeItem('fars_farewellSeen'); } catch(e) {}
+
+  // Allow opt-out via ?fw=0 in the URL for sessions where you don't want it
+  const skipParam = /[?&]fw=0\b/.test(location.search);
+  // Only skip if user already FINISHED watching it in this current tab session
+  // (sessionStorage clears when the tab is closed, so closing+reopening always replays)
+  let finishedInTab = false;
+  try { finishedInTab = sessionStorage.getItem('fars_farewellFinished') === '1'; } catch(e) {}
+  if (finishedInTab || skipParam) {
+    farewellEl.classList.add('hidden');
+    return;
+  }
+
+  const fwCtx = fwCanvas.getContext('2d');
+  function resizeFw() {
+    fwCanvas.width = window.innerWidth;
+    fwCanvas.height = window.innerHeight;
+  }
+  resizeFw();
+  window.addEventListener('resize', resizeFw);
+
+  // Team colors (matched to in-game palette)
+  const ACCT = '#ffb627'; // Emily
+  const RISK = '#ff4d6d'; // Kristin
+  const FIN  = '#00e5a8'; // Rob
+
+  // Static starfield for the farewell screen background
+  const fwStars = [];
+  for (let i = 0; i < 220; i++) {
+    fwStars.push({
+      x: Math.random() * fwCanvas.width,
+      y: Math.random() * fwCanvas.height,
+      s: Math.random() < 0.85 ? 1 : 2,
+      tw: Math.random() * Math.PI * 2
+    });
+  }
+
+  // ---- Ship designers (each is a unique distinctive shape) ----
+  // Emily — pug in a neon convertible spaceship, accounting orange.
+  // Open-top hull with windscreen, low-profile body, side fins, and a small pug
+  // sitting in the driver seat. Ears flap based on thrust.
+  function drawEmilyShip(cx, cy, scale, angle, thrustGlow) {
+    fwCtx.save();
+    fwCtx.translate(cx, cy);
+    fwCtx.rotate(angle);
+    fwCtx.scale(scale, scale);
+    // Engine trail glow
+    if (thrustGlow > 0) {
+      const grd = fwCtx.createRadialGradient(-26, 0, 0, -26, 0, 70);
+      grd.addColorStop(0, `rgba(255, 182, 39, ${0.65 * thrustGlow})`);
+      grd.addColorStop(0.5, `rgba(255, 100, 0, ${0.28 * thrustGlow})`);
+      grd.addColorStop(1, 'rgba(255,100,0,0)');
+      fwCtx.fillStyle = grd;
+      fwCtx.beginPath();
+      fwCtx.arc(-26, 0, 70, 0, Math.PI * 2);
+      fwCtx.fill();
+    }
+
+    // === CONVERTIBLE HULL (low-profile body) ===
+    fwCtx.shadowColor = ACCT;
+    fwCtx.shadowBlur = 16;
+    fwCtx.fillStyle = ACCT;
+    fwCtx.strokeStyle = '#fff7e0';
+    fwCtx.lineWidth = 1.5;
+    // Long flat hull (sleek convertible silhouette)
+    fwCtx.beginPath();
+    fwCtx.moveTo(30, 0);            // pointed nose
+    fwCtx.lineTo(22, -7);
+    fwCtx.lineTo(-2, -10);           // hood scoop area
+    fwCtx.lineTo(-22, -8);
+    fwCtx.lineTo(-26, -2);
+    fwCtx.lineTo(-26, 2);
+    fwCtx.lineTo(-22, 8);
+    fwCtx.lineTo(-2, 10);
+    fwCtx.lineTo(22, 7);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+
+    // Side fins (small spoiler-like)
+    fwCtx.beginPath();
+    fwCtx.moveTo(-18, -8);
+    fwCtx.lineTo(-22, -14);
+    fwCtx.lineTo(-26, -14);
+    fwCtx.lineTo(-22, -8);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    fwCtx.beginPath();
+    fwCtx.moveTo(-18, 8);
+    fwCtx.lineTo(-22, 14);
+    fwCtx.lineTo(-26, 14);
+    fwCtx.lineTo(-22, 8);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+
+    // Open cockpit well — darker recess where pug sits
+    fwCtx.shadowBlur = 0;
+    fwCtx.fillStyle = '#2a1d08';
+    fwCtx.beginPath();
+    fwCtx.ellipse(0, 0, 14, 6, 0, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.strokeStyle = '#ff8800';
+    fwCtx.lineWidth = 1;
+    fwCtx.stroke();
+
+    // Curved windscreen (small, in front of pug)
+    fwCtx.strokeStyle = 'rgba(200, 240, 255, 0.7)';
+    fwCtx.lineWidth = 1.5;
+    fwCtx.beginPath();
+    fwCtx.moveTo(8, -7);
+    fwCtx.quadraticCurveTo(12, 0, 8, 7);
+    fwCtx.stroke();
+
+    // === PUG (sitting in cockpit, facing forward) ===
+    // Coordinate space: pug sits centered around (0, 0), facing +x (forward of ship)
+    // Body (tan/fawn)
+    const pugBody = '#d9b78a';
+    const pugFace = '#3a2a1c';   // dark face mask
+    const pugLight = '#f5dcb5';
+    fwCtx.fillStyle = pugBody;
+    fwCtx.strokeStyle = '#5c4423';
+    fwCtx.lineWidth = 0.6;
+    // Body (round, sitting up, slightly behind cockpit center)
+    fwCtx.beginPath();
+    fwCtx.ellipse(-3, 0, 6, 5, 0, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Head (round, forward)
+    fwCtx.beginPath();
+    fwCtx.ellipse(4, 0, 5, 4.5, 0, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Floppy ears — flap angle based on thrust
+    const earFlap = -0.4 - thrustGlow * 0.6;  // ears flap back when thrusting
+    fwCtx.fillStyle = pugFace;
+    // Left ear (top in screen, since ship is rotated)
+    fwCtx.save();
+    fwCtx.translate(4, -3.5);
+    fwCtx.rotate(earFlap);
+    fwCtx.beginPath();
+    fwCtx.ellipse(0, -1.5, 1.5, 2.5, 0, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.stroke();
+    fwCtx.restore();
+    // Right ear (bottom)
+    fwCtx.save();
+    fwCtx.translate(4, 3.5);
+    fwCtx.rotate(-earFlap);
+    fwCtx.beginPath();
+    fwCtx.ellipse(0, 1.5, 1.5, 2.5, 0, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.stroke();
+    fwCtx.restore();
+    // Dark face mask (pug-defining feature)
+    fwCtx.fillStyle = pugFace;
+    fwCtx.beginPath();
+    fwCtx.ellipse(6, 0, 2.5, 3, 0, 0, Math.PI * 2);
+    fwCtx.fill();
+    // Small snout/nose (tiny dark dot at front)
+    fwCtx.fillStyle = '#1a1208';
+    fwCtx.beginPath();
+    fwCtx.arc(8.2, 0, 0.7, 0, Math.PI * 2);
+    fwCtx.fill();
+    // Eyes (big round, characteristic pug eyes)
+    fwCtx.fillStyle = '#fff';
+    fwCtx.beginPath();
+    fwCtx.arc(5, -2, 0.9, 0, Math.PI * 2);
+    fwCtx.arc(5, 2, 0.9, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.fillStyle = '#1a1208';
+    fwCtx.beginPath();
+    fwCtx.arc(5.2, -2, 0.5, 0, Math.PI * 2);
+    fwCtx.arc(5.2, 2, 0.5, 0, Math.PI * 2);
+    fwCtx.fill();
+    // Curly tail at back of body
+    fwCtx.strokeStyle = '#5c4423';
+    fwCtx.lineWidth = 1;
+    fwCtx.fillStyle = pugBody;
+    fwCtx.beginPath();
+    fwCtx.arc(-9.5, -1, 1.5, Math.PI * 0.3, Math.PI * 1.8);
+    fwCtx.stroke();
+
+    fwCtx.restore();
+  }
+
+  // Kristin — angular dart with crossing wings, risk red
+  function drawKristinShip(cx, cy, scale, angle, thrustGlow) {
+    fwCtx.save();
+    fwCtx.translate(cx, cy);
+    fwCtx.rotate(angle);
+    fwCtx.scale(scale, scale);
+    if (thrustGlow > 0) {
+      const grd = fwCtx.createRadialGradient(-20, 0, 0, -20, 0, 55);
+      grd.addColorStop(0, `rgba(255, 77, 109, ${0.6 * thrustGlow})`);
+      grd.addColorStop(0.5, `rgba(255, 30, 80, ${0.25 * thrustGlow})`);
+      grd.addColorStop(1, 'rgba(255,30,80,0)');
+      fwCtx.fillStyle = grd;
+      fwCtx.beginPath();
+      fwCtx.arc(-20, 0, 55, 0, Math.PI * 2);
+      fwCtx.fill();
+    }
+    fwCtx.shadowColor = RISK;
+    fwCtx.shadowBlur = 18;
+    fwCtx.fillStyle = RISK;
+    fwCtx.strokeStyle = '#ffd6e0';
+    fwCtx.lineWidth = 1.5;
+    // X-wing style crossed wings (back pair)
+    fwCtx.beginPath();
+    fwCtx.moveTo(-6, -4);
+    fwCtx.lineTo(-22, -16);
+    fwCtx.lineTo(-26, -14);
+    fwCtx.lineTo(-10, -2);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    fwCtx.beginPath();
+    fwCtx.moveTo(-6, 4);
+    fwCtx.lineTo(-22, 16);
+    fwCtx.lineTo(-26, 14);
+    fwCtx.lineTo(-10, 2);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Sharp dart hull
+    fwCtx.beginPath();
+    fwCtx.moveTo(26, 0);
+    fwCtx.lineTo(4, -5);
+    fwCtx.lineTo(-12, -5);
+    fwCtx.lineTo(-18, 0);
+    fwCtx.lineTo(-12, 5);
+    fwCtx.lineTo(4, 5);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Cockpit
+    fwCtx.shadowBlur = 0;
+    fwCtx.fillStyle = '#ffd6e0';
+    fwCtx.beginPath();
+    fwCtx.arc(8, 0, 3, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.restore();
+  }
+
+  // Rob — heroic fast scout with flared wings, finance teal
+  function drawRobShip(cx, cy, scale, angle, thrustGlow) {
+    fwCtx.save();
+    fwCtx.translate(cx, cy);
+    fwCtx.rotate(angle);
+    fwCtx.scale(scale, scale);
+    if (thrustGlow > 0) {
+      const grd = fwCtx.createRadialGradient(-22, 0, 0, -22, 0, 70);
+      grd.addColorStop(0, `rgba(0, 229, 168, ${0.7 * thrustGlow})`);
+      grd.addColorStop(0.5, `rgba(0, 180, 255, ${0.25 * thrustGlow})`);
+      grd.addColorStop(1, 'rgba(0,180,255,0)');
+      fwCtx.fillStyle = grd;
+      fwCtx.beginPath();
+      fwCtx.arc(-22, 0, 70, 0, Math.PI * 2);
+      fwCtx.fill();
+    }
+    fwCtx.shadowColor = FIN;
+    fwCtx.shadowBlur = 22;
+    fwCtx.fillStyle = FIN;
+    fwCtx.strokeStyle = '#d6fff0';
+    fwCtx.lineWidth = 1.5;
+    // Flared wings (delta sweep)
+    fwCtx.beginPath();
+    fwCtx.moveTo(-2, -4);
+    fwCtx.lineTo(-22, -22);
+    fwCtx.lineTo(-30, -18);
+    fwCtx.lineTo(-22, -2);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    fwCtx.beginPath();
+    fwCtx.moveTo(-2, 4);
+    fwCtx.lineTo(-22, 22);
+    fwCtx.lineTo(-30, 18);
+    fwCtx.lineTo(-22, 2);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Long elegant hull
+    fwCtx.beginPath();
+    fwCtx.moveTo(32, 0);
+    fwCtx.lineTo(10, -6);
+    fwCtx.lineTo(-22, -6);
+    fwCtx.lineTo(-26, 0);
+    fwCtx.lineTo(-22, 6);
+    fwCtx.lineTo(10, 6);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Cockpit canopy
+    fwCtx.shadowBlur = 0;
+    fwCtx.fillStyle = '#d6fff0';
+    fwCtx.beginPath();
+    fwCtx.moveTo(22, 0);
+    fwCtx.lineTo(10, -4);
+    fwCtx.lineTo(8, 0);
+    fwCtx.lineTo(10, 4);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.restore();
+  }
+
+  // ---- Ship state ----
+  // Departures start near the center, fly off-screen left.
+  // Arrival starts off-screen right, decelerates to center-stage.
+  let emily = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
+  let kristin = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
+  let rob = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
+
+  const startTime = performance.now() / 1000;
+  let rafId = null;
+
+  function setText(headline, namesHTML, sub) {
+    fwHeadline.textContent = headline;
+    fwNames.innerHTML = namesHTML;
+    fwSub.textContent = sub;
+  }
+
+  function loop() {
+    const t = performance.now() / 1000 - startTime;
+    const W = fwCanvas.width, H = fwCanvas.height;
+    fwCtx.clearRect(0, 0, W, H);
+
+    // Starfield with subtle twinkle
+    for (const s of fwStars) {
+      const tw = 0.5 + 0.5 * Math.sin(t * 1.5 + s.tw);
+      fwCtx.fillStyle = `rgba(255,255,255,${0.4 + 0.5 * tw})`;
+      fwCtx.fillRect(s.x, s.y, s.s, s.s);
+    }
+
+    // ---- Phase scheduling ----
+    // 0.0 - 1.5s: Empty stage, prefix fades in
+    // 1.5 - 3.0s: "Farewell to" headline appears, ships visible at center
+    // 3.0 - 6.5s: Names fade in (Emily, Kristin), engines spool up
+    // 6.5 - 9.0s: Ships thrust off to the left, "We'll miss you both" sub
+    // 9.0 - 10.5s: Brief pause, screen clears
+    // 10.5 - 13.0s: "Welcome aboard" headline, Rob ship enters from right
+    // 13.0 - 15.5s: Rob arrives center, name appears, "Glad to have you" sub
+    // 15.5+ : fade out, transition to intro
+
+    if (t < 1.5) {
+      setText('', '', '');
+    } else if (t < 3.0) {
+      setText('Farewell to two pilots', '', '');
+      // Position ships at slight offset positions, idle (gentle bob)
+      const bob = Math.sin(t * 1.5) * 3;
+      emily.x = W * 0.42; emily.y = H * 0.65 + bob; emily.visible = true; emily.thrust = 0;
+      kristin.x = W * 0.58; kristin.y = H * 0.65 - bob; kristin.visible = true; kristin.thrust = 0;
+    } else if (t < 6.5) {
+      setText('Farewell to two pilots',
+        '<span class="fw-name" style="color:' + ACCT + '">Emily</span>'
+        + ' <span style="color:rgba(255,255,255,0.5)">&amp;</span> '
+        + '<span class="fw-name" style="color:' + RISK + '">Kristin</span>',
+        'Thank you for everything');
+      const bob = Math.sin(t * 1.5) * 3;
+      emily.x = W * 0.42; emily.y = H * 0.65 + bob; emily.thrust = 0;
+      kristin.x = W * 0.58; kristin.y = H * 0.65 - bob; kristin.thrust = 0;
+      // Engines start spooling
+      if (t > 5.5) {
+        const k = (t - 5.5) / 1.0;
+        emily.thrust = k;
+        kristin.thrust = k;
+      }
+    } else if (t < 9.0) {
+      setText('Farewell to two pilots',
+        '<span class="fw-name" style="color:' + ACCT + '">Emily</span>'
+        + ' <span style="color:rgba(255,255,255,0.5)">&amp;</span> '
+        + '<span class="fw-name" style="color:' + RISK + '">Kristin</span>',
+        "We'll miss you both");
+      // Accelerate left, slightly diverging
+      const k = (t - 6.5) / 2.5;
+      const accel = 1400 * k;
+      emily.vx = -accel * 1.0;
+      emily.vy = -60 * k;
+      kristin.vx = -accel * 1.05;
+      kristin.vy = 60 * k;
+      const dt = 1/60;
+      emily.x += emily.vx * dt;
+      emily.y += emily.vy * dt;
+      kristin.x += kristin.vx * dt;
+      kristin.y += kristin.vy * dt;
+      emily.thrust = 1.0;
+      kristin.thrust = 1.0;
+      // Hide once off-screen
+      if (emily.x < -80) emily.visible = false;
+      if (kristin.x < -80) kristin.visible = false;
+    } else if (t < 10.5) {
+      // Pause - empty stage
+      setText('', '', '');
+      emily.visible = false;
+      kristin.visible = false;
+    } else if (t < 13.0) {
+      setText('And welcoming a new pilot', '', '');
+      // Rob enters from right, decelerating
+      if (!rob.visible) {
+        rob.x = W + 80;
+        rob.y = H * 0.65;
+        rob.vx = -900;
+        rob.vy = 0;
+        rob.thrust = 1.0;
+        rob.visible = true;
+      }
+      const dt = 1/60;
+      rob.x += rob.vx * dt;
+      // Decelerate as approaching center
+      const targetX = W * 0.5;
+      if (rob.x < W * 0.7) {
+        rob.vx *= 0.96;
+      }
+      // Settle near center with gentle sine
+      if (rob.x < targetX + 20) {
+        rob.x = targetX + Math.sin(t * 2) * 4;
+        rob.vx = 0;
+        rob.thrust = 0.2;
+      }
+      rob.y = H * 0.65 + Math.sin(t * 1.8) * 3;
+    } else if (t < 15.5) {
+      setText('And welcoming a new pilot',
+        '<span class="fw-name" style="color:' + FIN + '">Rob</span>',
+        "Glad to have you on the team");
+      rob.x = W * 0.5 + Math.sin(t * 2) * 4;
+      rob.y = H * 0.65 + Math.sin(t * 1.8) * 3;
+      rob.thrust = 0.15;
+    } else if (t < 16.5) {
+      // Fade out
+      const k = (t - 15.5) / 1.0;
+      farewellEl.style.opacity = String(1 - k);
+    } else {
+      farewellEl.classList.add('hidden');
+      farewellEl.style.opacity = '';
+      try { sessionStorage.setItem('fars_farewellFinished', '1'); } catch(e) {}
+      cancelAnimationFrame(rafId);
+      return;
+    }
+
+    // Render ships
+    if (emily.visible) drawEmilyShip(emily.x, emily.y, 2.0, Math.PI, emily.thrust);
+    if (kristin.visible) drawKristinShip(kristin.x, kristin.y, 1.4, Math.PI, kristin.thrust);
+    if (rob.visible) drawRobShip(rob.x, rob.y, 1.5, Math.PI, rob.thrust);
+
+    rafId = requestAnimationFrame(loop);
+  }
+  rafId = requestAnimationFrame(loop);
+
+  // Skip button
+  fwSkip.addEventListener('click', () => {
+    farewellEl.classList.add('hidden');
+    cancelAnimationFrame(rafId);
+  });
+})();
 
 // Start intro music on any first user interaction (autoplay policy)
 let introMusicStarted = false;
@@ -2902,10 +3549,12 @@ let myName = null;
 let myTeam = null;
 
 // ---------- Login UI ----------
+const pacifistBtn = document.getElementById('pacifistBtn');
 teamBtns.forEach(btn => {
   btn.addEventListener('click', () => {
     teamBtns.forEach(b => b.classList.remove('selected'));
     cfoBtn.classList.remove('selected');
+    pacifistBtn?.classList.remove('selected');
     btn.classList.add('selected');
     selectedTeam = btn.dataset.team;
     validateLogin();
@@ -2914,8 +3563,16 @@ teamBtns.forEach(btn => {
 cfoBtn.addEventListener('click', () => {
   if (cfoBtn.disabled) return;
   teamBtns.forEach(b => b.classList.remove('selected'));
+  pacifistBtn?.classList.remove('selected');
   cfoBtn.classList.add('selected');
   selectedTeam = 'CFO';
+  validateLogin();
+});
+pacifistBtn?.addEventListener('click', () => {
+  teamBtns.forEach(b => b.classList.remove('selected'));
+  cfoBtn.classList.remove('selected');
+  pacifistBtn.classList.add('selected');
+  selectedTeam = 'Pacifist';
   validateLogin();
 });
 
@@ -3394,13 +4051,17 @@ function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;'
 function showKill(k) {
   const div = document.createElement('div');
   div.className = 'kill-msg';
-  const kc = teamColor(k.killerTeam);
   const vc = teamColor(k.victimTeam);
   let extraTag = '';
   if (k.victimIcebreakerAnswer && k.victimIcebreakerPrompt) {
     extraTag = `<div class="kill-ice">${escapeHtml(k.victimIcebreakerPrompt)}: <em>${escapeHtml(k.victimIcebreakerAnswer)}</em></div>`;
   }
-  div.innerHTML = `<div class="kill-line"><span class="killer" style="color:${kc}">${escapeHtml(k.killer)}</span><span class="arrow">»</span><span class="victim" style="color:${vc}">${escapeHtml(k.victim)}</span></div>${extraTag}`;
+  if (k.selfDestruct) {
+    div.innerHTML = `<div class="kill-line"><span class="victim" style="color:${vc}">${escapeHtml(k.victim)}</span><span class="arrow">⨯</span><span class="killer" style="color:var(--ink-faint)">SELF-DESTRUCTED</span></div>${extraTag}`;
+  } else {
+    const kc = teamColor(k.killerTeam);
+    div.innerHTML = `<div class="kill-line"><span class="killer" style="color:${kc}">${escapeHtml(k.killer)}</span><span class="arrow">»</span><span class="victim" style="color:${vc}">${escapeHtml(k.victim)}</span></div>${extraTag}`;
+  }
   killfeed.appendChild(div);
   setTimeout(() => div.remove(), 7000);
   while (killfeed.children.length > 5) killfeed.removeChild(killfeed.firstChild);
@@ -4072,6 +4733,33 @@ function tick(dt) {
     // Rotate
     if (keys['a'] || keys['arrowleft'])  myState.angle -= stats.turn * dt;
     if (keys['d'] || keys['arrowright']) myState.angle += stats.turn * dt;
+    // Pacifist: instant-stop physics. Thrust = direct velocity, release = instant zero.
+    if (stats.instantStop) {
+      if (keys['w'] || keys['arrowup']) {
+        myState.vx = Math.cos(myState.angle) * stats.maxSpeed;
+        myState.vy = Math.sin(myState.angle) * stats.maxSpeed;
+        // Pink trail particles
+        particles.push({
+          x: myState.x - Math.cos(myState.angle) * 12,
+          y: myState.y - Math.sin(myState.angle) * 12,
+          vx: -Math.cos(myState.angle) * 80 + (Math.random() - 0.5) * 60,
+          vy: -Math.sin(myState.angle) * 80 + (Math.random() - 0.5) * 60,
+          life: 0.5, max: 0.5,
+          color: '#ff3fb5',
+          size: 2
+        });
+      } else {
+        myState.vx = 0; myState.vy = 0;
+      }
+      // Direct position update, skip drag and speed cap
+      myState.x += myState.vx * dt;
+      myState.y += myState.vy * dt;
+      // Wrap
+      if (myState.x < 0) myState.x += WORLD_W;
+      if (myState.x > WORLD_W) myState.x -= WORLD_W;
+      if (myState.y < 0) myState.y += WORLD_H;
+      if (myState.y > WORLD_H) myState.y -= WORLD_H;
+    } else {
     // Thrust
     if (keys['w'] || keys['arrowup']) {
       myState.vx += Math.cos(myState.angle) * stats.accel * dt;
@@ -4101,6 +4789,7 @@ function tick(dt) {
     if (myState.x > WORLD_W) myState.x -= WORLD_W;
     if (myState.y < 0) myState.y += WORLD_H;
     if (myState.y > WORLD_H) myState.y -= WORLD_H;
+    } // end non-Pacifist physics
 
     // Fire — dispatched by team weapon
     if (keys[' ']) {
@@ -4835,8 +5524,139 @@ function fireTrapezoid() {
   trapezoids.set(id, { ...tp, birth: performance.now()/1000 });
 }
 
+// 6 distinct death explosion styles - randomly selected each time someone dies
+// 1: Classic burst    2: Ring shockwave    3: Streamers    4: Bloom flower
+// 5: Plasma chaos     6: Implode-then-explode
+function spawnDeathExplosion(x, y, color) {
+  const style = Math.floor(Math.random() * 6) + 1;
+  const SPARK = '#ffffff';
+  const HOT = '#ffd040';
+  if (style === 1) {
+    // Classic burst - dense radial particles
+    for (let i = 0; i < 50; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 100 + Math.random() * 280;
+      particles.push({
+        x, y,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        life: 0.9, max: 0.9,
+        color: Math.random() < 0.3 ? HOT : color,
+        size: 2 + Math.random() * 3
+      });
+    }
+  } else if (style === 2) {
+    // Ring shockwave - particles all moving outward at same speed
+    for (let i = 0; i < 60; i++) {
+      const a = (i / 60) * Math.PI * 2 + (Math.random() - 0.5) * 0.05;
+      const sp = 240 + Math.random() * 30;
+      particles.push({
+        x, y,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        life: 0.7, max: 0.7,
+        color: SPARK,
+        size: 2.5
+      });
+    }
+    // Inner color fill
+    for (let i = 0; i < 25; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 50 + Math.random() * 120;
+      particles.push({
+        x, y,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        life: 0.5, max: 0.5,
+        color, size: 3
+      });
+    }
+  } else if (style === 3) {
+    // Streamers - 8 fast trails in cardinal directions
+    for (let beam = 0; beam < 8; beam++) {
+      const baseA = (beam / 8) * Math.PI * 2;
+      for (let i = 0; i < 12; i++) {
+        const a = baseA + (Math.random() - 0.5) * 0.15;
+        const sp = 80 + i * 35 + Math.random() * 40;
+        particles.push({
+          x, y,
+          vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+          life: 0.7 + Math.random() * 0.3, max: 1.0,
+          color: i < 3 ? HOT : color,
+          size: 2 + Math.random() * 2
+        });
+      }
+    }
+  } else if (style === 4) {
+    // Bloom flower - 5 petal-shaped clusters
+    const petals = 5;
+    for (let p = 0; p < petals; p++) {
+      const baseA = (p / petals) * Math.PI * 2;
+      const petalDist = 60;
+      const cx = x + Math.cos(baseA) * petalDist;
+      const cy = y + Math.sin(baseA) * petalDist;
+      for (let i = 0; i < 18; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const sp = 30 + Math.random() * 140;
+        particles.push({
+          x: cx, y: cy,
+          vx: Math.cos(a) * sp + Math.cos(baseA) * 60,
+          vy: Math.sin(a) * sp + Math.sin(baseA) * 60,
+          life: 0.8, max: 0.8,
+          color: Math.random() < 0.5 ? color : SPARK,
+          size: 2 + Math.random() * 2
+        });
+      }
+    }
+  } else if (style === 5) {
+    // Plasma chaos - lots of erratic colored particles
+    const palette = [color, HOT, SPARK, '#ff4d8a', '#9aeaff'];
+    for (let i = 0; i < 80; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 50 + Math.random() * 350;
+      particles.push({
+        x: x + (Math.random() - 0.5) * 10,
+        y: y + (Math.random() - 0.5) * 10,
+        vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+        life: 0.5 + Math.random() * 0.7, max: 1.2,
+        color: palette[Math.floor(Math.random() * palette.length)],
+        size: 1.5 + Math.random() * 3.5
+      });
+    }
+  } else {
+    // Implode-then-explode - particles converge, then a burst
+    for (let i = 0; i < 24; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const dist = 50 + Math.random() * 60;
+      particles.push({
+        x: x + Math.cos(a) * dist,
+        y: y + Math.sin(a) * dist,
+        vx: -Math.cos(a) * (dist * 4),
+        vy: -Math.sin(a) * (dist * 4),
+        life: 0.25, max: 0.25,
+        color: SPARK, size: 2
+      });
+    }
+    // Delayed center burst
+    setTimeout(() => {
+      for (let i = 0; i < 60; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const sp = 80 + Math.random() * 320;
+        particles.push({
+          x, y,
+          vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+          life: 0.9, max: 0.9,
+          color: Math.random() < 0.4 ? HOT : color,
+          size: 2 + Math.random() * 3
+        });
+      }
+    }, 250);
+  }
+}
+
 function handleDeath(bullet) {
   if (dead) return;
+  // Pacifist is immune to all weapons — only F4 self-destruct works (which bypasses this function)
+  if (myTeam === 'Pacifist') {
+    return;
+  }
   // Shield absorbs the hit (no HP loss)
   if (myState && myState.shielding && myState.shield > 0) {
     sfx('hit');
@@ -4888,18 +5708,8 @@ function handleDeath(bullet) {
   respawnEl.classList.add('show');
   sfx('death');
 
-  // Explosion particles
-  for (let i = 0; i < 30; i++) {
-    const a = Math.random() * Math.PI * 2;
-    const sp = 80 + Math.random() * 200;
-    particles.push({
-      x: myState.x, y: myState.y,
-      vx: Math.cos(a)*sp, vy: Math.sin(a)*sp,
-      life: 0.8, max: 0.8,
-      color: teamColor(myTeam),
-      size: 2 + Math.random() * 2
-    });
-  }
+  // Awesome explosion - one of 6 random styles
+  spawnDeathExplosion(myState.x, myState.y, teamColor(myTeam));
 
   // Update my deaths in DB
   myState.deaths++;
@@ -5690,6 +6500,114 @@ function drawShip(p, isMe) {
 
   ctx.save();
   ctx.translate(p.x, p.y);
+
+  if (p.team === 'Pacifist') {
+    // Pacifist - twin onion-dome ship in neon pink. Two towers side-by-side, the right one shorter.
+    const pink = '#ff3fb5';
+    const pinkSoft = 'rgba(255, 63, 181, 0.35)';
+    ctx.rotate(p.angle + Math.PI / 2); // align tip toward facing direction
+    ctx.shadowColor = pink;
+    ctx.shadowBlur = isMe ? 24 : 18;
+    // Outer aura
+    ctx.fillStyle = pinkSoft;
+    ctx.beginPath();
+    ctx.arc(0, 2, 26, 0, Math.PI * 2);
+    ctx.fill();
+    // Wide shared base platform supporting both towers
+    ctx.fillStyle = pink;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-18, 14);
+    ctx.lineTo(18, 14);
+    ctx.lineTo(15, 10);
+    ctx.lineTo(-15, 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // ===== LEFT TOWER (taller, primary) =====
+    // Tower body
+    ctx.beginPath();
+    ctx.moveTo(-12, 10);
+    ctx.lineTo(-2, 10);
+    ctx.lineTo(-3, -4);
+    ctx.lineTo(-11, -4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Onion dome
+    ctx.beginPath();
+    ctx.moveTo(-11, -4);
+    ctx.bezierCurveTo(-16, -6, -15, -14, -8, -14);
+    ctx.bezierCurveTo(-7, -16, -3, -16, -2, -14);
+    ctx.bezierCurveTo(5, -14, 6, -6, -3, -4);
+    ctx.fill();
+    ctx.stroke();
+    // Spire
+    ctx.beginPath();
+    ctx.moveTo(-7.5, -16);
+    ctx.lineTo(-5.5, -16);
+    ctx.lineTo(-6.5, -24);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Window
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur = 0;
+    ctx.fillRect(-8, 2, 3, 4);
+    ctx.shadowColor = pink;
+    ctx.shadowBlur = isMe ? 24 : 18;
+
+    // ===== RIGHT TOWER (shorter, companion) =====
+    ctx.fillStyle = pink;
+    // Tower body (shorter)
+    ctx.beginPath();
+    ctx.moveTo(3, 10);
+    ctx.lineTo(11, 10);
+    ctx.lineTo(10, 0);
+    ctx.lineTo(4, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Smaller onion dome
+    ctx.beginPath();
+    ctx.moveTo(4, 0);
+    ctx.bezierCurveTo(0, -2, 1, -9, 6, -9);
+    ctx.bezierCurveTo(7, -10, 8, -10, 8, -9);
+    ctx.bezierCurveTo(13, -9, 14, -2, 10, 0);
+    ctx.fill();
+    ctx.stroke();
+    // Shorter spire
+    ctx.beginPath();
+    ctx.moveTo(6.4, -10);
+    ctx.lineTo(7.6, -10);
+    ctx.lineTo(7, -16);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Small window
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowBlur = 0;
+    ctx.fillRect(5.5, 4, 2.5, 3);
+
+    ctx.restore();
+    // Floating peace symbol indicator above
+    ctx.font = '700 11px Orbitron, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = pink;
+    ctx.shadowColor = pink;
+    ctx.shadowBlur = 8;
+    ctx.fillText('☮ PACIFIST', p.x, p.y - 32);
+    ctx.shadowBlur = 0;
+    // Player name
+    if (p.name) {
+      ctx.font = '600 11px JetBrains Mono, monospace';
+      ctx.fillStyle = isMe ? '#ffffff' : 'rgba(255,255,255,0.8)';
+      ctx.fillText(p.name, p.x, p.y + 38);
+    }
+    return;
+  }
 
   if (p.team === 'CFO') {
     // Rotate so the pointer faces movement direction
