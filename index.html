@@ -229,7 +229,7 @@
     font-size: clamp(20px, 2.6vw, 32px);
     line-height: 1.7;
     text-align: justify;
-    animation: crawl 200s linear 14s forwards;
+    animation: crawl 130s linear 14s forwards;
     text-shadow: 0 0 8px rgba(255,230,0,0.45);
   }
   #crawlContent p { margin-bottom: 1.6em; }
@@ -1399,16 +1399,6 @@
         <p>RISK MANAGEMENT, weary of being ignored in meetings, scattered minefields across every trade lane. Their heat map is now the galaxy itself, and everything is red.</p>
 
         <p>Meanwhile, the cold strategists of STRATEGY fire cones of synergy so devastating that the recoil launches them backward into the very pivot tables they were fleeing.</p>
-
-        <p>Whispers tell of deeper horrors. COMPLIANCE, auditing the very fabric of space-time, has flagged three galaxies as non-compliant and placed the Milky Way in remediation.</p>
-
-        <p>FRAUD, lurking in the shadows of the org chart, has allegedly expensed a second Death Star as "team-building." An internal investigation is pending the completion of another investigation.</p>
-
-        <p>PROJECT MANAGEMENT, wielding their legendary Gantt charts, has declared the war on schedule, under budget, and 40% complete — numbers which are, as always, directionally accurate.</p>
-
-        <p>PAYROLL, silent and vengeful, has withheld direct deposit from every starfighter pilot. The rebellion cannot be funded. It cannot even be reimbursed.</p>
-
-        <p>Legacy systems whisper of a forgotten hero — the mythical INTERN — who once printed the entire general ledger and is still looking for the output tray.</p>
 
         <p>Kickoff meetings are scheduled. Stakeholders are aligned. Action items are unassigned. The war has been added to the parking lot and will be revisited next sprint.</p>
 
@@ -2615,8 +2605,8 @@ skipBtn.addEventListener('click', () => {
   endIntro();
 });
 
-// Auto-advance to login after the crawl
-setTimeout(() => endIntro(), 220000);
+// Auto-advance to login after the crawl (14s start delay + 130s scroll + 4s grace)
+setTimeout(() => endIntro(), 148000);
 
 // ===========================================================================
 // FAREWELL + WELCOME SCREEN
@@ -2633,23 +2623,19 @@ setTimeout(() => endIntro(), 220000);
   const fwSkip = document.getElementById('farewellSkip');
   if (!farewellEl || !fwCanvas) return;
 
-  // Clean up legacy localStorage flag from earlier version that gated forever
+  // Aggressive cleanup of any legacy state that might block the screen
   try { localStorage.removeItem('fars_farewellSeen'); } catch(e) {}
 
-  // Allow forcing the screen to show via ?fw=1 in the URL (for testing/replay)
-  // Skip via ?fw=0 for sessions where you don't want it
-  const force = /[?&]fw=1\b/.test(location.search);
+  // Allow opt-out via ?fw=0 in the URL for sessions where you don't want it
   const skipParam = /[?&]fw=0\b/.test(location.search);
-  let alreadySeen = false;
-  try { alreadySeen = sessionStorage.getItem('fars_farewellSeen') === '1'; } catch(e) {}
-  if ((alreadySeen || skipParam) && !force) {
+  // Only skip if user already FINISHED watching it in this current tab session
+  // (sessionStorage clears when the tab is closed, so closing+reopening always replays)
+  let finishedInTab = false;
+  try { finishedInTab = sessionStorage.getItem('fars_farewellFinished') === '1'; } catch(e) {}
+  if (finishedInTab || skipParam) {
     farewellEl.classList.add('hidden');
     return;
   }
-
-  // We mark "seen" only when the animation completes (not at start),
-  // so a reload mid-screen still replays. Using sessionStorage means
-  // it resets when the browser tab is closed.
 
   const fwCtx = fwCanvas.getContext('2d');
   function resizeFw() {
@@ -3073,7 +3059,7 @@ setTimeout(() => endIntro(), 220000);
     } else {
       farewellEl.classList.add('hidden');
       farewellEl.style.opacity = '';
-      try { sessionStorage.setItem('fars_farewellSeen', '1'); } catch(e) {}
+      try { sessionStorage.setItem('fars_farewellFinished', '1'); } catch(e) {}
       cancelAnimationFrame(rafId);
       return;
     }
