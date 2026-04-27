@@ -156,7 +156,7 @@
     white-space: nowrap;
     opacity: 0;
     text-align: center;
-    animation: subtitleFade 7s ease-in-out forwards;
+    animation: subtitleFade 3.5s ease-in-out forwards;
     z-index: 2;
   }
   @keyframes subtitleFade {
@@ -179,7 +179,7 @@
     white-space: nowrap;
     opacity: 0;
     text-shadow: 0 0 40px rgba(255, 230, 0, 0.6);
-    animation: logoShow 7s ease-in-out 7s forwards;
+    animation: logoShow 3.5s ease-in-out 3.5s forwards;
     z-index: 2;
   }
   @keyframes logoShow {
@@ -201,7 +201,7 @@
     perspective: 500px;
     perspective-origin: 50% 100%;
     opacity: 0;
-    animation: crawlShow 1s ease-in 14s forwards;
+    animation: crawlShow 1s ease-in 7s forwards;
     z-index: 2;
   }
   @keyframes crawlShow { to { opacity: 1; } }
@@ -229,7 +229,7 @@
     font-size: clamp(20px, 2.6vw, 32px);
     line-height: 1.7;
     text-align: justify;
-    animation: crawl 130s linear 14s forwards;
+    animation: crawl 130s linear 7s forwards;
     text-shadow: 0 0 8px rgba(255,230,0,0.45);
   }
   #crawlContent p { margin-bottom: 1.6em; }
@@ -271,7 +271,7 @@
     pointer-events: none;
     z-index: 4;
     opacity: 0;
-    animation: crawlShow 1s ease-in 14s forwards;
+    animation: crawlShow 1s ease-in 7s forwards;
   }
 
   #skipIntro {
@@ -1402,7 +1402,7 @@
 
         <p>Kickoff meetings are scheduled. Stakeholders are aligned. Action items are unassigned. The war has been added to the parking lot and will be revisited next sprint.</p>
 
-        <p>Which side shall secure enough Compute before the mysterious ship CFO arrives, demanding to know why EBITDA has been "adjusted" for the fourteenth consecutive quarter...</p>
+        <p>Which side shall secure enough Compute before the mysterious ship CFO arrives, demanding to know why CECL has been "adjusted" for the fourteenth consecutive quarter...</p>
 
         <p class="crawl-final">May the Forecast be with you.</p>
       </div>
@@ -2605,8 +2605,8 @@ skipBtn.addEventListener('click', () => {
   endIntro();
 });
 
-// Auto-advance to login after the crawl (14s start delay + 130s scroll + 4s grace)
-setTimeout(() => endIntro(), 148000);
+// Auto-advance to login after the crawl (7s start delay + 130s scroll + 4s grace)
+setTimeout(() => endIntro(), 141000);
 
 // ===========================================================================
 // FAREWELL + WELCOME SCREEN
