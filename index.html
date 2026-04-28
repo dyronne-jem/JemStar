@@ -394,7 +394,7 @@
     font-size: 11px;
     letter-spacing: 0.3em;
     text-transform: uppercase;
-    margin-bottom: 28px;
+    margin-bottom: 0;
   }
   .field-label {
     display: block;
@@ -592,6 +592,44 @@
   }
   #joinBtn:hover { transform: translateY(-1px); }
   #joinBtn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .title-block { flex: 0 0 auto; }
+  .controls-hint-inline {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 14px;
+    row-gap: 4px;
+    font-size: 10px;
+    line-height: 1.5;
+    text-align: right;
+    flex: 1 1 auto;
+    max-width: 280px;
+  }
+  .controls-hint-inline > div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .controls-hint-inline .ff-note {
+    grid-column: 1 / -1;
+    color: var(--ink-faint);
+    font-style: italic;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+    opacity: 0.7;
+  }
   .controls-hint {
     margin-top: 22px;
     padding-top: 18px;
@@ -611,6 +649,11 @@
     font-family: inherit;
     font-size: 10px;
     margin: 0 2px;
+  }
+  .controls-hint-inline kbd {
+    padding: 1px 5px;
+    font-size: 9px;
+    margin: 0 1px;
   }
 
   /* ===== Game UI ===== */
@@ -1415,8 +1458,21 @@
 <div id="login">
   <div id="loginStars"></div>
   <div class="login-card">
-    <div class="title">FARS WARS</div>
-    <div class="subtitle">// 4-Team Orbital Combat</div>
+    <div class="title-row">
+      <div class="title-block">
+        <div class="title">FARS WARS</div>
+        <div class="subtitle">// 4-Team Orbital Combat</div>
+      </div>
+      <div class="controls-hint controls-hint-inline">
+        <div><kbd>W</kbd>/<kbd>↑</kbd> thrust</div>
+        <div><kbd>A</kbd><kbd>D</kbd>/<kbd>←</kbd><kbd>→</kbd> rotate</div>
+        <div><kbd>Space</kbd> fire</div>
+        <div><kbd>E</kbd> shield</div>
+        <div><kbd>F4</kbd> self-destruct</div>
+        <div><kbd>Enter</kbd> chat</div>
+        <div class="ff-note">Friendly fire is OFF</div>
+      </div>
+    </div>
 
     <label class="field-label">Call Sign</label>
     <input id="nameInput" type="text" maxlength="16" placeholder="Enter your name..." autocomplete="off" />
@@ -1468,11 +1524,6 @@
     </div>
 
     <button id="joinBtn" disabled>Launch</button>
-
-    <div class="controls-hint">
-      <kbd>W</kbd>/<kbd>↑</kbd> thrust &nbsp; <kbd>A</kbd><kbd>D</kbd>/<kbd>←</kbd><kbd>→</kbd> rotate &nbsp; <kbd>Space</kbd> fire<br>
-      <kbd>E</kbd> shield &nbsp; <kbd>F4</kbd> self-destruct &nbsp; <kbd>Enter</kbd> chat &nbsp; Friendly fire is OFF.
-    </div>
   </div>
 </div>
 
