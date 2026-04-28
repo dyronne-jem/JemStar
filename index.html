@@ -2931,12 +2931,228 @@ setTimeout(() => endIntro(), 141000);
     fwCtx.restore();
   }
 
+  // Harley — stout cargo-hauler with side-mounted thrusters and a bubble cockpit
+  function drawHarleyShip(cx, cy, scale, angle, thrustGlow) {
+    fwCtx.save();
+    fwCtx.translate(cx, cy);
+    fwCtx.rotate(angle);
+    fwCtx.scale(scale, scale);
+    if (thrustGlow > 0) {
+      // Twin thrusters mean two glow plumes
+      for (const off of [-9, 9]) {
+        const grd = fwCtx.createRadialGradient(-22, off, 0, -22, off, 50);
+        grd.addColorStop(0, `rgba(255, 182, 39, ${0.55 * thrustGlow})`);
+        grd.addColorStop(0.5, `rgba(255, 110, 20, ${0.22 * thrustGlow})`);
+        grd.addColorStop(1, 'rgba(255,110,20,0)');
+        fwCtx.fillStyle = grd;
+        fwCtx.beginPath();
+        fwCtx.arc(-22, off, 50, 0, Math.PI * 2);
+        fwCtx.fill();
+      }
+    }
+    fwCtx.shadowColor = ACCT;
+    fwCtx.shadowBlur = 16;
+    fwCtx.fillStyle = ACCT;
+    fwCtx.strokeStyle = '#fff7e0';
+    fwCtx.lineWidth = 1.5;
+    // Wide stocky main hull (square-ish cargo body)
+    fwCtx.beginPath();
+    fwCtx.moveTo(22, 0);
+    fwCtx.lineTo(16, -10);
+    fwCtx.lineTo(-14, -12);
+    fwCtx.lineTo(-18, -6);
+    fwCtx.lineTo(-18, 6);
+    fwCtx.lineTo(-14, 12);
+    fwCtx.lineTo(16, 10);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Side-mounted thruster pods (parallel to hull on each side)
+    fwCtx.beginPath();
+    fwCtx.rect(-22, -13, 12, 5);
+    fwCtx.fill();
+    fwCtx.stroke();
+    fwCtx.beginPath();
+    fwCtx.rect(-22, 8, 12, 5);
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Cargo paneling lines for visual texture
+    fwCtx.shadowBlur = 0;
+    fwCtx.strokeStyle = 'rgba(0,0,0,0.4)';
+    fwCtx.lineWidth = 0.8;
+    for (let x = -10; x <= 10; x += 6) {
+      fwCtx.beginPath();
+      fwCtx.moveTo(x, -10);
+      fwCtx.lineTo(x, 10);
+      fwCtx.stroke();
+    }
+    // Bubble cockpit dome at the front
+    fwCtx.fillStyle = 'rgba(180, 230, 255, 0.85)';
+    fwCtx.strokeStyle = '#fff7e0';
+    fwCtx.lineWidth = 1.2;
+    fwCtx.beginPath();
+    fwCtx.arc(14, 0, 5, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Cockpit highlight
+    fwCtx.fillStyle = 'rgba(255,255,255,0.7)';
+    fwCtx.beginPath();
+    fwCtx.arc(15.5, -1.5, 1.2, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.restore();
+  }
+
+  // Kyle — long thin needle/javelin with swept-back stabilizers
+  function drawKyleShip(cx, cy, scale, angle, thrustGlow) {
+    fwCtx.save();
+    fwCtx.translate(cx, cy);
+    fwCtx.rotate(angle);
+    fwCtx.scale(scale, scale);
+    if (thrustGlow > 0) {
+      const grd = fwCtx.createRadialGradient(-26, 0, 0, -26, 0, 65);
+      grd.addColorStop(0, `rgba(255, 182, 39, ${0.7 * thrustGlow})`);
+      grd.addColorStop(0.5, `rgba(255, 100, 0, ${0.28 * thrustGlow})`);
+      grd.addColorStop(1, 'rgba(255,100,0,0)');
+      fwCtx.fillStyle = grd;
+      fwCtx.beginPath();
+      fwCtx.arc(-26, 0, 65, 0, Math.PI * 2);
+      fwCtx.fill();
+    }
+    fwCtx.shadowColor = ACCT;
+    fwCtx.shadowBlur = 18;
+    fwCtx.fillStyle = ACCT;
+    fwCtx.strokeStyle = '#fff7e0';
+    fwCtx.lineWidth = 1.5;
+    // Very long thin needle hull
+    fwCtx.beginPath();
+    fwCtx.moveTo(36, 0);
+    fwCtx.lineTo(28, -3);
+    fwCtx.lineTo(-22, -3);
+    fwCtx.lineTo(-26, 0);
+    fwCtx.lineTo(-22, 3);
+    fwCtx.lineTo(28, 3);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Swept-back stabilizers (delta wings near tail, angled outward)
+    fwCtx.beginPath();
+    fwCtx.moveTo(-8, -3);
+    fwCtx.lineTo(-22, -16);
+    fwCtx.lineTo(-26, -14);
+    fwCtx.lineTo(-22, -3);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    fwCtx.beginPath();
+    fwCtx.moveTo(-8, 3);
+    fwCtx.lineTo(-22, 16);
+    fwCtx.lineTo(-26, 14);
+    fwCtx.lineTo(-22, 3);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Smaller forward canard wings near nose
+    fwCtx.beginPath();
+    fwCtx.moveTo(20, -3);
+    fwCtx.lineTo(24, -8);
+    fwCtx.lineTo(28, -8);
+    fwCtx.lineTo(24, -3);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    fwCtx.beginPath();
+    fwCtx.moveTo(20, 3);
+    fwCtx.lineTo(24, 8);
+    fwCtx.lineTo(28, 8);
+    fwCtx.lineTo(24, 3);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Sharp tip highlight
+    fwCtx.shadowBlur = 0;
+    fwCtx.fillStyle = '#fff7e0';
+    fwCtx.beginPath();
+    fwCtx.moveTo(36, 0);
+    fwCtx.lineTo(30, -1.5);
+    fwCtx.lineTo(30, 1.5);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.restore();
+  }
+
+  // Maddy — saucer ship with a circular ring around a central pod
+  function drawMaddyShip(cx, cy, scale, angle, thrustGlow) {
+    fwCtx.save();
+    fwCtx.translate(cx, cy);
+    fwCtx.rotate(angle);
+    fwCtx.scale(scale, scale);
+    if (thrustGlow > 0) {
+      const grd = fwCtx.createRadialGradient(-22, 0, 0, -22, 0, 60);
+      grd.addColorStop(0, `rgba(255, 182, 39, ${0.6 * thrustGlow})`);
+      grd.addColorStop(0.5, `rgba(255, 110, 20, ${0.25 * thrustGlow})`);
+      grd.addColorStop(1, 'rgba(255,110,20,0)');
+      fwCtx.fillStyle = grd;
+      fwCtx.beginPath();
+      fwCtx.arc(-22, 0, 60, 0, Math.PI * 2);
+      fwCtx.fill();
+    }
+    fwCtx.shadowColor = ACCT;
+    fwCtx.shadowBlur = 18;
+    fwCtx.strokeStyle = '#fff7e0';
+    fwCtx.lineWidth = 1.5;
+    // Outer ring (large circle)
+    fwCtx.fillStyle = 'rgba(255, 182, 39, 0.25)';
+    fwCtx.beginPath();
+    fwCtx.arc(0, 0, 16, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.strokeStyle = ACCT;
+    fwCtx.lineWidth = 2.5;
+    fwCtx.beginPath();
+    fwCtx.arc(0, 0, 16, 0, Math.PI * 2);
+    fwCtx.stroke();
+    // Spokes connecting outer ring to inner pod (4 of them)
+    fwCtx.lineWidth = 1.5;
+    for (let a = 0; a < 4; a++) {
+      const ang = (a / 4) * Math.PI * 2 + Math.PI / 4;
+      fwCtx.beginPath();
+      fwCtx.moveTo(Math.cos(ang) * 7, Math.sin(ang) * 7);
+      fwCtx.lineTo(Math.cos(ang) * 16, Math.sin(ang) * 16);
+      fwCtx.stroke();
+    }
+    // Central pod (solid filled circle)
+    fwCtx.fillStyle = ACCT;
+    fwCtx.strokeStyle = '#fff7e0';
+    fwCtx.lineWidth = 1.5;
+    fwCtx.beginPath();
+    fwCtx.arc(0, 0, 7, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Forward indicator (small triangle pointing forward, on top of ring)
+    fwCtx.beginPath();
+    fwCtx.moveTo(20, 0);
+    fwCtx.lineTo(14, -3);
+    fwCtx.lineTo(14, 3);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Cockpit dot in center pod
+    fwCtx.shadowBlur = 0;
+    fwCtx.fillStyle = 'rgba(180, 230, 255, 0.9)';
+    fwCtx.beginPath();
+    fwCtx.arc(2, 0, 2.5, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.restore();
+  }
+
   // ---- Ship state ----
   // Departures start near the center, fly off-screen left.
   // Arrival starts off-screen right, decelerates to center-stage.
   let emily = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
   let kristin = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
   let rob = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
+  let harley = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
+  let kyle = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
+  let maddy = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
 
   const startTime = performance.now() / 1000;
   let rafId = null;
@@ -3052,9 +3268,70 @@ setTimeout(() => endIntro(), 141000);
       rob.x = W * 0.5 + Math.sin(t * 2) * 4;
       rob.y = H * 0.65 + Math.sin(t * 1.8) * 3;
       rob.thrust = 0.15;
-    } else if (t < 16.5) {
+    } else if (t < 18.0) {
+      // Rob drifts a bit so the new pilots have room
+      setText('And three more from Accounting',
+        '<span class="fw-name" style="color:' + ACCT + '">Harley</span>'
+        + ' <span style="color:rgba(255,255,255,0.5)">·</span> '
+        + '<span class="fw-name" style="color:' + ACCT + '">Kyle</span>'
+        + ' <span style="color:rgba(255,255,255,0.5)">·</span> '
+        + '<span class="fw-name" style="color:' + ACCT + '">Maddy</span>',
+        "");
+      // Move Rob gently up-and-left so others have room
+      const k = Math.min(1, (t - 15.5) / 2.0);
+      rob.x = W * 0.5 - 60 * k + Math.sin(t * 2) * 3;
+      rob.y = H * 0.65 - 30 * k + Math.sin(t * 1.8) * 3;
+      rob.thrust = 0.1;
+      // Spawn the three new ships off-screen right if not yet visible
+      if (!harley.visible) {
+        harley.x = W + 80; harley.y = H * 0.62;
+        harley.vx = -800; harley.thrust = 1.0; harley.visible = true;
+      }
+      if (!kyle.visible) {
+        kyle.x = W + 180; kyle.y = H * 0.72;
+        kyle.vx = -880; kyle.thrust = 1.0; kyle.visible = true;
+      }
+      if (!maddy.visible) {
+        maddy.x = W + 280; maddy.y = H * 0.55;
+        maddy.vx = -780; maddy.thrust = 1.0; maddy.visible = true;
+      }
+      const dt = 1/60;
+      // Decelerate each as they approach their parking spots
+      const targetHX = W * 0.42, targetKX = W * 0.55, targetMX = W * 0.68;
+      if (harley.x < W * 0.7) harley.vx *= 0.95;
+      if (kyle.x < W * 0.75) kyle.vx *= 0.95;
+      if (maddy.x < W * 0.8) maddy.vx *= 0.95;
+      harley.x += harley.vx * dt;
+      kyle.x += kyle.vx * dt;
+      maddy.x += maddy.vx * dt;
+      // Settle when close enough
+      if (harley.x < targetHX + 20) { harley.x = targetHX + Math.sin(t * 1.7) * 3; harley.vx = 0; harley.thrust = 0.15; }
+      if (kyle.x < targetKX + 20) { kyle.x = targetKX + Math.sin(t * 1.9) * 3; kyle.vx = 0; kyle.thrust = 0.15; }
+      if (maddy.x < targetMX + 20) { maddy.x = targetMX + Math.sin(t * 2.1) * 3; maddy.vx = 0; maddy.thrust = 0.15; }
+      harley.y = H * 0.62 + Math.sin(t * 1.7) * 3;
+      kyle.y = H * 0.72 + Math.sin(t * 1.9) * 3;
+      maddy.y = H * 0.55 + Math.sin(t * 2.1) * 3;
+    } else if (t < 21.0) {
+      setText('And three more from Accounting',
+        '<span class="fw-name" style="color:' + ACCT + '">Harley</span>'
+        + ' <span style="color:rgba(255,255,255,0.5)">·</span> '
+        + '<span class="fw-name" style="color:' + ACCT + '">Kyle</span>'
+        + ' <span style="color:rgba(255,255,255,0.5)">·</span> '
+        + '<span class="fw-name" style="color:' + ACCT + '">Maddy</span>',
+        "Welcome aboard, all of you");
+      // Hold positions, gentle bobbing
+      rob.x = W * 0.5 - 60 + Math.sin(t * 2) * 3;
+      rob.y = H * 0.65 - 30 + Math.sin(t * 1.8) * 3;
+      harley.x = W * 0.42 + Math.sin(t * 1.7) * 3;
+      harley.y = H * 0.62 + Math.sin(t * 1.7) * 3;
+      kyle.x = W * 0.55 + Math.sin(t * 1.9) * 3;
+      kyle.y = H * 0.72 + Math.sin(t * 1.9) * 3;
+      maddy.x = W * 0.68 + Math.sin(t * 2.1) * 3;
+      maddy.y = H * 0.55 + Math.sin(t * 2.1) * 3;
+      rob.thrust = 0.1; harley.thrust = 0.15; kyle.thrust = 0.15; maddy.thrust = 0.15;
+    } else if (t < 22.0) {
       // Fade out
-      const k = (t - 15.5) / 1.0;
+      const k = (t - 21.0) / 1.0;
       farewellEl.style.opacity = String(1 - k);
     } else {
       farewellEl.classList.add('hidden');
@@ -3068,6 +3345,9 @@ setTimeout(() => endIntro(), 141000);
     if (emily.visible) drawEmilyShip(emily.x, emily.y, 2.0, Math.PI, emily.thrust);
     if (kristin.visible) drawKristinShip(kristin.x, kristin.y, 1.4, Math.PI, kristin.thrust);
     if (rob.visible) drawRobShip(rob.x, rob.y, 1.5, Math.PI, rob.thrust);
+    if (harley.visible) drawHarleyShip(harley.x, harley.y, 1.4, Math.PI, harley.thrust);
+    if (kyle.visible) drawKyleShip(kyle.x, kyle.y, 1.4, Math.PI, kyle.thrust);
+    if (maddy.visible) drawMaddyShip(maddy.x, maddy.y, 1.4, Math.PI, maddy.thrust);
 
     rafId = requestAnimationFrame(loop);
   }
