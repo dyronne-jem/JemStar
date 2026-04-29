@@ -3196,15 +3196,167 @@ setTimeout(() => endIntro(), 141000);
     fwCtx.restore();
   }
 
+  // Jen — asymmetric scout with twin rear engines and a slanted forward sensor array (Accounting orange)
+  function drawJenShip(cx, cy, scale, angle, thrustGlow) {
+    fwCtx.save();
+    fwCtx.translate(cx, cy);
+    fwCtx.rotate(angle);
+    fwCtx.scale(scale, scale);
+    if (thrustGlow > 0) {
+      // Twin rear engines = two glow plumes side by side
+      for (const off of [-6, 6]) {
+        const grd = fwCtx.createRadialGradient(-22, off, 0, -22, off, 55);
+        grd.addColorStop(0, `rgba(255, 182, 39, ${0.6 * thrustGlow})`);
+        grd.addColorStop(0.5, `rgba(255, 110, 20, ${0.25 * thrustGlow})`);
+        grd.addColorStop(1, 'rgba(255,110,20,0)');
+        fwCtx.fillStyle = grd;
+        fwCtx.beginPath();
+        fwCtx.arc(-22, off, 55, 0, Math.PI * 2);
+        fwCtx.fill();
+      }
+    }
+    fwCtx.shadowColor = ACCT;
+    fwCtx.shadowBlur = 16;
+    fwCtx.fillStyle = ACCT;
+    fwCtx.strokeStyle = '#fff7e0';
+    fwCtx.lineWidth = 1.5;
+    // Main hull — sleek scout body
+    fwCtx.beginPath();
+    fwCtx.moveTo(28, 0);
+    fwCtx.lineTo(20, -6);
+    fwCtx.lineTo(-12, -8);
+    fwCtx.lineTo(-18, -4);
+    fwCtx.lineTo(-18, 4);
+    fwCtx.lineTo(-12, 8);
+    fwCtx.lineTo(20, 6);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Twin rear engine pods
+    fwCtx.beginPath();
+    fwCtx.rect(-22, -8, 8, 4);
+    fwCtx.fill();
+    fwCtx.stroke();
+    fwCtx.beginPath();
+    fwCtx.rect(-22, 4, 8, 4);
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Slanted forward sensor array (asymmetric — only on top side)
+    fwCtx.beginPath();
+    fwCtx.moveTo(10, -8);
+    fwCtx.lineTo(14, -16);
+    fwCtx.lineTo(20, -16);
+    fwCtx.lineTo(18, -8);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Sensor dish at the tip of the array
+    fwCtx.shadowBlur = 0;
+    fwCtx.fillStyle = 'rgba(180, 230, 255, 0.85)';
+    fwCtx.beginPath();
+    fwCtx.arc(17, -16, 2, 0, Math.PI * 2);
+    fwCtx.fill();
+    fwCtx.strokeStyle = '#fff7e0';
+    fwCtx.lineWidth = 1;
+    fwCtx.stroke();
+    // Forward cockpit window
+    fwCtx.fillStyle = '#fff7e0';
+    fwCtx.beginPath();
+    fwCtx.moveTo(20, 0);
+    fwCtx.lineTo(12, -3);
+    fwCtx.lineTo(12, 3);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.restore();
+  }
+
+  // Kelsey — triple-prong fork ship in strategy blue (departing pilot)
+  const STRAT = '#3da4ff';
+  function drawKelseyShip(cx, cy, scale, angle, thrustGlow) {
+    fwCtx.save();
+    fwCtx.translate(cx, cy);
+    fwCtx.rotate(angle);
+    fwCtx.scale(scale, scale);
+    if (thrustGlow > 0) {
+      // Three engines = three glow points (matching the three prongs)
+      for (const off of [-10, 0, 10]) {
+        const grd = fwCtx.createRadialGradient(-22, off, 0, -22, off, 50);
+        grd.addColorStop(0, `rgba(61, 164, 255, ${0.55 * thrustGlow})`);
+        grd.addColorStop(0.5, `rgba(20, 100, 200, ${0.22 * thrustGlow})`);
+        grd.addColorStop(1, 'rgba(20,100,200,0)');
+        fwCtx.fillStyle = grd;
+        fwCtx.beginPath();
+        fwCtx.arc(-22, off, 50, 0, Math.PI * 2);
+        fwCtx.fill();
+      }
+    }
+    fwCtx.shadowColor = STRAT;
+    fwCtx.shadowBlur = 18;
+    fwCtx.fillStyle = STRAT;
+    fwCtx.strokeStyle = '#cce4ff';
+    fwCtx.lineWidth = 1.5;
+    // Central spine (main forward body)
+    fwCtx.beginPath();
+    fwCtx.moveTo(28, 0);
+    fwCtx.lineTo(20, -3);
+    fwCtx.lineTo(-8, -3);
+    fwCtx.lineTo(-12, 0);
+    fwCtx.lineTo(-8, 3);
+    fwCtx.lineTo(20, 3);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Top prong
+    fwCtx.beginPath();
+    fwCtx.moveTo(-2, -3);
+    fwCtx.lineTo(-4, -10);
+    fwCtx.lineTo(-22, -12);
+    fwCtx.lineTo(-22, -8);
+    fwCtx.lineTo(-6, -3);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Bottom prong (mirror)
+    fwCtx.beginPath();
+    fwCtx.moveTo(-2, 3);
+    fwCtx.lineTo(-4, 10);
+    fwCtx.lineTo(-22, 12);
+    fwCtx.lineTo(-22, 8);
+    fwCtx.lineTo(-6, 3);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.stroke();
+    // Connecting struts between prongs and central spine
+    fwCtx.lineWidth = 1;
+    fwCtx.beginPath();
+    fwCtx.moveTo(-12, -10);
+    fwCtx.lineTo(-12, -3);
+    fwCtx.moveTo(-12, 10);
+    fwCtx.lineTo(-12, 3);
+    fwCtx.stroke();
+    // Cockpit at the front
+    fwCtx.shadowBlur = 0;
+    fwCtx.fillStyle = '#cce4ff';
+    fwCtx.beginPath();
+    fwCtx.moveTo(20, 0);
+    fwCtx.lineTo(12, -2);
+    fwCtx.lineTo(10, 0);
+    fwCtx.lineTo(12, 2);
+    fwCtx.closePath();
+    fwCtx.fill();
+    fwCtx.restore();
+  }
+
   // ---- Ship state ----
   // Departures start near the center, fly off-screen left.
   // Arrival starts off-screen right, decelerates to center-stage.
   let emily = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
   let kristin = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
+  let kelsey = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
   let rob = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
   let harley = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
-  let kyle = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
   let maddy = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
+  let jen = { x: 0, y: 0, vx: 0, vy: 0, thrust: 0, visible: false };
 
   const startTime = performance.now() / 1000;
   let rafId = null;
@@ -3240,54 +3392,68 @@ setTimeout(() => endIntro(), 141000);
     if (t < 1.5) {
       setText('', '', '');
     } else if (t < 3.0) {
-      setText('Farewell to two pilots', '', '');
+      setText('Farewell to three pilots', '', '');
       // Position ships at slight offset positions, idle (gentle bob)
       const bob = Math.sin(t * 1.5) * 3;
-      emily.x = W * 0.42; emily.y = H * 0.65 + bob; emily.visible = true; emily.thrust = 0;
-      kristin.x = W * 0.58; kristin.y = H * 0.65 - bob; kristin.visible = true; kristin.thrust = 0;
+      emily.x = W * 0.35; emily.y = H * 0.65 + bob; emily.visible = true; emily.thrust = 0;
+      kristin.x = W * 0.5; kristin.y = H * 0.65 - bob; kristin.visible = true; kristin.thrust = 0;
+      kelsey.x = W * 0.65; kelsey.y = H * 0.65 + bob * 0.6; kelsey.visible = true; kelsey.thrust = 0;
     } else if (t < 6.5) {
-      setText('Farewell to two pilots',
+      setText('Farewell to three pilots',
         '<span class="fw-name" style="color:' + ACCT + '">Emily</span>'
-        + ' <span style="color:rgba(255,255,255,0.5)">&amp;</span> '
-        + '<span class="fw-name" style="color:' + RISK + '">Kristin</span>',
+        + ' <span style="color:rgba(255,255,255,0.5)">·</span> '
+        + '<span class="fw-name" style="color:' + RISK + '">Kristin</span>'
+        + ' <span style="color:rgba(255,255,255,0.5)">·</span> '
+        + '<span class="fw-name" style="color:' + STRAT + '">Kelsey</span>',
         'Thank you for everything');
       const bob = Math.sin(t * 1.5) * 3;
-      emily.x = W * 0.42; emily.y = H * 0.65 + bob; emily.thrust = 0;
-      kristin.x = W * 0.58; kristin.y = H * 0.65 - bob; kristin.thrust = 0;
+      emily.x = W * 0.35; emily.y = H * 0.65 + bob; emily.thrust = 0;
+      kristin.x = W * 0.5; kristin.y = H * 0.65 - bob; kristin.thrust = 0;
+      kelsey.x = W * 0.65; kelsey.y = H * 0.65 + bob * 0.6; kelsey.thrust = 0;
       // Engines start spooling
       if (t > 5.5) {
         const k = (t - 5.5) / 1.0;
         emily.thrust = k;
         kristin.thrust = k;
+        kelsey.thrust = k;
       }
     } else if (t < 9.0) {
-      setText('Farewell to two pilots',
+      setText('Farewell to three pilots',
         '<span class="fw-name" style="color:' + ACCT + '">Emily</span>'
-        + ' <span style="color:rgba(255,255,255,0.5)">&amp;</span> '
-        + '<span class="fw-name" style="color:' + RISK + '">Kristin</span>',
-        "We'll miss you both");
+        + ' <span style="color:rgba(255,255,255,0.5)">·</span> '
+        + '<span class="fw-name" style="color:' + RISK + '">Kristin</span>'
+        + ' <span style="color:rgba(255,255,255,0.5)">·</span> '
+        + '<span class="fw-name" style="color:' + STRAT + '">Kelsey</span>',
+        "We'll miss you all");
       // Accelerate left, slightly diverging
       const k = (t - 6.5) / 2.5;
       const accel = 1400 * k;
       emily.vx = -accel * 1.0;
       emily.vy = -60 * k;
       kristin.vx = -accel * 1.05;
-      kristin.vy = 60 * k;
+      kristin.vy = 0;
+      kelsey.vx = -accel * 1.0;
+      kelsey.vy = 60 * k;
       const dt = 1/60;
       emily.x += emily.vx * dt;
       emily.y += emily.vy * dt;
       kristin.x += kristin.vx * dt;
       kristin.y += kristin.vy * dt;
+      kelsey.x += kelsey.vx * dt;
+      kelsey.y += kelsey.vy * dt;
       emily.thrust = 1.0;
       kristin.thrust = 1.0;
+      kelsey.thrust = 1.0;
       // Hide once off-screen
       if (emily.x < -80) emily.visible = false;
       if (kristin.x < -80) kristin.visible = false;
+      if (kelsey.x < -80) kelsey.visible = false;
     } else if (t < 10.5) {
       // Pause - empty stage
       setText('', '', '');
       emily.visible = false;
       kristin.visible = false;
+      kelsey.visible = false;
     } else if (t < 13.0) {
       setText('And welcoming a new pilot', '', '');
       // Rob enters from right, decelerating
@@ -3325,13 +3491,13 @@ setTimeout(() => endIntro(), 141000);
       setText('And three more from Accounting',
         '<span class="fw-name" style="color:' + ACCT + '">Harley</span>'
         + ' <span style="color:rgba(255,255,255,0.5)">·</span> '
-        + '<span class="fw-name" style="color:' + ACCT + '">Kyle</span>'
+        + '<span class="fw-name" style="color:' + ACCT + '">Maddy</span>'
         + ' <span style="color:rgba(255,255,255,0.5)">·</span> '
-        + '<span class="fw-name" style="color:' + ACCT + '">Maddy</span>',
+        + '<span class="fw-name" style="color:' + ACCT + '">Jen</span>',
         "");
       // Move Rob gently up-and-left so others have room
       const k = Math.min(1, (t - 15.5) / 2.0);
-      rob.x = W * 0.5 - 60 * k + Math.sin(t * 2) * 3;
+      rob.x = W * 0.5 - 80 * k + Math.sin(t * 2) * 3;
       rob.y = H * 0.65 - 30 * k + Math.sin(t * 1.8) * 3;
       rob.thrust = 0.1;
       // Spawn the three new ships off-screen right if not yet visible
@@ -3339,48 +3505,48 @@ setTimeout(() => endIntro(), 141000);
         harley.x = W + 80; harley.y = H * 0.62;
         harley.vx = -800; harley.thrust = 1.0; harley.visible = true;
       }
-      if (!kyle.visible) {
-        kyle.x = W + 180; kyle.y = H * 0.72;
-        kyle.vx = -880; kyle.thrust = 1.0; kyle.visible = true;
-      }
       if (!maddy.visible) {
-        maddy.x = W + 280; maddy.y = H * 0.55;
+        maddy.x = W + 220; maddy.y = H * 0.55;
         maddy.vx = -780; maddy.thrust = 1.0; maddy.visible = true;
+      }
+      if (!jen.visible) {
+        jen.x = W + 360; jen.y = H * 0.7;
+        jen.vx = -820; jen.thrust = 1.0; jen.visible = true;
       }
       const dt = 1/60;
       // Decelerate each as they approach their parking spots
-      const targetHX = W * 0.42, targetKX = W * 0.55, targetMX = W * 0.68;
+      const targetHX = W * 0.4, targetMX = W * 0.55, targetJX = W * 0.72;
       if (harley.x < W * 0.7) harley.vx *= 0.95;
-      if (kyle.x < W * 0.75) kyle.vx *= 0.95;
-      if (maddy.x < W * 0.8) maddy.vx *= 0.95;
+      if (maddy.x < W * 0.78) maddy.vx *= 0.95;
+      if (jen.x < W * 0.85) jen.vx *= 0.95;
       harley.x += harley.vx * dt;
-      kyle.x += kyle.vx * dt;
       maddy.x += maddy.vx * dt;
+      jen.x += jen.vx * dt;
       // Settle when close enough
       if (harley.x < targetHX + 20) { harley.x = targetHX + Math.sin(t * 1.7) * 3; harley.vx = 0; harley.thrust = 0.15; }
-      if (kyle.x < targetKX + 20) { kyle.x = targetKX + Math.sin(t * 1.9) * 3; kyle.vx = 0; kyle.thrust = 0.15; }
       if (maddy.x < targetMX + 20) { maddy.x = targetMX + Math.sin(t * 2.1) * 3; maddy.vx = 0; maddy.thrust = 0.15; }
+      if (jen.x < targetJX + 20) { jen.x = targetJX + Math.sin(t * 1.9) * 3; jen.vx = 0; jen.thrust = 0.15; }
       harley.y = H * 0.62 + Math.sin(t * 1.7) * 3;
-      kyle.y = H * 0.72 + Math.sin(t * 1.9) * 3;
       maddy.y = H * 0.55 + Math.sin(t * 2.1) * 3;
+      jen.y = H * 0.7 + Math.sin(t * 1.9) * 3;
     } else if (t < 21.0) {
       setText('And three more from Accounting',
         '<span class="fw-name" style="color:' + ACCT + '">Harley</span>'
         + ' <span style="color:rgba(255,255,255,0.5)">·</span> '
-        + '<span class="fw-name" style="color:' + ACCT + '">Kyle</span>'
+        + '<span class="fw-name" style="color:' + ACCT + '">Maddy</span>'
         + ' <span style="color:rgba(255,255,255,0.5)">·</span> '
-        + '<span class="fw-name" style="color:' + ACCT + '">Maddy</span>',
+        + '<span class="fw-name" style="color:' + ACCT + '">Jen</span>',
         "Welcome aboard, all of you");
       // Hold positions, gentle bobbing
-      rob.x = W * 0.5 - 60 + Math.sin(t * 2) * 3;
+      rob.x = W * 0.5 - 80 + Math.sin(t * 2) * 3;
       rob.y = H * 0.65 - 30 + Math.sin(t * 1.8) * 3;
-      harley.x = W * 0.42 + Math.sin(t * 1.7) * 3;
+      harley.x = W * 0.4 + Math.sin(t * 1.7) * 3;
       harley.y = H * 0.62 + Math.sin(t * 1.7) * 3;
-      kyle.x = W * 0.55 + Math.sin(t * 1.9) * 3;
-      kyle.y = H * 0.72 + Math.sin(t * 1.9) * 3;
-      maddy.x = W * 0.68 + Math.sin(t * 2.1) * 3;
+      maddy.x = W * 0.55 + Math.sin(t * 2.1) * 3;
       maddy.y = H * 0.55 + Math.sin(t * 2.1) * 3;
-      rob.thrust = 0.1; harley.thrust = 0.15; kyle.thrust = 0.15; maddy.thrust = 0.15;
+      jen.x = W * 0.72 + Math.sin(t * 1.9) * 3;
+      jen.y = H * 0.7 + Math.sin(t * 1.9) * 3;
+      rob.thrust = 0.1; harley.thrust = 0.15; maddy.thrust = 0.15; jen.thrust = 0.15;
     } else if (t < 22.0) {
       // Fade out
       const k = (t - 21.0) / 1.0;
@@ -3396,10 +3562,11 @@ setTimeout(() => endIntro(), 141000);
     // Render ships
     if (emily.visible) drawEmilyShip(emily.x, emily.y, 2.0, Math.PI, emily.thrust);
     if (kristin.visible) drawKristinShip(kristin.x, kristin.y, 1.4, Math.PI, kristin.thrust);
+    if (kelsey.visible) drawKelseyShip(kelsey.x, kelsey.y, 1.4, Math.PI, kelsey.thrust);
     if (rob.visible) drawRobShip(rob.x, rob.y, 1.5, Math.PI, rob.thrust);
     if (harley.visible) drawHarleyShip(harley.x, harley.y, 1.4, Math.PI, harley.thrust);
-    if (kyle.visible) drawKyleShip(kyle.x, kyle.y, 1.4, Math.PI, kyle.thrust);
     if (maddy.visible) drawMaddyShip(maddy.x, maddy.y, 1.4, Math.PI, maddy.thrust);
+    if (jen.visible) drawJenShip(jen.x, jen.y, 1.4, Math.PI, jen.thrust);
 
     rafId = requestAnimationFrame(loop);
   }
